@@ -1,28 +1,29 @@
 <?php
-// Single entry point for Vercel deployment — routes all requests through this file
-// to stay under Vercel's 12 Serverless Function limit
-
+// Single entry point for Vercel deployment — routes all requests safely
 $rootDir = dirname(__DIR__);
+
+// Normalize request path
 $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-$requestUri = trim($requestUri, '/');
+$path = trim($requestUri, '/');
 
 // Helper function to get file MIME type
 function getMimeType($file) {
     $mimes = [
         'html' => 'text/html; charset=UTF-8',
-        'css' => 'text/css',
-        'js' => 'application/javascript',
-        'json' => 'application/json',
-        'svg' => 'image/svg+xml',
-        'png' => 'image/png',
-        'jpg' => 'image/jpeg',
+        'css'  => 'text/css; charset=UTF-8',
+        'js'   => 'application/javascript; charset=UTF-8',
+        'json' => 'application/json; charset=UTF-8',
+        'svg'  => 'image/svg+xml',
+        'png'  => 'image/png',
+        'jpg'  => 'image/jpeg',
         'jpeg' => 'image/jpeg',
-        'gif' => 'image/gif',
+        'gif'  => 'image/gif',
         'webp' => 'image/webp',
         'woff' => 'font/woff',
-        'woff2' => 'font/woff2',
-        'ttf' => 'font/ttf',
-        'eot' => 'application/vnd.ms-fontobject',
+        'woff2'=> 'font/woff2',
+        'ttf'  => 'font/ttf',
+        'eot'  => 'application/vnd.ms-fontobject',
+        'ico'  => 'image/x-icon',
     ];
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     return $mimes[$ext] ?? 'application/octet-stream';
@@ -37,70 +38,87 @@ function serveStaticFile($file) {
             header('Pragma: no-cache');
             header('Expires: 0');
         } else {
-            header('Cache-Control: public, max-age=31536000');
+            header('Cache-Control: public, max-age=31536000, immutable');
         }
+        header('Content-Length: ' . filesize($file));
         readfile($file);
         exit;
     }
     return false;
 }
 
-// Intercept direct backend route requests and redirect to api/
-if (strpos($requestUri, 'backend/') === 0 && strpos($requestUri, 'backend/uploads/') !== 0) {
-    header('Location: /api/' . $requestUri);
-    exit;
+// 1. Handle Static Assets (assets/..., frontend/assets/..., css/..., js/...)
+if (preg_match('/\.(css|js|map|png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|eot)$/i', $path)) {
+    // Check in public/, frontend/, and root
+    $candidates = [
+        $rootDir . '/public/' . $path,
+        $rootDir . '/frontend/' . $path,
+        $rootDir . '/' . $path,
+        $rootDir . '/public/' . preg_replace('#^(frontend|public)/#', '', $path),
+        $rootDir . '/frontend/' . preg_replace('#^(frontend|public)/#', '', $path),
+    ];
+    foreach ($candidates as $cand) {
+        if (is_file($cand)) {
+            serveStaticFile($cand);
+        }
+    }
 }
 
-// Handle API requests (/api/...)
-if (strpos($requestUri, 'api/') === 0) {
-    $apiPath = substr($requestUri, 4); // Remove 'api/' prefix
-    
-    // Route to api/backend or api/frontend PHP files
-    if (strpos($apiPath, 'backend/uploads/') === 0) {
-        // Serve static uploads
-        $uploadFile = $rootDir . '/backend/uploads/' . substr($apiPath, 16);
-        if (file_exists($uploadFile) && is_file($uploadFile)) {
-            serveStaticFile($uploadFile);
+// 2. Handle Backend Uploads
+if (strpos($path, 'backend/uploads/') !== false || strpos($path, 'api/backend/uploads/') !== false) {
+    $uploadRel = preg_replace('#^.*backend/uploads/#', '', $path);
+    $uploadCandidates = [
+        $rootDir . '/backend/uploads/' . $uploadRel,
+        $rootDir . '/api/backend/uploads/' . $uploadRel,
+    ];
+    foreach ($uploadCandidates as $uFile) {
+        if (is_file($uFile)) {
+            serveStaticFile($uFile);
         }
-        $uploadFileAlt = $rootDir . '/api/backend/uploads/' . substr($apiPath, 16);
-        if (file_exists($uploadFileAlt) && is_file($uploadFileAlt)) {
-            serveStaticFile($uploadFileAlt);
+    }
+}
+
+// 3. Handle Root & Index Requests -> Hospital Selection Page
+if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path === 'api/router.php' || $path === 'router.php') {
+    $target = __DIR__ . '/frontend/index.php';
+    if (is_file($target)) {
+        chdir(dirname($target));
+        try {
+            require $target;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo "Error: " . htmlspecialchars($e->getMessage());
+        }
+        exit;
+    }
+}
+
+// 4. Handle Direct API / PHP Requests
+if (strpos($path, 'api/') === 0 || strpos($path, 'backend/') === 0 || strpos($path, 'frontend/') === 0) {
+    $cleanPath = preg_replace('#^api/#', '', $path);
+    
+    // Safety check: Prevent self-inclusion recursion
+    if ($cleanPath === 'router.php' || $cleanPath === 'router') {
+        $cleanPath = 'frontend/index.php';
+    }
+
+    $target = $rootDir . '/api/' . $cleanPath;
+    if (!str_ends_with($target, '.php') && !is_dir($target)) {
+        $target .= '.php';
+    }
+
+    // Try alternate paths in api/backend/ or api/frontend/
+    if (!is_file($target)) {
+        if (is_file($rootDir . '/api/backend/' . $cleanPath . '.php')) {
+            $target = $rootDir . '/api/backend/' . $cleanPath . '.php';
+        } elseif (is_file($rootDir . '/api/frontend/' . $cleanPath . '.php')) {
+            $target = $rootDir . '/api/frontend/' . $cleanPath . '.php';
+        } elseif (is_file($rootDir . '/api/' . $cleanPath . '/index.php')) {
+            $target = $rootDir . '/api/' . $cleanPath . '/index.php';
         }
     }
 
-    if (strpos($apiPath, 'frontend/assets/') === 0) {
-        $assetFile = $rootDir . '/frontend/assets/' . substr($apiPath, 16);
-        if (file_exists($assetFile) && is_file($assetFile)) {
-            serveStaticFile($assetFile);
-        }
-    }
-    
-    if (strpos($apiPath, 'backend/') === 0) {
-        $target = $rootDir . '/api/' . $apiPath;
-    } elseif (strpos($apiPath, 'frontend/') === 0) {
-        $target = $rootDir . '/api/' . $apiPath;
-    } else {
-        // Try both backend and frontend paths, or use the api/index.php
-        $backendTarget = $rootDir . '/api/backend/' . $apiPath;
-        $frontendTarget = $rootDir . '/api/frontend/' . $apiPath;
-        
-        if (file_exists($backendTarget)) {
-            $target = $backendTarget;
-        } elseif (file_exists($frontendTarget)) {
-            $target = $frontendTarget;
-        } else {
-            // Default to api/index.php for routing
-            $target = $rootDir . '/api/index.php';
-            $_SERVER['REQUEST_URI'] = '/api/' . $apiPath;
-        }
-    }
-    
-    // Ensure we're serving a PHP file
-    if (!str_ends_with($target, '.php')) {
-        $target .= '.php';
-    }
-    
-    if (file_exists($target)) {
+    if (is_file($target) && realpath($target) !== realpath(__FILE__)) {
         chdir(dirname($target));
         try {
             require $target;
@@ -113,46 +131,21 @@ if (strpos($requestUri, 'api/') === 0) {
         }
         exit;
     }
-    
-    http_response_code(404);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'API endpoint not found']);
-    exit;
 }
 
-// Handle static files from frontend
-// If $requestUri already starts with 'frontend/', don't prepend it again
-if (strpos($requestUri, 'frontend/') === 0) {
-    $staticFile = $rootDir . '/' . $requestUri;
-} else {
-    $staticFile = $rootDir . '/frontend/' . $requestUri;
-}
-
-if (file_exists($staticFile) && is_file($staticFile)) {
-    serveStaticFile($staticFile);
-}
-
-// Handle root request → Redirect to PHP Hospital Selection Page
-if ($requestUri === '' || $requestUri === 'index.php') {
-    header('Location: /api/frontend/index.php');
-    exit;
-}
-
-// If someone specifically requests index.html (the SPA / Apollo Hospital form)
-if ($requestUri === 'index.html') {
-    serveStaticFile($rootDir . '/frontend/index.html');
-}
-
-// For all other routes (SPA routing), serve the frontend index.html if it's a non-API route
-if (strpos($requestUri, 'api/') !== 0) {
-    $indexFile = $rootDir . '/frontend/index.html';
-    if (file_exists($indexFile)) {
-        serveStaticFile($indexFile);
+// 5. Fallback for SPA routing -> Serve frontend/index.html or public/index.html
+$spaCandidates = [
+    $rootDir . '/public/index.html',
+    $rootDir . '/frontend/index.html',
+];
+foreach ($spaCandidates as $spaHtml) {
+    if (is_file($spaHtml)) {
+        serveStaticFile($spaHtml);
     }
 }
 
-// Fallback 404
+// 6. 404 Fallback
 http_response_code(404);
 header('Content-Type: text/html; charset=UTF-8');
-echo '<!DOCTYPE html><html><body><h1>404 - Not Found</h1></body></html>';
+echo '<!DOCTYPE html><html><body><h1>404 - Not Found</h1><p>The requested endpoint could not be found.</p></body></html>';
 exit;
