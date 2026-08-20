@@ -2,7 +2,7 @@
   "functions": {
     "api/router.php": {
       "runtime": "vercel-php@0.9.0",
-      "includeFiles": "api/**/*.php,frontend/**,backend/**/*.php,includes/**/*.php"
+      "includeFiles": "api/**,frontend/**,backend/**"
     }
   },
   "routes": [
