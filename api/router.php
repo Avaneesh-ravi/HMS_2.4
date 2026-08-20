@@ -49,7 +49,6 @@ function serveStaticFile($file) {
 
 // 1. Handle Static Assets (assets/..., frontend/assets/..., css/..., js/...)
 if (preg_match('/\.(css|js|map|png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|eot)$/i', $path)) {
-    // Check in public/, frontend/, and root
     $candidates = [
         $rootDir . '/public/' . $path,
         $rootDir . '/frontend/' . $path,
@@ -79,7 +78,7 @@ if (strpos($path, 'backend/uploads/') !== false || strpos($path, 'api/backend/up
 }
 
 // 3. Handle Root & Index Requests -> Hospital Selection Page
-if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path === 'api/router.php' || $path === 'router.php') {
+if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path === 'api/index.php' || $path === 'api/router.php' || $path === 'router.php') {
     $target = __DIR__ . '/frontend/index.php';
     if (is_file($target)) {
         chdir(dirname($target));
@@ -97,8 +96,7 @@ if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path ===
 if (strpos($path, 'api/') === 0 || strpos($path, 'backend/') === 0 || strpos($path, 'frontend/') === 0) {
     $cleanPath = preg_replace('#^api/#', '', $path);
     
-    // Safety check: Prevent self-inclusion recursion
-    if ($cleanPath === 'router.php' || $cleanPath === 'router') {
+    if ($cleanPath === 'index.php' || $cleanPath === 'router.php' || $cleanPath === '') {
         $cleanPath = 'frontend/index.php';
     }
 
@@ -107,7 +105,6 @@ if (strpos($path, 'api/') === 0 || strpos($path, 'backend/') === 0 || strpos($pa
         $target .= '.php';
     }
 
-    // Try alternate paths in api/backend/ or api/frontend/
     if (!is_file($target)) {
         if (is_file($rootDir . '/api/backend/' . $cleanPath . '.php')) {
             $target = $rootDir . '/api/backend/' . $cleanPath . '.php';
