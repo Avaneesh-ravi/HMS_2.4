@@ -1,0 +1,53 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Untitled</title>
+      <meta name="description" content="Streamline patient feedback collection with an intuitive, bilingual form that enhances hospital service evaluation and improves patient experience." />
+      <meta name="robots" content="noindex, nofollow" />
+      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }
+        #vite-error-box { display: none; padding: 20px; background: #fff0f0; border: 1px solid red; color: red; position: fixed; z-index: 9999; top: 0; width: 100%; font-family: monospace; }
+        @media print {
+          body > *:not(#root), #root > *:not(.modal-print-overlay), nav, header, aside, .no-print { display: none !important; }
+          html, body { height: auto !important; overflow: visible !important; background: #ffffff !important; }
+          .modal-print-overlay { position: absolute !important; inset: 0 !important; background: transparent !important; padding: 0 !important; display: block !important; }
+          #printable-feedback-modal {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 20px !important;
+          }
+        }
+      </style>
+      <script>
+        window.addEventListener('error', function(e) {
+          document.getElementById('vite-error-box').style.display = 'block';
+          document.getElementById('vite-error-box').innerHTML += e.message + '<br>' + e.filename + ':' + e.lineno + '<br>';
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+          document.getElementById('vite-error-box').style.display = 'block';
+          document.getElementById('vite-error-box').innerHTML += e.reason?.stack || e.reason + '<br>';
+        });
+      </script>
+      
+      <script type="module" crossorigin src="./assets/index-BZdZO4bh.js"></script>
+      <link rel="stylesheet" crossorigin href="./assets/index-DTJewQkD.css">
+    </head>
+
+    <body>
+      
+      <div id="vite-error-box"></div>
+      <div id="root"></div>
+      
+    </body>
+  </html>
+  
