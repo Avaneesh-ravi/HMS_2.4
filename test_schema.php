@@ -1,0 +1,1 @@
+<?php require "HMS_V2.2/backend/config/database.php"; $pdo = getDBConnection(); $pdo->exec("ALTER TABLE feedback_form ADD COLUMN layout_mode TINYINT(1) DEFAULT 2, ADD COLUMN combine_pages TINYINT(1) DEFAULT 0;"); echo "Done";

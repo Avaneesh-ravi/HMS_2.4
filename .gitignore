@@ -1,0 +1,6 @@
+node_modules/
+frontend_source/node_modules/
+.vercel
+.env*
+*.log
+HMS_V2.2/

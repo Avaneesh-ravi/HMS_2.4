@@ -1,0 +1,10 @@
+{
+  "name": "hospital-feedback-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix frontend_source run build",
+    "vercel-build": "npm --prefix frontend_source install && npm --prefix frontend_source run build"
+  }
+}
