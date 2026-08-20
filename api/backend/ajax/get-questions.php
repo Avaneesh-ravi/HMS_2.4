@@ -109,14 +109,23 @@ try {
         }
     }
 
-    // Fetch live departments from department table for this hospital
-    $deptStmt = $pdo->prepare("SELECT department_name FROM department WHERE (hospital_id = ? OR hospital_id = 0) AND is_active = TRUE ORDER BY department_name ASC");
-    $deptStmt->execute([$hospitalId]);
-    $departments = $deptStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
-
-    if (empty($departments) && !empty($formSettings['departments'])) {
-        $departments = json_decode($formSettings['departments'], true) ?: [];
+    // Priority 1: Form configured departments JSON
+    $departments = [];
+    if (!empty($formSettings['departments'])) {
+        $decoded = json_decode($formSettings['departments'], true);
+        if (is_array($decoded)) {
+            $departments = $decoded;
+        }
     }
+
+    // Priority 2: Active departments from relational table if form settings empty
+    if (empty($departments)) {
+        $deptStmt = $pdo->prepare("SELECT department_name FROM department WHERE hospital_id = ? AND is_active = TRUE ORDER BY department_id ASC");
+        $deptStmt->execute([$hospitalId]);
+        $departments = $deptStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    }
+
+    // Priority 3: Fallback default list if completely empty
     if (empty($departments)) {
         $departments = ['Cardiology', 'Pediatrics', 'Orthopedics', 'Gynecology', 'Neurology', 'Oncology', 'Emergency', 'OPD / Outpatient'];
     }

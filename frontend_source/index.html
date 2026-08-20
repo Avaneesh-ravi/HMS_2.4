@@ -10,23 +10,47 @@
       <meta name="robots" content="noindex, nofollow" />
       <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }
         #vite-error-box { display: none; padding: 20px; background: #fff0f0; border: 1px solid red; color: red; position: fixed; z-index: 9999; top: 0; width: 100%; font-family: monospace; }
-        @media print {
-          body > *:not(#root), #root > *:not(.modal-print-overlay), nav, header, aside, .no-print { display: none !important; }
-          html, body { height: auto !important; overflow: visible !important; background: #ffffff !important; }
-          .modal-print-overlay { position: absolute !important; inset: 0 !important; background: transparent !important; padding: 0 !important; display: block !important; }
-          #printable-feedback-modal {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            max-height: none !important;
-            overflow: visible !important;
-            box-shadow: none !important;
-            border: none !important;
-            padding: 20px !important;
-          }
+                    @media print {
+        body * { visibility: hidden !important; }
+        #printable-feedback-modal, #printable-feedback-modal * { visibility: visible !important; }
+        html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; }
+        #root { height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; display: block !important; }
+        .modal-print-overlay { position: static !important; inset: auto !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; display: block !important; overflow: visible !important; }
+        #printable-feedback-modal {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
+          overflow: visible !important;
+          box-shadow: none !important;
+          border: none !important;
+          border-radius: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: #ffffff !important;
+          display: block !important;
         }
+        #printable-feedback-modal .sticky,
+        #printable-feedback-modal [class*="sticky"] {
+          position: relative !important;
+          top: auto !important;
+          box-shadow: none !important;
+          border-bottom: 2px solid #0d9488 !important;
+          padding-bottom: 12px !important;
+          margin-bottom: 16px !important;
+        }
+        .no-print, button, nav, aside, [class*="sidebar"] {
+          display: none !important;
+        }
+        .grid, .rounded-xl, .rounded-lg, [class*="rounded"] {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+      }
       </style>
       <script>
         window.addEventListener('error', function(e) {

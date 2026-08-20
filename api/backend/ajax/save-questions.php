@@ -160,15 +160,57 @@ try {
 
     if (isset($data['settings'])) {
         $layoutMode = $data['settings']['layoutMode'] === '1-column' ? 1 : 2;
-        $combinePages = $data['settings']['combinePages'] ? 1 : 0;
+        $combinePages = !empty($data['settings']['combinePages']) ? 1 : 0;
         
         $themeColor = $data['settings']['themeColor'] ?? '#0d9488';
         $fontSize = $data['settings']['fontSize'] ?? 'Normal';
         $showTitleLabels = isset($data['settings']['showPageTitleLabels']) ? ($data['settings']['showPageTitleLabels'] ? 1 : 0) : 1;
-        $departments = isset($data['settings']['departments']) ? json_encode($data['settings']['departments']) : '[]';
+        
+        $deptList = [];
+        if (isset($data['settings']['departments']) && is_array($data['settings']['departments'])) {
+            foreach ($data['settings']['departments'] as $dName) {
+                $trimmed = trim((string)$dName);
+                if ($trimmed !== '') {
+                    $deptList[] = $trimmed;
+                }
+            }
+        }
+        $departmentsJson = json_encode($deptList);
 
         $stmtSettings = $pdo->prepare("UPDATE feedback_form SET layout_mode = ?, combine_pages = ?, theme_color = ?, font_size = ?, show_title_labels = ?, departments = ? WHERE feedback_form_id = ?");
-        $stmtSettings->execute([$layoutMode, $combinePages, $themeColor, $fontSize, $showTitleLabels, $departments, $formId]);
+        $stmtSettings->execute([$layoutMode, $combinePages, $themeColor, $fontSize, $showTitleLabels, $departmentsJson, $formId]);
+
+        // Synchronize relational department table with the saved list
+        if ($hospitalId > 0) {
+            if (!empty($deptList)) {
+                // Deactivate any department not in the saved list
+                $placeholders = implode(',', array_fill(0, count($deptList), '?'));
+                $params = array_merge([$hospitalId], array_map('strtolower', $deptList));
+                $deactStmt = $pdo->prepare("UPDATE department SET is_active = FALSE WHERE hospital_id = ? AND LOWER(TRIM(department_name)) NOT IN ($placeholders)");
+                $deactStmt->execute($params);
+
+                // Insert or reactivate departments in the saved list
+                $checkStmt = $pdo->prepare("SELECT department_id, is_active FROM department WHERE hospital_id = ? AND LOWER(TRIM(department_name)) = LOWER(TRIM(?))");
+                $actStmt = $pdo->prepare("UPDATE department SET is_active = TRUE WHERE department_id = ?");
+                $insStmt = $pdo->prepare("INSERT INTO department (hospital_id, department_name, is_active) VALUES (?, ?, TRUE)");
+
+                foreach ($deptList as $dName) {
+                    $checkStmt->execute([$hospitalId, $dName]);
+                    $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+                    if ($existing) {
+                        if (!$existing['is_active']) {
+                            $actStmt->execute([$existing['department_id']]);
+                        }
+                    } else {
+                        $insStmt->execute([$hospitalId, $dName]);
+                    }
+                }
+            } else {
+                // If user deleted all departments, deactivate all for this hospital
+                $deactAll = $pdo->prepare("UPDATE department SET is_active = FALSE WHERE hospital_id = ?");
+                $deactAll->execute([$hospitalId]);
+            }
+        }
     }
 
     ob_clean();

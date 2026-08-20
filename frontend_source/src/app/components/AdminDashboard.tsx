@@ -5,7 +5,8 @@ import {
   Plus, Trash2, Edit2, Eye, X, GripVertical, LogOut, FileText,
   Hospital, User, TrendingUp, ThumbsUp, Pencil, Columns2, RectangleVertical,
   Building2, UserCircle, CreditCard, Stethoscope, Users, Pill, Activity,
-  Shield, Utensils, HeartPulse, Droplet, Sparkles, Lock, Calendar, UserCircle2
+  Shield, Utensils, HeartPulse, Droplet, Sparkles, Lock, Calendar, UserCircle2,
+  Printer, Search, CheckCircle2, ChevronUp, ChevronDown, HelpCircle, BarChart3, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -49,6 +50,11 @@ interface Question {
 }
 
 interface FeedbackResponse {
+  id?: number | string;
+  departmentId?: number;
+  departmentName?: string;
+  rawRatings?: any[];
+  rawYesNo?: any[];
   uhid: string;
   patientName: string;
   date: string;
@@ -500,7 +506,8 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
     }
   ];
 
-  const [responses, setResponses] = useState<FeedbackResponse[]>([]);
+  const [responses, setResponses] = useState<FeedbackResponse[]>(mockResponses);
+  const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -559,15 +566,32 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
               }
               return {
                 ...item,
-                overallRating: computedOverall,
-                wouldRecommend: computedRecommend,
-                ratings: {},
-                yesNoAnswers: {},
-                appreciations: [],
-                whyChooseUs: []
+                departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
+                rawRatings: item.rawRatings || [],
+                rawYesNo: item.rawYesNo || [],
+                overallRating: computedOverall || item.overallRating || 5,
+                wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
+                ratings: item.ratings || {},
+                yesNoAnswers: item.yesNoAnswers || {},
+                appreciations: item.rawAppreciations || item.appreciations || [],
+                whyChooseUs: item.whyChooseUs || []
               };
             });
+            const initialOfficeUse: Record<string, OfficeUse> = {};
+            data.data.forEach((item: any) => {
+              if (item.officeUse && (item.officeUse.reviewOfComplaint || item.officeUse.dateOfReview || item.officeUse.inchargeName || item.officeUse.correctiveAction)) {
+                initialOfficeUse[item.uhid || item.id] = {
+                  reviewOfComplaint: item.officeUse.reviewOfComplaint || '',
+                  dateOfReview: item.officeUse.dateOfReview || '',
+                  correctiveAction: item.officeUse.correctiveAction || '',
+                  preventiveAction: item.officeUse.preventiveAction || '',
+                  inchargeName: item.officeUse.inchargeName || ''
+                };
+              }
+            });
+            setOfficeUseByResponse(initialOfficeUse);
             setResponses(fetchedResponses);
+            setIsLoadingResponses(false);
           } else {
              console.error("API returned failure:", data);
              setApiError(data.message || "API returned failure");
@@ -580,6 +604,8 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
       .catch(e => {
         console.error("Network or fetch error:", e);
         setApiError(e.message);
+      }).finally(() => {
+        setIsLoadingResponses(false);
       });
 
 
@@ -606,6 +632,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const sidebarItems = [
     { id: 'overview' as SidebarItem, icon: <Home className="w-5 h-5" />, label: 'Overview' },
     { id: 'responses' as SidebarItem, icon: <MessageSquare className="w-5 h-5" />, label: 'Feedback Responses' },
+    { id: 'feedback-report' as SidebarItem, icon: <FileText className="w-5 h-5" />, label: 'Feedback Report' },
     { id: 'branding' as SidebarItem, icon: <Image className="w-5 h-5" />, label: 'Branding Settings' },
     { id: 'form-builder' as SidebarItem, icon: <Layout className="w-5 h-5" />, label: 'Form Builder' }
   ];
@@ -628,6 +655,48 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   };
 
   const [isSavingBranding, setIsSavingBranding] = useState(false);
+
+  const handlePrintFeedbackDetail = () => {
+    if (!selectedResponse) return;
+
+    const uhid = selectedResponse.uhid || 'NO_UHID';
+    
+    // Format Date to YYYY-MM-DD
+    let formattedDate = '';
+    if (selectedResponse.submittedAt) {
+      const dt = new Date(selectedResponse.submittedAt);
+      if (!isNaN(dt.getTime())) {
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth() + 1).padStart(2, '0');
+        const dd = String(dt.getDate()).padStart(2, '0');
+        formattedDate = `${yyyy}-${mm}-${dd}`;
+      }
+    }
+    if (!formattedDate && selectedResponse.date) {
+      const parts = selectedResponse.date.split('/');
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      } else {
+        formattedDate = selectedResponse.date.replace(/[\/\\]/g, '-');
+      }
+    }
+    if (!formattedDate) {
+      const now = new Date();
+      formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    const visitType = (selectedResponse.visitType === 'IP' || selectedResponse.ipNumber) ? 'IP' : 'OP';
+    const printDocTitle = `${uhid}_${formattedDate}_${visitType}`;
+
+    const originalTitle = document.title;
+    document.title = printDocTitle;
+
+    window.print();
+
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
 
   const handleSaveBranding = async () => {
     setIsSavingBranding(true);
@@ -759,6 +828,8 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
         if (refreshData.success) {
           if (refreshData.data && refreshData.data.length > 0) setQuestions(refreshData.data);
           if (refreshData.yesno_data && refreshData.yesno_data.length > 0) setYesNoQuestions(refreshData.yesno_data);
+          if (refreshData.departments) setDepartments(refreshData.departments);
+          else if (refreshData.settings?.departments) setDepartments(refreshData.settings.departments);
         }
       } else {
         toast.error(data.message || 'Failed to save questions');
@@ -804,7 +875,316 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
       percentage: validTotal > 0 ? ((ratingCounts as any)[stars] / validTotal) * 100 : 0
   }));
 
-  // Filtering & Sorting
+  // Feedback Report State
+  const [reportDept, setReportDept] = useState<string>('all');
+  const [reportSearch, setReportSearch] = useState<string>('');
+  const [reportViewTab, setReportViewTab] = useState<'all' | 'ratings' | 'yesno' | 'resolved' | 'unresolved'>('all');
+  const [expandedRemarksQId, setExpandedRemarksQId] = useState<string | null>(null);
+  const [reportFromDate, setReportFromDate] = useState<string>('');
+  const [reportToDate, setReportToDate] = useState<string>('');
+
+  // Helper to parse rating value to number (1-5)
+  const parseRatingVal = (r: any): number => {
+    if (!r) return 0;
+    const s = String(r).toLowerCase().trim();
+    if (s === 'excellent' || s === '5') return 5;
+    if (s === 'good' || s === '4') return 4;
+    if (s === 'average' || s === '3') return 3;
+    if (s === 'poor' || s === '2') return 2;
+    if (s === 'bad' || s === '1') return 1;
+    const n = parseInt(s);
+    return isNaN(n) ? 0 : Math.min(5, Math.max(1, n));
+  };
+
+  const isYesAnswer = (a: any): boolean => {
+    if (a === true || a === 1) return true;
+    const s = String(a).toLowerCase().trim();
+    return s === 'yes' || s === '1' || s === 'true' || s === 'ஆம்';
+  };
+
+  const isNoAnswer = (a: any): boolean => {
+    if (a === false || a === 0) return true;
+    const s = String(a).toLowerCase().trim();
+    return s === 'no' || s === '0' || s === 'false' || s === 'இல்லை';
+  };
+
+  // All distinct departments available
+  const availableDepartments = useMemo(() => {
+    const set = new Set<string>();
+    departments.forEach(d => { if (d.trim()) set.add(d.trim()); });
+    responses.forEach(r => {
+      const dName = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+      if (dName && dName.trim()) set.add(dName.trim());
+    });
+    if (set.size === 0) {
+      set.add('OPD / Outpatient');
+      set.add('IPD / Inpatient');
+    }
+    return Array.from(set);
+  }, [responses, departments]);
+
+  // Department-Wise Feedback Report Data Aggregation
+  const departmentReportData = useMemo(() => {
+    let filtered = [...responses];
+    const effectiveFrom = reportFromDate || fromDate;
+    const effectiveTo = reportToDate || toDate;
+
+    if (effectiveFrom || effectiveTo) {
+      filtered = filtered.filter(res => {
+        const parts = String(res.date).split('/');
+        if (parts.length === 3) {
+          const rDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          if (effectiveFrom && rDate < effectiveFrom) return false;
+          if (effectiveTo && rDate > effectiveTo) return false;
+        }
+        return true;
+      });
+    }
+
+    const deptsToProcess = reportDept === 'all' 
+      ? availableDepartments 
+      : availableDepartments.filter(d => d.toLowerCase().trim() === reportDept.toLowerCase().trim());
+
+    if (reportDept !== 'all' && deptsToProcess.length === 0) {
+      deptsToProcess.push(reportDept);
+    }
+
+    return deptsToProcess.map(deptName => {
+      const deptResponses = filtered.filter(r => {
+        const d = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+        return d.toLowerCase().trim() === deptName.toLowerCase().trim();
+      });
+
+      const totalDeptResponses = deptResponses.length;
+
+      // 1. Rating Questions Map
+      const ratingMap = new Map<string, {
+        id: string;
+        label: string;
+        tamilLabel?: string;
+        count5: number;
+        count4: number;
+        count3: number;
+        count2: number;
+        count1: number;
+        totalRated: number;
+        sumScores: number;
+      }>();
+
+      // Initialize with configured questions
+      questions.forEach(q => {
+        ratingMap.set(String(q.id), {
+          id: String(q.id),
+          label: q.label,
+          tamilLabel: q.tamilLabel,
+          count5: 0, count4: 0, count3: 0, count2: 0, count1: 0,
+          totalRated: 0, sumScores: 0
+        });
+      });
+
+      // Aggregate responses strictly for the hospital's configured rating questions
+      deptResponses.forEach(r => {
+        if (r.rawRatings && r.rawRatings.length > 0) {
+          r.rawRatings.forEach(item => {
+            const qId = String(item.question_id || '');
+            const qTxt = (item.question_text || '').trim().toLowerCase();
+            const score = parseRatingVal(item.rating);
+
+            if (score >= 1 && score <= 5) {
+              let entry = ratingMap.get(qId);
+              if (!entry && qTxt) {
+                for (const val of ratingMap.values()) {
+                  if (val.label.trim().toLowerCase() === qTxt || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === qTxt)) {
+                    entry = val;
+                    break;
+                  }
+                }
+              }
+              // Only accumulate if the question belongs to this hospital's active configuration
+              if (entry) {
+                if (score === 5) entry.count5++;
+                else if (score === 4) entry.count4++;
+                else if (score === 3) entry.count3++;
+                else if (score === 2) entry.count2++;
+                else if (score === 1) entry.count1++;
+
+                entry.totalRated++;
+                entry.sumScores += score;
+              }
+            }
+          });
+        }
+      });
+
+      const ratingQuestionsList = Array.from(ratingMap.values()).map(q => {
+        const avg = q.totalRated > 0 ? (q.sumScores / q.totalRated) : 0;
+        const pctPositive = q.totalRated > 0 ? (((q.count5 + q.count4) / q.totalRated) * 100) : 0;
+        return {
+          ...q,
+          averageScore: parseFloat(avg.toFixed(1)),
+          percentagePositive: Math.round(pctPositive),
+          pct5: q.totalRated > 0 ? Math.round((q.count5 / q.totalRated) * 100) : 0,
+          pct4: q.totalRated > 0 ? Math.round((q.count4 / q.totalRated) * 100) : 0,
+          pct3: q.totalRated > 0 ? Math.round((q.count3 / q.totalRated) * 100) : 0,
+          pct2: q.totalRated > 0 ? Math.round((q.count2 / q.totalRated) * 100) : 0,
+          pct1: q.totalRated > 0 ? Math.round((q.count1 / q.totalRated) * 100) : 0,
+        };
+      }).filter(q => {
+        if (!reportSearch) return true;
+        const query = reportSearch.toLowerCase();
+        return q.label.toLowerCase().includes(query) || (q.tamilLabel && q.tamilLabel.toLowerCase().includes(query));
+      });
+
+      // 2. Yes/No Questions Map
+      const yesNoMap = new Map<string, {
+        id: string;
+        label: string;
+        tamilLabel?: string;
+        yesCount: number;
+        noCount: number;
+        totalAnswered: number;
+        remarks: Array<{ patientName: string; uhid: string; date: string; text: string }>;
+      }>();
+
+      yesNoQuestions.forEach(yq => {
+        yesNoMap.set(String(yq.id), {
+          id: String(yq.id),
+          label: yq.label,
+          tamilLabel: yq.tamilLabel,
+          yesCount: 0,
+          noCount: 0,
+          totalAnswered: 0,
+          remarks: []
+        });
+      });
+
+      // Aggregate responses strictly for the hospital's configured Yes/No questions
+      deptResponses.forEach(r => {
+        if (r.rawYesNo && r.rawYesNo.length > 0) {
+          r.rawYesNo.forEach(yn => {
+            const yId = String(yn.yesno_question_id || '');
+            const yTxt = (yn.question_en || yn.question_text || yn.question_ta || '').trim().toLowerCase();
+            const ans = yn.answer;
+
+            let entry = yesNoMap.get(yId);
+            if (!entry && yTxt) {
+              for (const val of yesNoMap.values()) {
+                if (val.label.trim().toLowerCase() === yTxt || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === yTxt)) {
+                  entry = val;
+                  break;
+                }
+              }
+            }
+            // Only accumulate if the question belongs to this hospital's active configuration
+            if (entry) {
+              if (isYesAnswer(ans)) {
+                entry.yesCount++;
+                entry.totalAnswered++;
+              } else if (isNoAnswer(ans)) {
+                entry.noCount++;
+                entry.totalAnswered++;
+              }
+
+              if (yn.remarks && String(yn.remarks).trim()) {
+                entry.remarks.push({
+                  patientName: r.patientName,
+                  uhid: r.uhid,
+                  date: r.date,
+                  text: String(yn.remarks).trim()
+                });
+              }
+            }
+          });
+        }
+      });
+
+      const yesNoQuestionsList = Array.from(yesNoMap.values()).map(yq => {
+        const yesPct = yq.totalAnswered > 0 ? Math.round((yq.yesCount / yq.totalAnswered) * 100) : 0;
+        const noPct = yq.totalAnswered > 0 ? Math.round((yq.noCount / yq.totalAnswered) * 100) : 0;
+        return {
+          ...yq,
+          yesPercent: yesPct,
+          noPercent: noPct,
+        };
+      }).filter(yq => {
+        if (!reportSearch) return true;
+        const query = reportSearch.toLowerCase();
+        return yq.label.toLowerCase().includes(query) || 
+               (yq.tamilLabel && yq.tamilLabel.toLowerCase().includes(query)) ||
+               yq.remarks.some(rem => rem.text.toLowerCase().includes(query) || rem.patientName.toLowerCase().includes(query));
+      });
+
+      // Overall Department Metrics
+      let deptSumScores = 0;
+      let deptTotalRatedCount = 0;
+      ratingQuestionsList.forEach(rq => {
+        deptSumScores += rq.sumScores;
+        deptTotalRatedCount += rq.totalRated;
+      });
+      const deptOverallAvg = deptTotalRatedCount > 0 ? (deptSumScores / deptTotalRatedCount).toFixed(1) : '5.0';
+
+      let deptTotalYes = 0;
+      let deptTotalYesNoAnswers = 0;
+      yesNoQuestionsList.forEach(yq => {
+        deptTotalYes += yq.yesCount;
+        deptTotalYesNoAnswers += yq.totalAnswered;
+      });
+      const deptYesPercent = deptTotalYesNoAnswers > 0 ? Math.round((deptTotalYes / deptTotalYesNoAnswers) * 100) : 100;
+
+      return {
+        departmentName: deptName,
+        totalResponses: totalDeptResponses,
+        overallAvgRating: parseFloat(deptOverallAvg),
+        overallYesPercent: deptYesPercent,
+        ratingQuestions: ratingQuestionsList,
+        yesNoQuestions: yesNoQuestionsList
+      };
+    });
+  }, [responses, availableDepartments, reportDept, reportFromDate, reportToDate, fromDate, toDate, questions, yesNoQuestions, reportSearch]);
+
+  const handleExportCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Department,Question Type,Question (English),Question (Tamil),Total Responses,Average Rating / Yes %,Breakdown (5★/4★/3★/2★/1★ or Yes/No Counts)\n";
+
+    departmentReportData.forEach(dept => {
+      dept.ratingQuestions.forEach(rq => {
+        const row = [
+          `"${dept.departmentName}"`,
+          '"Rating Question"',
+          `"${rq.label.replace(/"/g, '""')}"`,
+          `"${(rq.tamilLabel || '').replace(/"/g, '""')}"`,
+          rq.totalRated,
+          `"${rq.averageScore} / 5.0"`,
+          `"5★:${rq.count5} (${rq.pct5}%), 4★:${rq.count4} (${rq.pct4}%), 3★:${rq.count3} (${rq.pct3}%), 2★:${rq.count2} (${rq.pct2}%), 1★:${rq.count1} (${rq.pct1}%)"`
+        ];
+        csvContent += row.join(',') + "\n";
+      });
+
+      dept.yesNoQuestions.forEach(yq => {
+        const row = [
+          `"${dept.departmentName}"`,
+          '"Yes/No Question"',
+          `"${yq.label.replace(/"/g, '""')}"`,
+          `"${(yq.tamilLabel || '').replace(/"/g, '""')}"`,
+          yq.totalAnswered,
+          `"${yq.yesPercent}% Yes"`,
+          `"Yes:${yq.yesCount} (${yq.yesPercent}%), No:${yq.noCount} (${yq.noPercent}%), Remarks:${yq.remarks.length}"`
+        ];
+        csvContent += row.join(',') + "\n";
+      });
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Feedback_Report_${brandingSettings.hospitalName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Feedback Report CSV exported successfully!');
+  };
+
+    // Filtering & Sorting
   const filteredAndSortedResponses = useMemo(() => {
     let result = [...responses];
 
@@ -1523,18 +1903,27 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                               </td>
                               <td className="py-4 px-4">
                                 {officeUseFilled ? (
-                                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-md text-xs font-semibold">
-                                    ✓ Done
-                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setOfficeUseModalData(officeUseByResponse[response.uhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                      setOfficeUseModalResponse(response);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                    title="Problem Resolved - Click to view or edit Office Use details"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>Resolved ✓</span>
+                                  </button>
                                 ) : (
                                   <button
                                     onClick={() => {
                                       setOfficeUseModalData(officeUseByResponse[response.uhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
                                       setOfficeUseModalResponse(response);
                                     }}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-700 border border-gray-300 rounded-md text-xs font-medium hover:bg-gray-100 transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
+                                    title="Pending Review - Click to fill Office Use details"
                                   >
-                                    Fill ✏️
+                                    <span>Fill ✏️</span>
                                   </button>
                                 )}
                               </td>
@@ -1673,21 +2062,654 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                         Cancel
                       </button>
                       <button
-                        onClick={() => {
-                          setOfficeUseByResponse({ ...officeUseByResponse, [officeUseModalResponse.uhid]: { ...officeUseModalData } });
+                        onClick={async () => {
+                          if (!officeUseModalResponse) return;
+                          const uhid = officeUseModalResponse.uhid;
+                          const respId = officeUseModalResponse.id;
+                          const nextData = { ...officeUseModalData };
+                          
+                          setOfficeUseByResponse(prev => ({ ...prev, [uhid]: nextData }));
+                          setResponses(prev => prev.map(r => (r.uhid === uhid || r.id === respId) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
                           setOfficeUseModalResponse(null);
-                          toast.success('Office Use record saved successfully');
+                          toast.success('Office Use record saved! Marked as Resolved ✓');
+
+                          try {
+                            const fd = new FormData();
+                            fd.append('response_id', String(respId || 0));
+                            fd.append('submission_id', String(respId || 0));
+                            fd.append('uhid', uhid);
+                            fd.append('review_comments', nextData.reviewOfComplaint || '');
+                            fd.append('review_date', nextData.dateOfReview || new Date().toISOString().slice(0, 10));
+                            fd.append('corrective_action', nextData.correctiveAction || '');
+                            fd.append('preventive_action', nextData.preventiveAction || '');
+                            fd.append('incharge_name', nextData.inchargeName || '');
+                            await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                          } catch (err) {
+                            console.error('Save office use error:', err);
+                          }
                         }}
                         style={{ background: '#0D9488' }}
-                        className="px-6 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                        className="px-6 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
                       >
-                        Save
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Save & Mark Resolved</span>
                       </button>
                     </div>
                   </div>
                 </div>
               )}
               </>
+            )}
+
+            {/* Feedback Report Section */}
+            {activeSection === 'feedback-report' && (
+              <div className="pb-24 space-y-8">
+                {/* Header Strip with Hospital Branding and Print/Export */}
+                <div className="bg-white rounded-2xl shadow-md p-6 border-l-4 border-teal-600 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center text-teal-700 shadow-sm flex-shrink-0">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-2xl font-bold text-gray-900">Feedback Report</h2>
+                        <span className="text-xs px-2.5 py-1 bg-teal-100 text-teal-800 rounded-full font-semibold">
+                          {brandingSettings.hospitalName}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        Comprehensive department-wise ratings, Yes/No question breakdown, and patient remarks.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button
+                      onClick={() => window.print()}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors shadow-sm text-sm"
+                    >
+                      <Printer className="w-4 h-4 text-gray-600" />
+                      Print Report
+                    </button>
+                    <button
+                      onClick={handleExportCSV}
+                      className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-xl transition-colors shadow-sm text-sm"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export CSV
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filters Strip */}
+                {/* Executive Problem Resolution & Performance Summary */}
+                {(() => {
+                  const totalEvaluated = responses.length;
+                  const resolvedCount = responses.filter(r => !!(officeUseByResponse[r.uhid]?.reviewOfComplaint || officeUseByResponse[r.uhid]?.inchargeName)).length;
+                  const unresolvedCount = totalEvaluated - resolvedCount;
+                  const resolutionPct = totalEvaluated > 0 ? Math.round((resolvedCount / totalEvaluated) * 100) : 100;
+                  const avgScore = totalEvaluated > 0 ? (responses.reduce((sum, r) => sum + Number(r.overallRating || 5), 0) / totalEvaluated).toFixed(1) : '5.0';
+
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 flex-shrink-0">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Responses</p>
+                          <h3 className="text-2xl font-bold text-gray-900 mt-0.5">{totalEvaluated}</h3>
+                          <p className="text-xs text-gray-400">Avg Rating: ⭐ {avgScore}/5</p>
+                        </div>
+                      </div>
+
+                      <div 
+                        onClick={() => setReportViewTab('resolved')}
+                        className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 shadow-sm border border-emerald-200 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                        title="Click to filter Resolved Problems"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white flex-shrink-0 shadow-md">
+                          <CheckCircle2 className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide flex items-center gap-1">
+                            Resolved Problems
+                          </p>
+                          <h3 className="text-2xl font-black text-emerald-700 mt-0.5">{resolvedCount}</h3>
+                          <p className="text-xs text-emerald-600 font-medium">Office review completed ✓</p>
+                        </div>
+                      </div>
+
+                      <div 
+                        onClick={() => setReportViewTab('unresolved')}
+                        className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 shadow-sm border border-amber-200 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow"
+                        title="Click to filter Unresolved Problems"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center text-white flex-shrink-0 shadow-md">
+                          <HelpCircle className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">Unresolved Problems</p>
+                          <h3 className="text-2xl font-black text-amber-700 mt-0.5">{unresolvedCount}</h3>
+                          <p className="text-xs text-amber-600 font-medium">Pending office action</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                          <Award className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Resolution Rate</p>
+                          <h3 className="text-2xl font-bold text-indigo-600 mt-0.5">{resolutionPct}%</h3>
+                          <p className="text-xs text-gray-400">{resolvedCount} of {totalEvaluated} addressed</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="bg-white rounded-2xl shadow-md p-6 space-y-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    {/* Search Input */}
+                    <div className="relative flex-1 max-w-md">
+                      <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={reportSearch}
+                        onChange={(e) => setReportSearch(e.target.value)}
+                        placeholder="Search question, keyword, or patient remarks..."
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all"
+                      />
+                      {reportSearch && (
+                        <button onClick={() => setReportSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Date Filters & Tab Toggle */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-2 text-sm bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                        <span className="text-gray-500 font-medium">From:</span>
+                        <input
+                          type="date"
+                          value={reportFromDate || fromDate}
+                          onChange={(e) => setReportFromDate(e.target.value)}
+                          className="bg-transparent text-gray-700 text-sm outline-none cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 text-sm bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                        <span className="text-gray-500 font-medium">To:</span>
+                        <input
+                          type="date"
+                          value={reportToDate || toDate}
+                          onChange={(e) => setReportToDate(e.target.value)}
+                          className="bg-transparent text-gray-700 text-sm outline-none cursor-pointer"
+                        />
+                      </div>
+
+                      {/* View Mode Toggle */}
+                      <div className="flex bg-gray-100 p-1 rounded-xl text-xs font-semibold text-gray-600 flex-wrap gap-1">
+                        <button
+                          onClick={() => setReportViewTab('all')}
+                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${reportViewTab === 'all' ? 'bg-white text-teal-700 shadow-sm font-bold' : 'hover:text-gray-900'}`}
+                        >
+                          All Questions
+                        </button>
+                        <button
+                          onClick={() => setReportViewTab('ratings')}
+                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${reportViewTab === 'ratings' ? 'bg-white text-teal-700 shadow-sm font-bold' : 'hover:text-gray-900'}`}
+                        >
+                          ⭐ Ratings Only
+                        </button>
+                        <button
+                          onClick={() => setReportViewTab('yesno')}
+                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${reportViewTab === 'yesno' ? 'bg-white text-teal-700 shadow-sm font-bold' : 'hover:text-gray-900'}`}
+                        >
+                          ✓/✗ Yes/No Only
+                        </button>
+                        <button
+                          onClick={() => setReportViewTab('resolved')}
+                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${reportViewTab === 'resolved' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'text-emerald-800 hover:bg-emerald-100'}`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Resolved ({responses.filter(r => !!(officeUseByResponse[r.uhid]?.reviewOfComplaint || officeUseByResponse[r.uhid]?.inchargeName)).length})
+                        </button>
+                        <button
+                          onClick={() => setReportViewTab('unresolved')}
+                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${reportViewTab === 'unresolved' ? 'bg-amber-500 text-white shadow-sm font-bold' : 'text-amber-800 hover:bg-amber-100'}`}
+                        >
+                          <HelpCircle className="w-3.5 h-3.5" />
+                          Unresolved ({responses.filter(r => !officeUseByResponse[r.uhid]?.reviewOfComplaint && !officeUseByResponse[r.uhid]?.inchargeName).length})
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Department Filter Pills */}
+                  <div className="pt-2 border-t border-gray-100 flex items-center gap-2 overflow-x-auto pb-1">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide mr-2 flex-shrink-0">
+                      Department:
+                    </span>
+                    <button
+                      onClick={() => setReportDept('all')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                        reportDept === 'all'
+                          ? 'bg-teal-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      All Departments ({responses.length})
+                    </button>
+                    {availableDepartments.map(dept => {
+                      const count = responses.filter(r => {
+                        const d = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+                        return d.toLowerCase().trim() === dept.toLowerCase().trim();
+                      }).length;
+                      return (
+                        <button
+                          key={dept}
+                          onClick={() => setReportDept(dept)}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                            reportDept === dept
+                              ? 'bg-teal-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {dept} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Dedicated Problem Resolution View (Resolved / Unresolved Tabs) */}
+                {(reportViewTab === 'resolved' || reportViewTab === 'unresolved') && (
+                  <div className="bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
+                    <div className={`px-6 py-4 text-white flex items-center justify-between ${reportViewTab === 'resolved' ? 'bg-gradient-to-r from-emerald-700 to-teal-800' : 'bg-gradient-to-r from-amber-600 to-orange-700'}`}>
+                      <div className="flex items-center gap-3">
+                        {reportViewTab === 'resolved' ? (
+                          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white font-bold">
+                            <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white font-bold">
+                            <HelpCircle className="w-6 h-6" />
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="text-lg font-bold">
+                            {reportViewTab === 'resolved' ? 'Resolved Problems & Office Actions' : 'Unresolved Problems & Pending Actions'}
+                          </h3>
+                          <p className="text-xs text-white/80">
+                            {reportViewTab === 'resolved' 
+                              ? 'List of patient feedback records where office complaint review and corrective actions were completed.' 
+                              : 'List of patient feedback records pending administrative review and corrective actions.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6">
+                      {(() => {
+                        const filteredProblems = responses.filter(r => {
+                          const isResolved = !!(officeUseByResponse[r.uhid]?.reviewOfComplaint || officeUseByResponse[r.uhid]?.inchargeName);
+                          if (reportViewTab === 'resolved') return isResolved;
+                          return !isResolved;
+                        }).filter(r => {
+                          if (reportDept === 'all') return true;
+                          const d = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+                          return d.toLowerCase().trim() === reportDept.toLowerCase().trim();
+                        }).filter(r => {
+                          if (!reportSearch) return true;
+                          const q = reportSearch.toLowerCase();
+                          return (r.uhid || '').toLowerCase().includes(q) ||
+                                 (r.patientName || '').toLowerCase().includes(q) ||
+                                 (officeUseByResponse[r.uhid]?.reviewOfComplaint || '').toLowerCase().includes(q) ||
+                                 (officeUseByResponse[r.uhid]?.inchargeName || '').toLowerCase().includes(q);
+                        });
+
+                        if (filteredProblems.length === 0) {
+                          return (
+                            <div className="text-center py-12 text-gray-500">
+                              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+                              <p className="text-lg font-semibold">
+                                {reportViewTab === 'resolved' ? 'No resolved problems found for this filter.' : 'All problems are resolved! No pending items.'}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-4">
+                            {filteredProblems.map((p, idx) => {
+                              const ou = officeUseByResponse[p.uhid];
+                              const isResolved = !!(ou?.reviewOfComplaint || ou?.inchargeName);
+
+                              return (
+                                <div key={idx} className="border border-gray-200 rounded-xl p-5 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all space-y-4">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-200">
+                                    <div>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-bold text-gray-900 text-base">{p.patientName}</span>
+                                        <span className="text-xs px-2.5 py-0.5 bg-gray-200 text-gray-800 rounded-full font-semibold">UHID: {p.uhid}</span>
+                                        <span className="text-xs px-2 py-0.5 bg-teal-100 text-teal-800 rounded font-semibold">{p.visitType || 'OP'}</span>
+                                        <span className="text-xs text-gray-500">• {p.date}</span>
+                                      </div>
+                                      <p className="text-xs text-gray-600 mt-1">
+                                        Department: <span className="font-semibold text-teal-700">{p.departmentName}</span> • Rating: <span className="font-semibold text-amber-600">⭐ {typeof p.overallRating === 'number' ? p.overallRating.toFixed(1) : p.overallRating}/5</span>
+                                      </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      {isResolved ? (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold shadow-sm">
+                                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                          Resolved ✓
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold shadow-sm">
+                                          <HelpCircle className="w-4 h-4 text-amber-600" />
+                                          Pending Action
+                                        </span>
+                                      )}
+                                      <button
+                                        onClick={() => {
+                                          setOfficeUseModalData(officeUseByResponse[p.uhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                          setOfficeUseModalResponse(p);
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer flex items-center gap-1 ${
+                                          isResolved 
+                                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                                            : 'bg-teal-600 text-white hover:bg-teal-700'
+                                        }`}
+                                      >
+                                        ✏️ {isResolved ? 'Edit Office Review' : 'Resolve Problem'}
+                                      </button>
+                                      <button
+                                        onClick={() => setSelectedResponse(p)}
+                                        className="p-1.5 hover:bg-gray-200 rounded-lg text-gray-600 cursor-pointer"
+                                        title="View Full Feedback Details"
+                                      >
+                                        <Eye className="w-4 h-4 text-teal-600" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Office Action Details */}
+                                  {isResolved ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-emerald-50/60 p-4 rounded-xl border border-emerald-200">
+                                      <div>
+                                        <span className="font-bold text-emerald-900 uppercase tracking-wide block mb-1">Review of Complaint:</span>
+                                        <p className="text-gray-800 italic bg-white p-2.5 rounded-lg border border-emerald-100">{ou?.reviewOfComplaint || '—'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-bold text-emerald-900 uppercase tracking-wide block mb-1">Corrective Action Taken:</span>
+                                        <p className="text-gray-800 italic bg-white p-2.5 rounded-lg border border-emerald-100">{ou?.correctiveAction || '—'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-bold text-emerald-900 uppercase tracking-wide block mb-1">Preventive Action:</span>
+                                        <p className="text-gray-800 italic bg-white p-2.5 rounded-lg border border-emerald-100">{ou?.preventiveAction || '—'}</p>
+                                      </div>
+                                      <div>
+                                        <span className="font-bold text-emerald-900 uppercase tracking-wide block mb-1">Incharge / Date:</span>
+                                        <p className="text-gray-800 bg-white p-2.5 rounded-lg border border-emerald-100">
+                                          <span className="font-semibold">{ou?.inchargeName || '—'}</span> {ou?.dateOfReview ? `• ${ou.dateOfReview}` : ''}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-xs flex items-center justify-between">
+                                      <p className="text-amber-800 font-medium">
+                                        ⚠️ Action pending for this feedback. Click <strong>Resolve Problem</strong> to log the investigation and corrective action.
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Department Wise Report Cards */}
+                {departmentReportData.length === 0 ? (
+                  <div className="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-500">
+                    <HelpCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-lg font-semibold">No feedback records found for this selection.</p>
+                    <p className="text-sm mt-1">Try adjusting the department filter or date range.</p>
+                  </div>
+                ) : (
+                  departmentReportData.map((dept, deptIdx) => (
+                    <div key={deptIdx} className="bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
+                      {/* Department Banner */}
+                      <div className="bg-gradient-to-r from-teal-700 to-teal-800 px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white font-bold shadow-inner">
+                            <Building2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold">{dept.departmentName}</h3>
+                            <p className="text-xs text-teal-100">
+                              {dept.totalResponses} Total Feedback Submissions Evaluated
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Dept Stats Badge */}
+                        <div className="flex items-center gap-4 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
+                          <div className="text-center">
+                            <span className="text-[11px] text-teal-200 block uppercase font-medium">Avg Rating</span>
+                            <span className="text-base font-bold text-white flex items-center gap-1 justify-center">
+                              ⭐ {dept.overallAvgRating.toFixed(1)} <span className="text-xs text-teal-200 font-normal">/ 5.0</span>
+                            </span>
+                          </div>
+                          <div className="w-[1px] h-6 bg-white/20"></div>
+                          <div className="text-center">
+                            <span className="text-[11px] text-teal-200 block uppercase font-medium">Positive Response</span>
+                            <span className="text-base font-bold text-teal-300">
+                              {dept.overallYesPercent}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6 space-y-8">
+                        {/* Section A: Rating Questions Breakdown */}
+                        {(reportViewTab === 'all' || reportViewTab === 'ratings') && (
+                          <div>
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
+                                Department Rating Questions ({dept.ratingQuestions.length})
+                              </h4>
+                              <span className="text-xs text-gray-500 font-medium">
+                                Breakdown by 5★ Excellent to 1★ Bad
+                              </span>
+                            </div>
+
+                            {dept.ratingQuestions.length === 0 ? (
+                              <p className="text-sm text-gray-400 italic py-2">No rating questions match your search.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {dept.ratingQuestions.map((rq, rqIdx) => (
+                                  <div
+                                    key={rqIdx}
+                                    className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all space-y-3"
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div>
+                                        <h5 className="text-sm font-bold text-gray-900">{rq.label}</h5>
+                                        {rq.tamilLabel && (
+                                          <p className="text-xs text-teal-700 font-medium mt-0.5">{rq.tamilLabel}</p>
+                                        )}
+                                        <span className="text-[11px] text-gray-500 mt-1 inline-block">
+                                          {rq.totalRated} patient responses
+                                        </span>
+                                      </div>
+                                      
+                                      {/* Score Badge */}
+                                      <div className="text-right flex-shrink-0">
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm ${
+                                          rq.averageScore >= 4.0
+                                            ? 'bg-emerald-100 text-emerald-800'
+                                            : rq.averageScore >= 3.0
+                                            ? 'bg-amber-100 text-amber-800'
+                                            : 'bg-rose-100 text-rose-800'
+                                        }`}>
+                                          ⭐ {rq.averageScore.toFixed(1)} / 5.0
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Star Rating Breakdown Distribution */}
+                                    <div className="space-y-1.5 pt-2 border-t border-gray-200/60 text-xs">
+                                      {[
+                                        { star: 5, label: '5★ Excellent', count: rq.count5, pct: rq.pct5, color: 'bg-emerald-500' },
+                                        { star: 4, label: '4★ Good', count: rq.count4, pct: rq.pct4, color: 'bg-teal-500' },
+                                        { star: 3, label: '3★ Average', count: rq.count3, pct: rq.pct3, color: 'bg-amber-400' },
+                                        { star: 2, label: '2★ Poor', count: rq.count2, pct: rq.pct2, color: 'bg-orange-400' },
+                                        { star: 1, label: '1★ Bad', count: rq.count1, pct: rq.pct1, color: 'bg-rose-500' },
+                                      ].map((b, bIdx) => (
+                                        <div key={bIdx} className="flex items-center gap-2">
+                                          <span className="w-20 text-[11px] font-medium text-gray-600 flex-shrink-0">{b.label}</span>
+                                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div
+                                              className={`h-full rounded-full transition-all ${b.color}`}
+                                              style={{ width: `${b.pct}%` }}
+                                            />
+                                          </div>
+                                          <span className="w-12 text-right text-[11px] font-semibold text-gray-700 flex-shrink-0">
+                                            {b.count} ({b.pct}%)
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Section B: Yes / No Questions Breakdown */}
+                        {(reportViewTab === 'all' || reportViewTab === 'yesno') && (
+                          <div className="pt-4 border-t border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                                Department Yes / No Questions ({dept.yesNoQuestions.length})
+                              </h4>
+                              <span className="text-xs text-gray-500 font-medium">
+                                Direct patient confirmation and remarks
+                              </span>
+                            </div>
+
+                            {dept.yesNoQuestions.length === 0 ? (
+                              <p className="text-sm text-gray-400 italic py-2">No Yes/No questions match your search.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {dept.yesNoQuestions.map((yq, yqIdx) => (
+                                  <div
+                                    key={yqIdx}
+                                    className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all space-y-3"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div>
+                                        <h5 className="text-sm font-bold text-gray-900">{yq.label}</h5>
+                                        {yq.tamilLabel && (
+                                          <p className="text-xs text-teal-700 font-medium mt-0.5">{yq.tamilLabel}</p>
+                                        )}
+                                        <span className="text-[11px] text-gray-500 mt-1 inline-block">
+                                          {yq.totalAnswered} total responses
+                                        </span>
+                                      </div>
+
+                                      <span className={`text-xs px-2.5 py-1 rounded-lg font-bold flex-shrink-0 ${
+                                        yq.yesPercent >= 80
+                                          ? 'bg-emerald-100 text-emerald-800'
+                                          : yq.yesPercent >= 50
+                                          ? 'bg-amber-100 text-amber-800'
+                                          : 'bg-rose-100 text-rose-800'
+                                      }`}>
+                                        {yq.yesPercent}% Yes
+                                      </span>
+                                    </div>
+
+                                    {/* Yes vs No Bar */}
+                                    <div className="space-y-1.5 pt-1">
+                                      <div className="flex h-3 w-full rounded-full overflow-hidden bg-gray-200 shadow-inner">
+                                        <div
+                                          className="bg-emerald-500 h-full transition-all"
+                                          style={{ width: `${yq.yesPercent}%` }}
+                                          title={`Yes: ${yq.yesCount} (${yq.yesPercent}%)`}
+                                        />
+                                        <div
+                                          className="bg-rose-500 h-full transition-all"
+                                          style={{ width: `${yq.noPercent}%` }}
+                                          title={`No: ${yq.noCount} (${yq.noPercent}%)`}
+                                        />
+                                      </div>
+
+                                      <div className="flex justify-between text-xs font-semibold">
+                                        <span className="text-emerald-700 flex items-center gap-1">
+                                          ✓ Yes: {yq.yesCount} ({yq.yesPercent}%)
+                                        </span>
+                                        <span className="text-rose-700 flex items-center gap-1">
+                                          ✗ No: {yq.noCount} ({yq.noPercent}%)
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Remarks Accordion Button */}
+                                    {yq.remarks.length > 0 && (
+                                      <div className="pt-2 border-t border-gray-200/60">
+                                        <button
+                                          onClick={() => {
+                                            const uniqueKey = `${dept.departmentName}_${yq.id}`;
+                                            setExpandedRemarksQId(expandedRemarksQId === uniqueKey ? null : uniqueKey);
+                                          }}
+                                          className="text-xs font-semibold text-teal-700 hover:text-teal-900 flex items-center justify-between w-full py-1"
+                                        >
+                                          <span>💬 View Patient Remarks ({yq.remarks.length})</span>
+                                          {expandedRemarksQId === `${dept.departmentName}_${yq.id}` ? (
+                                            <ChevronUp className="w-4 h-4" />
+                                          ) : (
+                                            <ChevronDown className="w-4 h-4" />
+                                          )}
+                                        </button>
+
+                                        {expandedRemarksQId === `${dept.departmentName}_${yq.id}` && (
+                                          <div className="mt-2 space-y-2 max-h-48 overflow-y-auto p-2 bg-white rounded-lg border border-gray-200 text-xs">
+                                            {yq.remarks.map((rem, rIdx) => (
+                                              <div key={rIdx} className="p-2 rounded bg-gray-50 border-l-2 border-teal-500">
+                                                <p className="text-gray-800 font-medium">"{rem.text}"</p>
+                                                <div className="flex items-center justify-between text-[10px] text-gray-500 mt-1">
+                                                  <span>{rem.patientName} ({rem.uhid})</span>
+                                                  <span>{rem.date}</span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             )}
 
           </div>
@@ -1883,18 +2905,78 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
         </div>
       )}
 
-      {/* Response Detail Modal */}
+      {/* Response Detail Modal with Print Support */}
       {selectedResponse && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-              <h3 className="text-2xl font-bold text-gray-900">Feedback Detail</h3>
-              <button
-                onClick={() => setSelectedResponse(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 modal-print-overlay">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              #printable-feedback-modal, #printable-feedback-modal * { visibility: visible !important; }
+              html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; }
+              #root { height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; display: block !important; }
+              .modal-print-overlay { position: static !important; inset: auto !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; display: block !important; overflow: visible !important; }
+              #printable-feedback-modal {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                overflow: visible !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                display: block !important;
+              }
+              #printable-feedback-modal .sticky,
+              #printable-feedback-modal [class*="sticky"] {
+                position: relative !important;
+                top: auto !important;
+                box-shadow: none !important;
+                border-bottom: 2px solid #0d9488 !important;
+                padding-bottom: 12px !important;
+                margin-bottom: 16px !important;
+              }
+              .no-print, button, nav, aside, [class*="sidebar"] {
+                display: none !important;
+              }
+              .grid, .rounded-xl, .rounded-lg, [class*="rounded"] {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+              }
+            }
+          `}</style>
+          <div id="printable-feedback-modal" className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">Feedback Detail</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  UHID: <span className="font-semibold text-gray-800">{selectedResponse.uhid}</span> • Type: <span className="font-semibold text-teal-700">{selectedResponse.visitType || (selectedResponse.ipNumber ? 'IP' : 'OP')}</span>
+                </p>
+              </div>
+              <div className="flex items-center gap-2 no-print">
+                <button
+                  type="button"
+                  onClick={handlePrintFeedbackDetail}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+                  title="Print this feedback details (Saved filename format: UHID_Date_Type)"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedResponse(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 cursor-pointer"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
             <div className="p-6 space-y-6">
               <div className="bg-teal-50 rounded-xl p-4 border-l-4 border-teal-500">
@@ -1915,7 +2997,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                     <p className="text-sm text-gray-600">Overall Rating</p>
                     <p className="font-semibold text-teal-600 flex items-center gap-1">
                       <Star className="w-5 h-5 fill-current" />
-                      {selectedResponse.overallRating}/5
+                      {typeof selectedResponse.overallRating === 'number' ? selectedResponse.overallRating.toFixed(1) : selectedResponse.overallRating}/5
                     </p>
                   </div>
                 </div>
@@ -1958,93 +3040,148 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                   )}
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">Mobile Number</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.mobile}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.mobile || 'N/A'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.email}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.email || 'N/A'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg col-span-2">
                     <p className="text-sm text-gray-600">Address</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.address}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.address || 'N/A'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">City</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.city}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.city || 'N/A'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">State</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.state}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.state || 'N/A'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">Pincode</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.pincode}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.pincode || 'N/A'}</p>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">Country</p>
-                    <p className="font-semibold text-gray-900">{selectedResponse.country}</p>
+                    <p className="font-semibold text-gray-900">{selectedResponse.country || 'N/A'}</p>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-bold text-gray-900 mb-3">Why Did You Choose Us?</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedResponse.whyChooseUs.map((choice, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium"
-                    >
-                      {choice}
-                    </span>
-                  ))}
+              {selectedResponse.whyChooseUs && selectedResponse.whyChooseUs.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-gray-900 mb-3">Why Did You Choose Us?</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedResponse.whyChooseUs.map((choice, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium"
+                      >
+                        {choice}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Service Ratings</h4>
                 <div className="grid grid-cols-2 gap-3">
-                  {selectedResponse.rawRatings?.map((rtg: any, idx: number) => (
+                  {(() => {
+                    const list = [];
+                    if (selectedResponse.rawRatings && selectedResponse.rawRatings.length > 0) {
+                      selectedResponse.rawRatings.forEach((r) => {
+                        list.push({
+                          label: r.question_text || r.question_text_en || 'Service Rating',
+                          rating: r.rating
+                        });
+                      });
+                    } else if (selectedResponse.ratings && Object.keys(selectedResponse.ratings).length > 0) {
+                      Object.entries(selectedResponse.ratings).forEach(([k, v]) => {
+                        if (v > 0) {
+                          const formattedLabel = k
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/^./, str => str.toUpperCase())
+                            .trim();
+                          list.push({ label: formattedLabel, rating: v });
+                        }
+                      });
+                    }
+
+                    if (list.length === 0) {
+                      return <div className="col-span-2 text-sm text-gray-500">No service ratings provided.</div>;
+                    }
+
+                    return list.map((rtg, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="text-sm text-gray-700 capitalize">{rtg.question_text || 'Service Rating'}</span>
+                        <span className="text-sm text-gray-700 capitalize">{rtg.label}</span>
                         <span className="font-semibold text-teal-600">{rtg.rating}/5</span>
                       </div>
-                  ))}
-                  {(!selectedResponse.rawRatings || selectedResponse.rawRatings.length === 0) && (
-                     <div className="col-span-2 text-sm text-gray-500">No service ratings provided.</div>
-                  )}
+                    ));
+                  })()}
                 </div>
               </div>
               
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Yes/No Questions</h4>
                 <div className="space-y-2">
-                  {selectedResponse.rawYesNo?.map((yn: any, idx: number) => {
-                     let ans = String(yn.answer).toLowerCase();
-                     let isYes = (ans === '1' || ans === 'yes' || ans === 'true');
-                     return (
+                  {(() => {
+                    const list = [];
+                    if (selectedResponse.rawYesNo && selectedResponse.rawYesNo.length > 0) {
+                      selectedResponse.rawYesNo.forEach((yn) => {
+                        const ansStr = String(yn.answer).toLowerCase();
+                        const isYes = (ansStr === '1' || ansStr === 'yes' || ansStr === 'true' || ansStr === 'ஆம்');
+                        list.push({
+                          label: yn.question_text || yn.question_en || yn.question_ta || 'Question',
+                          answer: isYes ? 'Yes' : 'No',
+                          remarks: yn.remarks
+                        });
+                      });
+                    } else if (selectedResponse.yesNoAnswers && Object.keys(selectedResponse.yesNoAnswers).length > 0) {
+                      const questionLabels = {
+                        cleanlinessIssue: 'Cleanliness of the hospital environment (Toilets / Other areas)',
+                        costExplained: 'Were you informed about the estimated cost of treatment at admission counter?',
+                        wouldRecommend: 'Would you refer to your family / friends?'
+                      };
+                      Object.entries(selectedResponse.yesNoAnswers).forEach(([k, v]) => {
+                        if (v !== null && v !== undefined) {
+                          const lbl = questionLabels[k] || k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+                          list.push({
+                            label: lbl,
+                            answer: v ? 'Yes' : 'No'
+                          });
+                        }
+                      });
+                    }
+
+                    if (list.length === 0) {
+                      return <div className="text-sm text-gray-500">No Yes/No questions answered.</div>;
+                    }
+
+                    return list.map((yn, idx) => {
+                      const isYes = yn.answer === 'Yes';
+                      return (
                         <div key={idx} className="flex flex-col p-3 bg-gray-50 rounded-lg">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-700">{yn.question_text || yn.question_en || 'Question'}</span>
+                            <span className="text-sm text-gray-700">{yn.label}</span>
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isYes ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {isYes ? 'Yes' : 'No'}
+                              {yn.answer}
                             </span>
                           </div>
                           {yn.remarks && String(yn.remarks).trim() !== '' && (
                             <div className="mt-2 pl-3 border-l-2 border-gray-300">
-                               <span className="text-xs text-gray-500 font-medium">Description: </span>
-                               <span className="text-xs text-gray-600 italic">{yn.remarks}</span>
+                              <span className="text-xs text-gray-500 font-medium">Description: </span>
+                              <span className="text-xs text-gray-600 italic">{yn.remarks}</span>
                             </div>
                           )}
                         </div>
-                     );
-                  })}
-                  {(!selectedResponse.rawYesNo || selectedResponse.rawYesNo.length === 0) && (
-                     <div className="text-sm text-gray-500">No Yes/No questions answered.</div>
-                  )}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
-              
+
               {selectedResponse.suggestions && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3">Suggestions</h4>
@@ -2054,7 +3191,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                 </div>
               )}
 
-              {selectedResponse.appreciations.length > 0 && (
+              {selectedResponse.appreciations && selectedResponse.appreciations.length > 0 && (
                 <div>
                   <h4 className="font-bold text-gray-900 mb-3">Staff Appreciations</h4>
                   <div className="space-y-3">
@@ -2074,10 +3211,10 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
               {/* Office Use Only Section */}
               {(() => {
                 const key = selectedResponse.uhid;
-                const ou: OfficeUse = officeUseByResponse[key] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' };
+                const ou = officeUseByResponse[key] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' };
                 const isReviewed = !!(ou.reviewOfComplaint || ou.dateOfReview || ou.inchargeName);
-                const setOu = (next: OfficeUse) => setOfficeUseByResponse(prev => ({ ...prev, [key]: next }));
-                const formatDate = (d: string) => {
+                const setOu = (next) => setOfficeUseByResponse(prev => ({ ...prev, [key]: next }));
+                const formatDate = (d) => {
                   if (!d) return '—';
                   const dt = new Date(d);
                   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -2095,120 +3232,272 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
 
                     {/* Body */}
                     <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '20px' }}>
-                      {/* Summary row */}
-                      <div style={{ background: '#fff', borderRadius: '8px', padding: '10px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '0', flexWrap: 'wrap', border: '1px solid #e2e8f0', fontSize: '13px' }}>
-                        {[
-                          { icon: '🔍', label: 'Complaint Reviewed', value: ou.reviewOfComplaint ? 'Yes' : '—' },
-                          { icon: '📅', label: 'Review Date', value: formatDate(ou.dateOfReview) },
-                          { icon: '👤', label: 'Incharge', value: ou.inchargeName || '—' },
-                        ].map((item, i) => (
-                          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 14px', borderRight: i < 2 ? '1px solid #e2e8f0' : 'none', color: '#374151' }}>
-                            <span>{item.icon}</span>
-                            <span style={{ color: '#6b7280' }}>{item.label}:</span>
-                            <span style={{ fontWeight: 600 }}>{item.value}</span>
-                          </span>
-                        ))}
-                        <span style={{ marginLeft: 'auto', paddingLeft: '14px' }}>
-                          <span style={{ background: isReviewed ? '#dcfce7' : '#fef3c7', color: isReviewed ? '#15803d' : '#92400e', padding: '3px 10px', borderRadius: '20px', fontWeight: 600, fontSize: '12px' }}>
-                            {isReviewed ? '● Reviewed' : '● Pending Review'}
-                          </span>
-                        </span>
-                      </div>
-
-                      {/* 2-column fields */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        {/* Left */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                          <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Review of the Complaint</div>
-                            {officeUseEditing ? (
-                              <textarea value={ou.reviewOfComplaint} onChange={e => setOu({ ...ou, reviewOfComplaint: e.target.value })} rows={3} placeholder="Enter review details..." style={{ width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-                            ) : (
-                              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: ou.reviewOfComplaint ? '#374151' : '#9ca3af', fontStyle: ou.reviewOfComplaint ? 'normal' : 'italic', minHeight: '70px' }}>{ou.reviewOfComplaint || 'Not reviewed yet'}</div>
-                            )}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Date of Review</div>
-                            {officeUseEditing ? (
-                              <input type="date" value={ou.dateOfReview} onChange={e => setOu({ ...ou, dateOfReview: e.target.value })} style={{ width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', outline: 'none', boxSizing: 'border-box' }} />
-                            ) : (
-                              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Calendar style={{ width: 16, height: 16, color: '#0d9488' }} />
-                                <span>{formatDate(ou.dateOfReview)}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Incharge Name / பொறுப்பாளர் பெயர்</div>
-                            {officeUseEditing ? (
-                              <input type="text" value={ou.inchargeName} onChange={e => setOu({ ...ou, inchargeName: e.target.value })} placeholder="Enter incharge name" style={{ width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', outline: 'none', boxSizing: 'border-box' }} />
-                            ) : (
-                              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <UserCircle2 style={{ width: 16, height: 16, color: '#0d9488' }} />
-                                <span>{ou.inchargeName || '—'}</span>
-                              </div>
-                            )}
-                          </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Review of the Complaint</label>
+                          <textarea
+                            value={ou.reviewOfComplaint}
+                            onChange={e => setOu({ ...ou, reviewOfComplaint: e.target.value })}
+                            rows={3}
+                            placeholder="Describe complaint investigation..."
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', resize: 'vertical', boxSizing: 'border-box' }}
+                          />
                         </div>
-
-                        {/* Right */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                          <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Corrective Action</div>
-                            {officeUseEditing ? (
-                              <textarea value={ou.correctiveAction} onChange={e => setOu({ ...ou, correctiveAction: e.target.value })} rows={3} placeholder="Enter corrective action..." style={{ width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', resize: 'vertical', outline: 'none', boxSizing: 'border-box', minHeight: '70px' }} />
-                            ) : (
-                              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: ou.correctiveAction ? '#374151' : '#9ca3af', fontStyle: ou.correctiveAction ? 'normal' : 'italic', minHeight: '70px' }}>{ou.correctiveAction || 'Not filled yet'}</div>
-                            )}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Preventive Action</div>
-                            {officeUseEditing ? (
-                              <textarea value={ou.preventiveAction} onChange={e => setOu({ ...ou, preventiveAction: e.target.value })} rows={3} placeholder="Enter preventive action..." style={{ width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: '#374151', resize: 'vertical', outline: 'none', boxSizing: 'border-box', minHeight: '70px' }} />
-                            ) : (
-                              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: ou.preventiveAction ? '#374151' : '#9ca3af', fontStyle: ou.preventiveAction ? 'normal' : 'italic', minHeight: '70px' }}>{ou.preventiveAction || 'Not filled yet'}</div>
-                            )}
-                          </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Corrective Action</label>
+                          <textarea
+                            value={ou.correctiveAction}
+                            onChange={e => setOu({ ...ou, correctiveAction: e.target.value })}
+                            rows={3}
+                            placeholder="Immediate corrective steps taken..."
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', resize: 'vertical', boxSizing: 'border-box' }}
+                          />
                         </div>
                       </div>
 
-                      {/* Edit / Save button */}
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-                        {officeUseEditing ? (
-                          <button
-                            onClick={() => { setOfficeUseEditing(false); toast.success('Office details saved'); }}
-                            style={{ background: '#0d9488', color: '#fff', border: '1.5px solid #0d9488', borderRadius: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                          >
-                            <Save style={{ width: 14, height: 14 }} /> Save Details
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setOfficeUseEditing(true)}
-                            style={{ background: '#fff', color: '#0d9488', border: '1.5px solid #0d9488', borderRadius: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 150ms ease' }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#0d9488'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.color = '#0d9488'; }}
-                          >
-                            ✏️ Fill Office Details
-                          </button>
-                        )}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Date of Review</label>
+                          <input
+                            type="date"
+                            value={ou.dateOfReview}
+                            onChange={e => setOu({ ...ou, dateOfReview: e.target.value })}
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Preventive Action</label>
+                          <textarea
+                            value={ou.preventiveAction}
+                            onChange={e => setOu({ ...ou, preventiveAction: e.target.value })}
+                            rows={2}
+                            placeholder="Long-term preventive measure..."
+                            style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', resize: 'vertical', boxSizing: 'border-box' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '16px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Incharge Name / பொறுப்பாளர் பெயர்</label>
+                        <input
+                          type="text"
+                          value={ou.inchargeName}
+                          onChange={e => setOu({ ...ou, inchargeName: e.target.value })}
+                          placeholder="e.g. Dr. Ramesh Kumar / Quality Manager"
+                          style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }} className="no-print">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOfficeUseByResponse(prev => ({ ...prev, [key]: ou }));
+                            toast.success('Office Use details saved');
+                          }}
+                          style={{ background: '#0f766e', color: '#fff', padding: '8px 20px', borderRadius: '8px', fontWeight: 600, fontSize: '13px', border: 'none', cursor: 'pointer' }}
+                        >
+                          Save Office Use Details
+                        </button>
                       </div>
                     </div>
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => { setSelectedResponse(null); setOfficeUseEditing(false); }}
-                  className="w-full px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+      {/* Edit Question Modal */}
+      {editingQuestion && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Edit Question</h3>
+              <button
+                onClick={() => setEditingQuestion(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">English Label</label>
+                <input
+                  type="text"
+                  value={editingQuestion.label}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, label: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tamil Label</label>
+                <input
+                  type="text"
+                  value={editingQuestion.tamilLabel}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, tamilLabel: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating Mode</label>
+                <select
+                  value={editingQuestion.ratingMode}
+                  onChange={(e) => setEditingQuestion({ ...editingQuestion, ratingMode: e.target.value as 'emoji' | 'star' })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                 >
-                  Close
+                  <option value="emoji">Emoji Rating</option>
+                  <option value="star">Star Rating</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleSaveEdit}
+                  className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingQuestion(null)}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Add Question Modal */}
+      {showAddQuestion && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Add New Question</h3>
+              <button
+                onClick={() => {
+                  setShowAddQuestion(false);
+                  setNewQuestion({ label: '', tamilLabel: '', ratingMode: 'emoji' });
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">English Label</label>
+                <input
+                  type="text"
+                  value={newQuestion.label}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, label: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                  placeholder="e.g., Ambulance Services"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tamil Label</label>
+                <input
+                  type="text"
+                  value={newQuestion.tamilLabel}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, tamilLabel: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                  placeholder="e.g., ஆம்புலன்ஸ் சேவைகள்"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rating Mode</label>
+                <select
+                  value={newQuestion.ratingMode}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, ratingMode: e.target.value as 'emoji' | 'star' })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                >
+                  <option value="emoji">Emoji Rating</option>
+                  <option value="star">Star Rating</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleAddQuestion}
+                  disabled={!newQuestion.label || !newQuestion.tamilLabel}
+                  className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-300"
+                >
+                  Add Question
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddQuestion(false);
+                    setNewQuestion({ label: '', tamilLabel: '', ratingMode: 'emoji' });
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Yes/No Question Modal */}
+      {editingYesNoQuestion && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Edit Questionary Page Question</h3>
+              <button onClick={() => setEditingYesNoQuestion(null)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">English Label</label>
+                <input type="text" value={editingYesNoQuestion.label} onChange={(e) => setEditingYesNoQuestion({ ...editingYesNoQuestion, label: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tamil Label</label>
+                <input type="text" value={editingYesNoQuestion.tamilLabel} onChange={(e) => setEditingYesNoQuestion({ ...editingYesNoQuestion, tamilLabel: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button onClick={() => { setYesNoQuestions(yesNoQuestions.map(q => q.id === editingYesNoQuestion.id ? editingYesNoQuestion : q)); setEditingYesNoQuestion(null); }} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700">Save</button>
+                <button onClick={() => setEditingYesNoQuestion(null)} className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Yes/No Question Modal */}
+      {showAddYesNoQuestion && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Add Questionary Page Question</h3>
+              <button onClick={() => { setShowAddYesNoQuestion(false); setNewYesNoQuestion({ label: '', tamilLabel: '' }); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">English Label</label>
+                <input type="text" value={newYesNoQuestion.label} onChange={(e) => setNewYesNoQuestion({ ...newYesNoQuestion, label: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g., Any diet restrictions?" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tamil Label</label>
+                <input type="text" value={newYesNoQuestion.tamilLabel} onChange={(e) => setNewYesNoQuestion({ ...newYesNoQuestion, tamilLabel: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g., உணவு கட்டுப்பாடுகள் ஏதேனும் உண்டா?" />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button onClick={() => { setYesNoQuestions([...yesNoQuestions, { id: `yesno_new_${Date.now()}`, ...newYesNoQuestion }]); setNewYesNoQuestion({ label: '', tamilLabel: '' }); setShowAddYesNoQuestion(false); }} disabled={!newYesNoQuestion.label} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300">Add Question</button>
+                <button onClick={() => { setShowAddYesNoQuestion(false); setNewYesNoQuestion({ label: '', tamilLabel: '' }); }} className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
