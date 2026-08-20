@@ -273,12 +273,21 @@ export default function App() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const hospitalId = urlParams.get('hospital_id');
+    let hospitalId = urlParams.get('hospital_id');
+    
+    if (!hospitalId) {
+      const savedHospitalId = localStorage.getItem('selected_hospital_id');
+      if (savedHospitalId) {
+        hospitalId = savedHospitalId;
+      }
+    }
     
     if (!hospitalId) {
       setIsInitializing(false);
       return;
     }
+
+    localStorage.setItem('selected_hospital_id', String(hospitalId));
 
     const getApiUrl = (endpoint: string) => {
       const p = window.location.pathname;
@@ -580,6 +589,9 @@ export default function App() {
 
   const handleHospitalSelect = (hospital: any) => {
     setSelectedHospital(hospital);
+    if (hospital?.id) {
+      localStorage.setItem('selected_hospital_id', String(hospital.id));
+    }
     
     // Update branding based on selected hospital
     setBranding({
@@ -681,10 +693,13 @@ export default function App() {
 
       const data = await response.json();
       
+      const activeHospitalId = selectedHospital?.id || new URLSearchParams(window.location.search).get('hospital_id') || localStorage.getItem('selected_hospital_id') || '1';
+      localStorage.setItem('selected_hospital_id', String(activeHospitalId));
+
       const getRedirectUrl = (dest: 'thank-you') => {
         const p = window.location.pathname;
-        if (p.includes('api/backend/admin')) return '../../frontend/thank-you.php';
-        return 'thank-you.php';
+        if (p.includes('api/backend/admin')) return `../../frontend/thank-you.php?hospital_id=${activeHospitalId}`;
+        return `thank-you.php?hospital_id=${activeHospitalId}`;
       };
 
       if (data.success) {
