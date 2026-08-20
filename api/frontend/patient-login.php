@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="container d-flex align-items-center justify-content-center" style="min-height: 85vh;">
@@ -104,4 +104,4 @@ require_once 'includes/header.php';
 .transition { transition: all 0.3s ease; }
 </style>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

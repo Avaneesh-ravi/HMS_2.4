@@ -2,7 +2,7 @@
 $pageTitle = 'Select Hospital';
 require_once(__DIR__ . '/../backend/includes/functions.php');
 require_once __DIR__ . '/' . '../backend/config/database.php';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 
 $pdo = getDBConnection();
 $stmt = $pdo->query("SELECT * FROM hospital WHERE status = 'Active'");
@@ -78,4 +78,4 @@ function filterHospitals() {
 }
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

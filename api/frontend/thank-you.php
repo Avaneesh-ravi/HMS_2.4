@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/' . '../backend/includes/functions.php';
 $pageTitle = 'Thank You';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 <div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
   <div class="card-soft text-center position-relative" style="width: 100%; max-width: 500px; padding: 50px 40px; border-left: none;">
@@ -36,4 +36,4 @@ function clearDraft() {
 }
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

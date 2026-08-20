@@ -101,7 +101,16 @@ if (strpos($requestUri, 'api/') === 0) {
     }
     
     if (file_exists($target)) {
-        require $target;
+        chdir(dirname($target));
+        try {
+            require $target;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
+            echo json_encode(['error' => $e->getMessage(), 'file' => basename($e->getFile()), 'line' => $e->getLine()]);
+        }
         exit;
     }
     

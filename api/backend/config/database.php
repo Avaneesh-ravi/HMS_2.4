@@ -4,11 +4,11 @@
  * Now using PostgreSQL (Supabase) instead of MySQL.
  */
 
-if (!defined('DB_HOST')) define('DB_HOST', 'aws-0-ap-northeast-1.pooler.supabase.com');
-if (!defined('DB_PORT')) define('DB_PORT', '6543');
-if (!defined('DB_NAME')) define('DB_NAME', 'postgres');
-if (!defined('DB_USER')) define('DB_USER', 'postgres.oeithmuipahqhaoznznd');
-if (!defined('DB_PASS')) define('DB_PASS', 'Avaneesh4084@');
+if (!defined('DB_HOST')) define('DB_HOST', getenv('DB_HOST') ?: 'aws-0-ap-northeast-1.pooler.supabase.com');
+if (!defined('DB_PORT')) define('DB_PORT', getenv('DB_PORT') ?: '6543');
+if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'postgres');
+if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'postgres.oeithmuipahqhaoznznd');
+if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: 'Avaneesh4084@');
 
 function getDBConnection(): PDO {
     static $pdo = null;
@@ -23,7 +23,7 @@ function getDBConnection(): PDO {
             ];
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
         } catch (PDOException $e) {
-            die('Database connection failed. Please check config/database.php — ' . $e->getMessage());
+            throw new Exception('Database connection failed: ' . $e->getMessage());
         }
     }
 
