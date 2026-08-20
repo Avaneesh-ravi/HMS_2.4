@@ -1,10 +1,29 @@
 <?php
-// Single entry point for Vercel deployment — routes all requests safely
+ini_set('display_errors', '1');
+error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+
 $rootDir = dirname(__DIR__);
 
-// Normalize request path
+// Debug endpoint: /api/info or /info.php or /?debug=1
 $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $path = trim($requestUri, '/');
+
+if ($path === 'api/info' || $path === 'info.php' || isset($_GET['debug'])) {
+    header('Content-Type: text/plain');
+    echo "=== HMS Diagnostic Info ===\n";
+    echo "PHP Version: " . PHP_VERSION . "\n";
+    echo "Loaded Extensions: " . implode(', ', get_loaded_extensions()) . "\n\n";
+    echo "Testing Database Connection (PostgreSQL Supabase)...\n";
+    try {
+        require_once __DIR__ . '/backend/config/database.php';
+        $pdo = getDBConnection();
+        $cnt = $pdo->query('SELECT count(*) FROM hospital')->fetchColumn();
+        echo "SUCCESS! Connected to Supabase DB. Total hospitals: $cnt\n";
+    } catch (Throwable $e) {
+        echo "FAILED to connect to DB: " . $e->getMessage() . "\n";
+    }
+    exit;
+}
 
 // Helper function to get file MIME type
 function getMimeType($file) {
@@ -86,7 +105,7 @@ if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path ===
             require $target;
         } catch (\Throwable $e) {
             http_response_code(500);
-            echo "Error: " . htmlspecialchars($e->getMessage());
+            echo "<pre>Error: " . htmlspecialchars($e->getMessage()) . "\n" . $e->getTraceAsString() . "</pre>";
         }
         exit;
     }
