@@ -518,7 +518,8 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
       return `../api/backend/ajax/${endpoint}`;
     };
     
-    fetch(getApiUrl('get-responses.php'), { credentials: 'same-origin' })
+    const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+    fetch(getApiUrl(`get-responses.php?hospital_id=${hid}`), { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.text();

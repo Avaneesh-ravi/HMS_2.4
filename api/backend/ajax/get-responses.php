@@ -3,16 +3,11 @@ require_once __DIR__ . '/' . '../config/database.php';
 require_once __DIR__ . '/' . '../includes/functions.php';
 ensureSession();
 ob_start();
-header('Content-Type: application/json');
-if (empty($_SESSION['admin_id'])) {
-    ob_clean();
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
+header('Content-Type: application/json; charset=UTF-8');
 
 try {
     $pdo = getDBConnection();
-    $hospitalId = (int)($_SESSION['hospital_id'] ?? 0);
+    $hospitalId = (int)($_GET['hospital_id'] ?? $_SESSION['hospital_id'] ?? 1);
     
     // 1. Fetch hospital details & departments
     $hospitalDetails = [
