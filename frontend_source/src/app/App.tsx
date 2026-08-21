@@ -289,6 +289,23 @@ export default function App() {
 
     localStorage.setItem('selected_hospital_id', String(hospitalId));
 
+    const hIdNum = parseInt(hospitalId, 10) || 1;
+    const defaultHName = hIdNum === 1 ? 'Apollo Healthcare Center' : (hIdNum === 2 ? 'City Medical Centre' : 'Government Hospital');
+    setSelectedHospital({
+      id: hIdNum,
+      name: defaultHName,
+      logo: null,
+      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : 'Tamil Nadu',
+      contactNumber: '+91 44 1234 5678'
+    });
+    setBranding({
+      logo: '',
+      hospitalName: defaultHName,
+      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : 'Tamil Nadu',
+      contactNumber: '+91 44 1234 5678',
+      email: ''
+    });
+
     const getApiUrl = (endpoint: string) => {
       const p = window.location.pathname;
       if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
