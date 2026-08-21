@@ -61,8 +61,8 @@ try {
     foreach ($yesnoRaw as $row) {
         $yesnoQuestions[] = [
             'id' => (string)$row['yesno_question_id'],
-            'label' => $row['question_text_en'],
-            'tamilLabel' => $row['question_text_ta'],
+            'label' => !empty($row['question_en']) ? $row['question_en'] : (!empty($row['question_ta']) ? $row['question_ta'] : 'Question'),
+            'tamilLabel' => !empty($row['question_ta']) ? $row['question_ta'] : (!empty($row['question_en']) ? $row['question_en'] : 'கேள்வி'),
             'backgroundColor' => $row['background_color'] ?? '',
             'describeIssueTrigger' => $row['describe_issue_trigger'] ?? 'no'
         ];

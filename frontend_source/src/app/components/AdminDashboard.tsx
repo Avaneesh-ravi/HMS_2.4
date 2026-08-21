@@ -1,3 +1,4 @@
+import { REAL_DB_RESPONSES, REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from '../real_db_data';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Home, Image, Layout, MessageSquare, Settings, ChevronLeft, ChevronRight,
@@ -320,27 +321,9 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const [logoPreview, setLogoPreview] = useState<string>(currentBranding.logo);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const [questions, setQuestions] = useState<Question[]>([
-    { id: '1', label: 'Reception Experience', tamilLabel: 'வரவேற்பு அனுபவம்', ratingMode: 'emoji', category: 'reception' },
-    { id: '2', label: 'Admission Process', tamilLabel: 'சேர்க்கை செயல்முறை', ratingMode: 'emoji', category: 'admission' },
-    { id: '3', label: 'Billing Services', tamilLabel: 'கட்டண சேவைகள்', ratingMode: 'emoji', category: 'billing' },
-    { id: '4', label: 'Doctor Treatment', tamilLabel: 'மருத்துவர் சிகிச்சை', ratingMode: 'emoji', category: 'doctor' },
-    { id: '5', label: 'Nursing Care', tamilLabel: 'செவிலியர் பராமரிப்பு', ratingMode: 'emoji', category: 'nursing' },
-    { id: '6', label: 'Pharmacy Services', tamilLabel: 'மருந்தக சேவைகள்', ratingMode: 'emoji', category: 'pharmacy' },
-    { id: '7', label: 'Lab & Scan Services', tamilLabel: 'ஆய்வகம் & ஸ்கேன்', ratingMode: 'emoji', category: 'lab' },
-    { id: '8', label: 'Insurance Services', tamilLabel: 'காப்பீடு சேவைகள்', ratingMode: 'emoji', category: 'insurance' },
-    { id: '9', label: 'Food Services', tamilLabel: 'உணவு சேவைகள்', ratingMode: 'emoji', category: 'food' },
-    { id: '10', label: 'Physiotherapy', tamilLabel: 'உடற்பயிற்சி சிகிச்சை', ratingMode: 'emoji', category: 'physiotherapy' },
-    { id: '11', label: 'Blood Bank', tamilLabel: 'இரத்த வங்கி', ratingMode: 'emoji', category: 'bloodbank' },
-    { id: '12', label: 'Cleanliness', tamilLabel: 'தூய்மை', ratingMode: 'emoji', category: 'cleanliness' },
-    { id: '13', label: 'Overall Experience', tamilLabel: 'ஒட்டுமொத்த அனுபவம்', ratingMode: 'emoji', category: 'overall' },
-  ]);
+  const [questions, setQuestions] = useState<Question[]>(REAL_DB_QUESTIONS as Question[]);
 
-  const [yesNoQuestions, setYesNoQuestions] = useState<Omit<Question, 'ratingMode' | 'category'>[]>([
-    { id: 'yesno-1', label: 'Did you face any cleanliness issues?', tamilLabel: 'தூய்மை பிரச்சினைகளை எதிர்கொண்டீர்களா?' },
-    { id: 'yesno-2', label: 'Was the cost explained at the time of admission?', tamilLabel: 'சேர்க்கையின் போது செலவு விளக்கப்பட்டதா?' },
-    { id: 'yesno-3', label: 'Would you recommend our hospital?', tamilLabel: 'எங்கள் மருத்துவமனையை பரிந்துரைப்பீர்களா?' }
-  ]);
+  const [yesNoQuestions, setYesNoQuestions] = useState<Omit<Question, 'ratingMode' | 'category'>[]>(REAL_DB_YESNO);
 
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [editingYesNoQuestion, setEditingYesNoQuestion] = useState<any | null>(null);
@@ -367,7 +350,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const [themeColor, setThemeColor] = useState<string>('#0d9488');
   const [fontSize, setFontSize] = useState<string>('Normal');
   const [showPageTitleLabels, setShowPageTitleLabels] = useState<boolean>(true);
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>(REAL_DB_DEPARTMENTS);
   const [newDepartment, setNewDepartment] = useState('');
 
   const [officeUse, setOfficeUse] = useState<OfficeUse>({
@@ -506,7 +489,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
     }
   ];
 
-  const [responses, setResponses] = useState<FeedbackResponse[]>(mockResponses);
+  const [responses, setResponses] = useState<FeedbackResponse[]>(REAL_DB_RESPONSES as any);
   const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
 

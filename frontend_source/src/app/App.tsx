@@ -1,3 +1,4 @@
+import { REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from './real_db_data';
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import {
@@ -258,18 +259,24 @@ export default function App() {
     overall: 0,
   });
 
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [dynamicRatings, setDynamicRatings] = useState<Record<string, number>>({});
+  const [questions, setQuestions] = useState<Question[]>(REAL_DB_QUESTIONS as Question[]);
+  const [dynamicRatings, setDynamicRatings] = useState<Record<string, number>>({
+    '30': 0, '31': 0, '32': 0, '33': 0, '34': 0, '35': 0
+  });
 
-  const [fetchedYesNoQuestions, setFetchedYesNoQuestions] = useState<any[]>([]);
-  const [dynamicYesNo, setDynamicYesNo] = useState<Record<string, { answer: boolean | null, remarks: string }>>({});
+  const [fetchedYesNoQuestions, setFetchedYesNoQuestions] = useState<any[]>(REAL_DB_YESNO);
+  const [dynamicYesNo, setDynamicYesNo] = useState<Record<string, { answer: boolean | null, remarks: string }>>({
+    '40': { answer: null, remarks: '' },
+    '41': { answer: null, remarks: '' },
+    '42': { answer: null, remarks: '' }
+  });
 
   const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>('2-column');
   const [combinePages, setCombinePages] = useState<boolean>(false);
   const [themeColor, setThemeColor] = useState<string>('#0d9488');
   const [fontSize, setFontSize] = useState<string>('Normal');
   const [showPageTitleLabels, setShowPageTitleLabels] = useState<boolean>(true);
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>(REAL_DB_DEPARTMENTS);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
