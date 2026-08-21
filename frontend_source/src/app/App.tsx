@@ -843,9 +843,50 @@ export default function App() {
       } catch (e) {}
 
       try {
+        // Send JSON payload with all questions, ratings, and patient details
+        const postPayload: Record<string, any> = {
+          hospital_id: selectedHospital?.id || 1,
+          feedback_form_id: 1,
+          uhid: newSubmissionObj.uhid,
+          first_name: patientInfo.firstName || '',
+          last_name: patientInfo.lastName || '',
+          full_name: newSubmissionObj.patientName,
+          age: patientInfo.age || 30,
+          gender: patientInfo.gender || 'Male',
+          mobile_number: patientInfo.mobile || '',
+          email: patientInfo.email || '',
+          address: patientInfo.address || '',
+          pincode: patientInfo.pincode || '',
+          city: patientInfo.city || '',
+          state: patientInfo.state || 'Tamil Nadu',
+          country: patientInfo.country || 'India',
+          visit_type: patientInfo.visitType || 'OP',
+          op_id: patientInfo.opNo || '',
+          ip_id: patientInfo.ipNo || '',
+          admission_date: newSubmissionObj.admissionDate || '',
+          discharge_date: newSubmissionObj.dischargeDate || '',
+          suggestions: suggestions || '',
+          rating_overall: overallRating || 5,
+          signature_confirmed: '1'
+        };
+
+        Object.entries(dynamicRatings).forEach(([qId, val]) => {
+          postPayload[`rating_q_${qId}`] = val;
+        });
+
+        Object.entries(dynamicYesNo).forEach(([yqId, val]) => {
+          if (val.answer !== null) {
+            postPayload[`yesno_q_${yqId}`] = val.answer ? 'Yes' : 'No';
+            postPayload[`yesno_q_${yqId}_text`] = val.remarks || '';
+          }
+        });
+
         await fetch(getApiUrl('submit-feedback.php'), {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(postPayload)
         });
       } catch (err) {
         console.warn('Network sync logged locally:', err);

@@ -1,6 +1,136 @@
 // Real Database Snapshot synchronized with Supabase PostgreSQL
 export const REAL_DB_RESPONSES = [
     {
+        "id": 89,
+        "uhid": "UHID_NODE_8729",
+        "patientName": "VercelLive TestPatient",
+        "date": "21/08/2026",
+        "submittedAt": "2026-08-21 10:50:55.645832",
+        "visitType": "OP",
+        "departmentId": 1,
+        "departmentName": "Cardiology",
+        "mobile": "9876543210",
+        "email": "vercellive@example.com",
+        "address": "777 Vercel Cloud Lane, Chennai",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "pincode": "600001",
+        "country": "India",
+        "opNumber": "OP888",
+        "ipNumber": "",
+        "admissionDate": "",
+        "dischargeDate": "",
+        "overallRating": 5,
+        "wouldRecommend": true,
+        "isProblem": false,
+        "isResolved": false,
+        "suggestions": "Submitted via Node serverless API",
+        "rawRatings": [
+            {
+                "rating_id": 396,
+                "question_id": 30,
+                "patient_id": 98,
+                "feedback_form_id": 1,
+                "rating": "5",
+                "created_at": "2026-08-21 10:50:55.645832",
+                "question_text": "Responsiveness at Reception "
+            },
+            {
+                "rating_id": 397,
+                "question_id": 31,
+                "patient_id": 98,
+                "feedback_form_id": 1,
+                "rating": "5",
+                "created_at": "2026-08-21 10:50:55.645832",
+                "question_text": "Admission Process"
+            },
+            {
+                "rating_id": 398,
+                "question_id": 32,
+                "patient_id": 98,
+                "feedback_form_id": 1,
+                "rating": "5",
+                "created_at": "2026-08-21 10:50:55.645832",
+                "question_text": " Billing Services"
+            },
+            {
+                "rating_id": 399,
+                "question_id": 33,
+                "patient_id": 98,
+                "feedback_form_id": 1,
+                "rating": "5",
+                "created_at": "2026-08-21 10:50:55.645832",
+                "question_text": "Doctor's Treatment "
+            },
+            {
+                "rating_id": 400,
+                "question_id": 34,
+                "patient_id": 98,
+                "feedback_form_id": 1,
+                "rating": "5",
+                "created_at": "2026-08-21 10:50:55.645832",
+                "question_text": " Nursing Care"
+            },
+            {
+                "rating_id": 401,
+                "question_id": 35,
+                "patient_id": 98,
+                "feedback_form_id": 1,
+                "rating": "5",
+                "created_at": "2026-08-21 10:50:55.645832",
+                "question_text": "Pharmacy Services "
+            }
+        ],
+        "rawYesNo": [
+            {
+                "yesno_answer_id": 181,
+                "yesno_question_id": 40,
+                "submission_id": 89,
+                "answer": 1,
+                "remarks": null,
+                "question_en": "Cleanliness of the hospital environment (Toilets / Other areas) ",
+                "question_ta": "மருத்துவமைனயின் சுற்றுப்புற தூய்ைம (கழிப்பைறகள் /   மற்ற இடங்கள்) ",
+                "question_text": "Cleanliness of the hospital environment (Toilets / Other areas) "
+            },
+            {
+                "yesno_answer_id": 182,
+                "yesno_question_id": 41,
+                "submission_id": 89,
+                "answer": 1,
+                "remarks": null,
+                "question_en": "Were you informed about the estimated cost of treatment at   admission counter? ",
+                "question_ta": " நீங்கள் உள்ேநாயாளியாக ேசரும்ேபாது மதிப்பிட்டு   சிகிச்ைசக் கட்டணம் எவ்வளவு ஆகும் என்று   கூறப்பட்டதா? ",
+                "question_text": "Were you informed about the estimated cost of treatment at   admission counter? "
+            },
+            {
+                "yesno_answer_id": 183,
+                "yesno_question_id": 42,
+                "submission_id": 89,
+                "answer": 1,
+                "remarks": null,
+                "question_en": "Would you refer (Hospital name)____ to your family  / friends? ",
+                "question_ta": "ருத்துவமைனயின் ேசைவைய   உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும்   பரிந்துைரப்பீர்களா?",
+                "question_text": "Would you refer (Hospital name)____ to your family  / friends? "
+            }
+        ],
+        "rawAppreciations": [
+            {
+                "submission_id": 89,
+                "person_name": "Dr. Ramesh",
+                "department": "Cardiology",
+                "comments": "Excellent attention"
+            }
+        ],
+        "officeUse": {
+            "status": "Pending",
+            "reviewOfComplaint": "",
+            "dateOfReview": "",
+            "correctiveAction": "",
+            "preventiveAction": "",
+            "inchargeName": ""
+        }
+    },
+    {
         "id": 88,
         "uhid": "UHID_TEST_1787302287",
         "patientName": "Test Patient",

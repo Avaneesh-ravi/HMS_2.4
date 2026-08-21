@@ -1,16 +1,16 @@
 {
-  "functions": {
-    "api/*.php": {
-      "runtime": "vercel-php@0.9.0"
-    }
-  },
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.php"
-    }
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/info", "destination": "/api/info.js" },
+    { "source": "/api/backend/ajax/get-responses.php", "destination": "/api/get-responses.js" },
+    { "source": "/api/backend/ajax/get-responses", "destination": "/api/get-responses.js" },
+    { "source": "/api/backend/process/submit-feedback.php", "destination": "/api/submit-feedback.js" },
+    { "source": "/api/backend/process/submit-feedback", "destination": "/api/submit-feedback.js" },
+    { "source": "/api/backend/ajax/get-questions.php", "destination": "/api/get-questions.js" },
+    { "source": "/api/backend/ajax/get-questions", "destination": "/api/get-questions.js" },
+    { "source": "/api/get-responses", "destination": "/api/get-responses.js" },
+    { "source": "/api/submit-feedback", "destination": "/api/submit-feedback.js" },
+    { "source": "/api/get-questions", "destination": "/api/get-questions.js" },
+    { "source": "/((?!api/|assets/|favicon.ico).*)", "destination": "/public/index.html" }
   ]
 }

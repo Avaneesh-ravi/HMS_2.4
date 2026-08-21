@@ -6,5 +6,8 @@
   "scripts": {
     "build": "npm --prefix frontend_source run build",
     "vercel-build": "npm --prefix frontend_source install && npm --prefix frontend_source run build"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
   }
 }
