@@ -113,7 +113,7 @@ interface BrandingSettings {
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [language, setLanguage] = useState<'en' | 'ta'>('ta');
+  const [language, setLanguage] = useState<'en' | 'ta'>('en');
   
   // Hospital Selection state
   interface SelectedHospital {
