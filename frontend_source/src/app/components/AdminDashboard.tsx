@@ -650,12 +650,39 @@ export function AdminDashboard({
             }
           });
           setOfficeUseByResponse(initialOfficeUse);
-          setResponses(fetchedResponses);
+          let finalResponses = fetchedResponses;
+          try {
+            const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+            if (Array.isArray(newSubs) && newSubs.length > 0) {
+              const fetchedUhids = new Set(fetchedResponses.map((r: any) => r.uhid));
+              const uniqueNewSubs = newSubs.filter((s: any) => !fetchedUhids.has(s.uhid));
+              finalResponses = [...uniqueNewSubs, ...fetchedResponses];
+            }
+          } catch (e) {}
+          setResponses(finalResponses);
+        } else {
+          // If no data from API, keep local new submissions merged with DB snapshot
+          try {
+            const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+            if (Array.isArray(newSubs) && newSubs.length > 0) {
+              const snapUhids = new Set((REAL_DB_RESPONSES as any[]).map((r: any) => r.uhid));
+              const uniqueNewSubs = newSubs.filter((s: any) => !snapUhids.has(s.uhid));
+              setResponses([...uniqueNewSubs, ...(REAL_DB_RESPONSES as any[])]);
+            }
+          } catch (e) {}
         }
         setApiError(null);
       })
       .catch(e => {
         setApiError(null);
+        try {
+          const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+          if (Array.isArray(newSubs) && newSubs.length > 0) {
+            const snapUhids = new Set((REAL_DB_RESPONSES as any[]).map((r: any) => r.uhid));
+            const uniqueNewSubs = newSubs.filter((s: any) => !snapUhids.has(s.uhid));
+            setResponses([...uniqueNewSubs, ...(REAL_DB_RESPONSES as any[])]);
+          }
+        } catch (err) {}
       })
       .finally(() => {
         setIsLoadingResponses(false);

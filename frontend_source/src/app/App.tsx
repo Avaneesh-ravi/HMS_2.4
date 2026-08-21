@@ -786,30 +786,52 @@ export default function App() {
         return `../api/backend/process/${endpoint}`;
       };
 
-      // Record new submission into local storage so Admin Dashboard shows it immediately
+      // Enrich and record new submission into local storage so Admin Dashboard shows it immediately
+      const generatedRawRatings = Object.entries(dynamicRatings).map(([qId, val]) => {
+        const q = questions.find(item => item.id === qId);
+        return {
+          question_id: qId,
+          question_text: q ? q.label : `Question ${qId}`,
+          rating: Number(val) || 5
+        };
+      });
+
+      const generatedRawYesNo = Object.entries(dynamicYesNo).map(([yId, val]) => {
+        const yq = fetchedYesNoQuestions.find(item => item.id === yId);
+        return {
+          yesno_question_id: yId,
+          question_text: yq ? yq.label : `Question ${yId}`,
+          answer: val.answer ? 'Yes' : 'No',
+          remarks: val.remarks || ''
+        };
+      });
+
       const newSubmissionObj = {
+        id: 'sub_' + Date.now(),
         uhid: patientInfo.uhid || ('UHID' + Math.floor(1000 + Math.random() * 9000)),
-        patientName: `${patientInfo.firstName} ${patientInfo.lastName}`.trim(),
+        patientName: `${patientInfo.firstName} ${patientInfo.lastName}`.trim() || 'Patient',
         date: new Date().toLocaleDateString('en-GB'),
         submittedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
         visitType: patientInfo.visitType || 'OP',
         departmentName: patientInfo.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient',
-        mobile: patientInfo.mobile,
-        email: patientInfo.email,
-        address: patientInfo.address,
-        city: patientInfo.city,
-        state: patientInfo.state,
-        pincode: patientInfo.pincode,
-        country: patientInfo.country,
-        opNumber: patientInfo.opNumber,
-        ipNumber: patientInfo.ipNumber,
-        admissionDate: patientInfo.admissionDate,
-        dischargeDate: patientInfo.dischargeDate,
+        mobile: patientInfo.mobile || '',
+        email: patientInfo.email || '',
+        address: patientInfo.address || '',
+        city: patientInfo.city || '',
+        state: patientInfo.state || 'Tamil Nadu',
+        pincode: patientInfo.pincode || '',
+        country: patientInfo.country || 'India',
+        opNumber: patientInfo.opNo || '',
+        ipNumber: patientInfo.ipNo || '',
+        admissionDate: patientInfo.admissionDate ? patientInfo.admissionDate.toISOString().split('T')[0] : '',
+        dischargeDate: patientInfo.dischargeDate ? patientInfo.dischargeDate.toISOString().split('T')[0] : '',
         overallRating: overallRating || 5,
         wouldRecommend: dynamicYesNo['42'] ? (dynamicYesNo['42'].answer === true || dynamicYesNo['42'].answer === 1) : true,
         ratings: dynamicRatings,
         yesNoAnswers: dynamicYesNo,
-        suggestions: suggestions,
+        rawRatings: generatedRawRatings,
+        rawYesNo: generatedRawYesNo,
+        suggestions: suggestions || '',
         appreciations: appreciations.filter(a => a.name || a.department || a.note),
         whyChooseUs: Object.keys(whyChooseUs).filter(k => (whyChooseUs as any)[k])
       };
