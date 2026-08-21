@@ -2,20 +2,32 @@
 ini_set('display_errors', '1');
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 
-$rootDir = dirname(__DIR__);
+// Robust base directory resolution for both local XAMPP and Vercel Serverless
+$baseDir = __DIR__;
+if (file_exists(dirname(__DIR__) . '/api/backend')) {
+    $baseDir = dirname(__DIR__);
+} elseif (file_exists(__DIR__ . '/backend')) {
+    $baseDir = __DIR__;
+}
 
-// Debug endpoint: /api/info or /info.php or /?debug=1
 $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $path = trim($requestUri, '/');
 
+// 1. Diagnostic endpoint: /api/info, /info.php, or ?debug=1
 if ($path === 'api/info' || $path === 'info.php' || isset($_GET['debug'])) {
-    header('Content-Type: text/plain');
-    echo "=== HMS Diagnostic Info ===\n";
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo "=== HMS System Diagnostic ===\n";
     echo "PHP Version: " . PHP_VERSION . "\n";
+    echo "Base Directory: " . $baseDir . "\n";
+    echo "Script Directory: " . __DIR__ . "\n";
+    echo "Request URI: " . ($requestUri ?: '/') . "\n";
     echo "Loaded Extensions: " . implode(', ', get_loaded_extensions()) . "\n\n";
     echo "Testing Database Connection (PostgreSQL Supabase)...\n";
     try {
-        require_once __DIR__ . '/backend/config/database.php';
+        $dbFile = file_exists(__DIR__ . '/backend/config/database.php') 
+            ? __DIR__ . '/backend/config/database.php' 
+            : $baseDir . '/api/backend/config/database.php';
+        require_once $dbFile;
         $pdo = getDBConnection();
         $cnt = $pdo->query('SELECT count(*) FROM hospital')->fetchColumn();
         echo "SUCCESS! Connected to Supabase DB. Total hospitals: $cnt\n";
@@ -25,7 +37,7 @@ if ($path === 'api/info' || $path === 'info.php' || isset($_GET['debug'])) {
     exit;
 }
 
-// Helper function to get file MIME type
+// 2. MIME type helper
 function getMimeType($file) {
     $mimes = [
         'html' => 'text/html; charset=UTF-8',
@@ -48,7 +60,7 @@ function getMimeType($file) {
     return $mimes[$ext] ?? 'application/octet-stream';
 }
 
-// Helper function to serve a static file
+// 3. Static file server
 function serveStaticFile($file) {
     if (file_exists($file) && is_file($file)) {
         header('Content-Type: ' . getMimeType($file));
@@ -66,14 +78,16 @@ function serveStaticFile($file) {
     return false;
 }
 
-// 1. Handle Static Assets (assets/..., frontend/assets/..., css/..., js/...)
+// 4. Handle Static Assets (CSS, JS, images, fonts)
 if (preg_match('/\.(css|js|map|png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|eot)$/i', $path)) {
     $candidates = [
-        $rootDir . '/public/' . $path,
-        $rootDir . '/frontend/' . $path,
-        $rootDir . '/' . $path,
-        $rootDir . '/public/' . preg_replace('#^(frontend|public)/#', '', $path),
-        $rootDir . '/frontend/' . preg_replace('#^(frontend|public)/#', '', $path),
+        $baseDir . '/public/' . $path,
+        $baseDir . '/frontend/' . $path,
+        $baseDir . '/api/frontend/' . $path,
+        $baseDir . '/' . $path,
+        $baseDir . '/public/' . preg_replace('#^(frontend|public|api/frontend)/#', '', $path),
+        $baseDir . '/frontend/' . preg_replace('#^(frontend|public|api/frontend)/#', '', $path),
+        __DIR__ . '/frontend/' . $path,
     ];
     foreach ($candidates as $cand) {
         if (is_file($cand)) {
@@ -82,12 +96,13 @@ if (preg_match('/\.(css|js|map|png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|eot)$/i'
     }
 }
 
-// 2. Handle Backend Uploads
-if (strpos($path, 'backend/uploads/') !== false || strpos($path, 'api/backend/uploads/') !== false) {
-    $uploadRel = preg_replace('#^.*backend/uploads/#', '', $path);
+// 5. Handle Uploaded Images
+if (strpos($path, 'backend/uploads/') !== false || strpos($path, 'uploads/') !== false) {
+    $uploadRel = preg_replace('#^.*uploads/#', '', $path);
     $uploadCandidates = [
-        $rootDir . '/backend/uploads/' . $uploadRel,
-        $rootDir . '/api/backend/uploads/' . $uploadRel,
+        $baseDir . '/api/backend/uploads/' . $uploadRel,
+        $baseDir . '/backend/uploads/' . $uploadRel,
+        __DIR__ . '/backend/uploads/' . $uploadRel,
     ];
     foreach ($uploadCandidates as $uFile) {
         if (is_file($uFile)) {
@@ -96,63 +111,71 @@ if (strpos($path, 'backend/uploads/') !== false || strpos($path, 'api/backend/up
     }
 }
 
-// 3. Handle Root & Index Requests -> Hospital Selection Page
-if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path === 'api/index.php' || $path === 'api/router.php' || $path === 'router.php') {
-    $target = __DIR__ . '/frontend/index.php';
+// 6. Handle Root & Index Requests -> Hospital Selection Page
+if ($path === '' || $path === 'index.php' || $path === 'index.html' || $path === 'api' || $path === 'api/' || $path === 'api/index.php' || $path === 'api/router.php' || $path === 'router.php') {
+    $target = file_exists(__DIR__ . '/frontend/index.php') 
+        ? __DIR__ . '/frontend/index.php' 
+        : $baseDir . '/api/frontend/index.php';
     if (is_file($target)) {
         chdir(dirname($target));
         try {
             require $target;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             http_response_code(500);
-            echo "<pre>Error: " . htmlspecialchars($e->getMessage()) . "\n" . $e->getTraceAsString() . "</pre>";
+            echo "<pre>Application Error: " . htmlspecialchars($e->getMessage()) . "\n" . $e->getTraceAsString() . "</pre>";
         }
         exit;
     }
 }
 
-// 4. Handle Direct API / PHP Requests
-if (strpos($path, 'api/') === 0 || strpos($path, 'backend/') === 0 || strpos($path, 'frontend/') === 0) {
-    $cleanPath = preg_replace('#^api/#', '', $path);
-    
-    if ($cleanPath === 'index.php' || $cleanPath === 'router.php' || $cleanPath === '') {
-        $cleanPath = 'frontend/index.php';
-    }
+// 7. Handle Direct API & Backend/Frontend PHP Endpoints
+$cleanPath = preg_replace('#^api/#', '', $path);
+if ($cleanPath === 'index.php' || $cleanPath === 'router.php' || $cleanPath === '') {
+    $cleanPath = 'frontend/index.php';
+}
 
-    $target = $rootDir . '/api/' . $cleanPath;
-    if (!str_ends_with($target, '.php') && !is_dir($target)) {
-        $target .= '.php';
-    }
+$possibleTargets = [
+    __DIR__ . '/' . $cleanPath,
+    __DIR__ . '/' . $cleanPath . '.php',
+    __DIR__ . '/backend/' . $cleanPath . '.php',
+    __DIR__ . '/frontend/' . $cleanPath . '.php',
+    __DIR__ . '/backend/ajax/' . $cleanPath . '.php',
+    __DIR__ . '/backend/process/' . $cleanPath . '.php',
+    __DIR__ . '/backend/admin/' . $cleanPath . '.php',
+    $baseDir . '/api/' . $cleanPath,
+    $baseDir . '/api/' . $cleanPath . '.php',
+    $baseDir . '/api/backend/' . $cleanPath . '.php',
+    $baseDir . '/api/frontend/' . $cleanPath . '.php',
+    $baseDir . '/api/backend/ajax/' . $cleanPath . '.php',
+    $baseDir . '/api/backend/process/' . $cleanPath . '.php',
+    $baseDir . '/api/backend/admin/' . $cleanPath . '.php',
+];
 
-    if (!is_file($target)) {
-        if (is_file($rootDir . '/api/backend/' . $cleanPath . '.php')) {
-            $target = $rootDir . '/api/backend/' . $cleanPath . '.php';
-        } elseif (is_file($rootDir . '/api/frontend/' . $cleanPath . '.php')) {
-            $target = $rootDir . '/api/frontend/' . $cleanPath . '.php';
-        } elseif (is_file($rootDir . '/api/' . $cleanPath . '/index.php')) {
-            $target = $rootDir . '/api/' . $cleanPath . '/index.php';
-        }
-    }
-
+foreach ($possibleTargets as $target) {
     if (is_file($target) && realpath($target) !== realpath(__FILE__)) {
         chdir(dirname($target));
         try {
             require $target;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             http_response_code(500);
             if (!headers_sent()) {
-                header('Content-Type: application/json');
+                header('Content-Type: application/json; charset=UTF-8');
             }
-            echo json_encode(['error' => $e->getMessage(), 'file' => basename($e->getFile()), 'line' => $e->getLine()]);
+            echo json_encode([
+                'error' => $e->getMessage(),
+                'file'  => basename($e->getFile()),
+                'line'  => $e->getLine()
+            ]);
         }
         exit;
     }
 }
 
-// 5. Fallback for SPA routing -> Serve frontend/index.html or public/index.html
+// 8. Fallback for SPA routing -> Serve frontend/index.html or public/index.html
 $spaCandidates = [
-    $rootDir . '/public/index.html',
-    $rootDir . '/frontend/index.html',
+    $baseDir . '/public/index.html',
+    $baseDir . '/frontend/index.html',
+    __DIR__ . '/frontend/index.html',
 ];
 foreach ($spaCandidates as $spaHtml) {
     if (is_file($spaHtml)) {
@@ -160,8 +183,8 @@ foreach ($spaCandidates as $spaHtml) {
     }
 }
 
-// 6. 404 Fallback
+// 9. 404 Not Found
 http_response_code(404);
 header('Content-Type: text/html; charset=UTF-8');
-echo '<!DOCTYPE html><html><body><h1>404 - Not Found</h1><p>The requested endpoint could not be found.</p></body></html>';
+echo '<!DOCTYPE html><html><body style="font-family:sans-serif;padding:40px;text-align:center;"><h1>404 - Not Found</h1><p>The requested endpoint could not be found.</p><p><a href="/">← Return to Hospital Selection</a></p></body></html>';
 exit;
