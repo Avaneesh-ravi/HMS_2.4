@@ -825,7 +825,7 @@ export default function App() {
         ipNumber: patientInfo.ipNo || '',
         admissionDate: patientInfo.admissionDate ? patientInfo.admissionDate.toISOString().split('T')[0] : '',
         dischargeDate: patientInfo.dischargeDate ? patientInfo.dischargeDate.toISOString().split('T')[0] : '',
-        overallRating: overallRating || 5,
+        overallRating: (ratings.overall || 5),
         wouldRecommend: dynamicYesNo['42'] ? (dynamicYesNo['42'].answer === true || dynamicYesNo['42'].answer === 1) : true,
         ratings: dynamicRatings,
         yesNoAnswers: dynamicYesNo,
@@ -866,7 +866,7 @@ export default function App() {
           admission_date: newSubmissionObj.admissionDate || '',
           discharge_date: newSubmissionObj.dischargeDate || '',
           suggestions: suggestions || '',
-          rating_overall: overallRating || 5,
+          rating_overall: (ratings.overall || 5),
           signature_confirmed: '1'
         };
 
