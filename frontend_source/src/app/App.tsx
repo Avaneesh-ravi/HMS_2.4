@@ -783,7 +783,7 @@ export default function App() {
         const p = window.location.pathname;
         if (p.includes('api/backend/admin')) return `../process/${endpoint}`; // relative to admin folder
         if (p.includes('api/frontend')) return `../backend/process/${endpoint}`;
-        return `../api/backend/process/${endpoint}`;
+        return `/api/backend/process/${endpoint}`;
       };
 
       // Enrich and record new submission into local storage so Admin Dashboard shows it immediately
