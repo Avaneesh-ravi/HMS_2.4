@@ -582,7 +582,7 @@ export function AdminDashboard({
       const p = window.location.pathname;
       if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
       if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
-      return `../api/backend/ajax/${endpoint}`;
+      return `/api/backend/ajax/${endpoint}`;
     };
     
     const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
@@ -716,7 +716,7 @@ export function AdminDashboard({
       const p = window.location.pathname;
       if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
       if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
-      return `../api/backend/ajax/${endpoint}`;
+      return `/api/backend/ajax/${endpoint}`;
     };
     const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
     fetch(getApiUrl(`get-questions.php?hospital_id=${hid}`), { credentials: 'include' })
