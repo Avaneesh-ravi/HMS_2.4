@@ -112,17 +112,21 @@ export function HospitalSelection({
         return `../api/backend/ajax/${endpoint}`;
       };
 
-      const formData = new FormData();
-      formData.append('hospital_id', String(selectedHospitalForLogin.id));
-      formData.append('userid', loginUsername);
-      formData.append('password', loginPassword);
+      const payload = {
+        hospital_id: selectedHospitalForLogin.id,
+        email: loginUsername.trim(),
+        userid: loginUsername.trim(),
+        username: loginUsername.trim(),
+        password: loginPassword
+      };
 
       const response = await fetch(getApiUrl('login-ajax.php'), {
         method: 'POST',
-        body: formData,
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
-        }
+        },
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json().catch(() => null);

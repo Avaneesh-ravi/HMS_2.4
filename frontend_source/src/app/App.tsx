@@ -601,6 +601,44 @@ export default function App() {
       contactNumber: hospital.contactNumber || '',
       email: ''
     });
+
+    const getApiUrl = (endpoint: string) => {
+      const p = window.location.pathname;
+      if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+      if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+      return `../api/backend/ajax/${endpoint}`;
+    };
+
+    fetch(getApiUrl(`get-questions.php?hospital_id=${hospital.id}`))
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (data.data) {
+            setQuestions(data.data);
+            const initialRatings: Record<string, number> = {};
+            data.data.forEach((q: Question) => {
+              initialRatings[q.id] = 0;
+            });
+            setDynamicRatings(initialRatings);
+          }
+          if (data.yesno_data) {
+            setFetchedYesNoQuestions(data.yesno_data);
+            const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+            data.yesno_data.forEach((yq: any) => {
+              initialYesNo[yq.id] = { answer: null, remarks: '' };
+            });
+            setDynamicYesNo(initialYesNo);
+          }
+          if (data.settings) {
+            setLayoutMode(data.settings.layoutMode);
+            setMergedPages(data.settings.mergePages);
+            if (data.settings.departments) {
+              setDepartments(data.settings.departments);
+            }
+          }
+        }
+      })
+      .catch(err => console.error('Error fetching questions for hospital:', err));
     
     toast.success(language === 'en' ? `${hospital.name} selected` : `${hospital.name} தேர்ந்தெடுக்கப்பட்டது`);
   };
