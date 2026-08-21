@@ -1,6 +1,259 @@
 // Real Database Snapshot synchronized with Supabase PostgreSQL
 export const REAL_DB_RESPONSES = [
   {
+    "id": "93",
+    "uhid": "APL123",
+    "patientName": "Avaneesh R",
+    "date": "21/08/2026",
+    "submittedAt": "2026-08-21T08:31:16.034Z",
+    "visitType": "OP",
+    "departmentId": 1,
+    "departmentName": "Cardiology",
+    "mobile": "9876543210",
+    "email": "avaneesh@example.com",
+    "address": "Erode",
+    "city": "Erode",
+    "state": "Tamil Nadu",
+    "pincode": "638001",
+    "country": "India",
+    "opNumber": "OP123",
+    "ipNumber": "",
+    "admissionDate": "",
+    "dischargeDate": "",
+    "overallRating": 5,
+    "wouldRecommend": true,
+    "isProblem": false,
+    "isResolved": false,
+    "suggestions": "Test with APL123",
+    "rawRatings": [
+      {
+        "rating_id": "420",
+        "question_id": 30,
+        "patient_id": "102",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:31:16.034Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "421",
+        "question_id": 31,
+        "patient_id": "102",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:31:16.034Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "422",
+        "question_id": 32,
+        "patient_id": "102",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:31:16.034Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "423",
+        "question_id": 33,
+        "patient_id": "102",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:31:16.034Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "424",
+        "question_id": 34,
+        "patient_id": "102",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:31:16.034Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "425",
+        "question_id": 35,
+        "patient_id": "102",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:31:16.034Z",
+        "question_text": "Pharmacy Services "
+      }
+    ],
+    "rawYesNo": [
+      {
+        "yesno_answer_id": "193",
+        "yesno_question_id": "40",
+        "submission_id": "93",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Cleanliness of the hospital environment (Toilets / Other areas) ",
+        "question_ta": "மருத்துவமைனயின் சுற்றுப்புற தூய்ைம (கழிப்பைறகள் /   மற்ற இடங்கள்) ",
+        "question_text": "Cleanliness of the hospital environment (Toilets / Other areas) "
+      },
+      {
+        "yesno_answer_id": "194",
+        "yesno_question_id": "41",
+        "submission_id": "93",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Were you informed about the estimated cost of treatment at   admission counter? ",
+        "question_ta": " நீங்கள் உள்ேநாயாளியாக ேசரும்ேபாது மதிப்பிட்டு   சிகிச்ைசக் கட்டணம் எவ்வளவு ஆகும் என்று   கூறப்பட்டதா? ",
+        "question_text": "Were you informed about the estimated cost of treatment at   admission counter? "
+      },
+      {
+        "yesno_answer_id": "195",
+        "yesno_question_id": "42",
+        "submission_id": "93",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Would you refer (Hospital name)____ to your family  / friends? ",
+        "question_ta": "ருத்துவமைனயின் ேசைவைய   உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும்   பரிந்துைரப்பீர்களா?",
+        "question_text": "Would you refer (Hospital name)____ to your family  / friends? "
+      }
+    ],
+    "rawAppreciations": [],
+    "officeUse": {
+      "status": "Pending",
+      "reviewOfComplaint": "",
+      "dateOfReview": "",
+      "correctiveAction": "",
+      "preventiveAction": "",
+      "inchargeName": ""
+    }
+  },
+  {
+    "id": "92",
+    "uhid": "UHID_CONFIRM_0383",
+    "patientName": "Avaneesh Confirmation Test",
+    "date": "21/08/2026",
+    "submittedAt": "2026-08-21T08:23:10.297Z",
+    "visitType": "OP",
+    "departmentId": 1,
+    "departmentName": "Cardiology",
+    "mobile": "9876543210",
+    "email": "avaneesh.test@example.com",
+    "address": "77 Apollo Medical Hub, Chennai",
+    "city": "Chennai",
+    "state": "Tamil Nadu",
+    "pincode": "600001",
+    "country": "India",
+    "opNumber": "OP_CONFIRM_1",
+    "ipNumber": "",
+    "admissionDate": "",
+    "dischargeDate": "",
+    "overallRating": 5,
+    "wouldRecommend": true,
+    "isProblem": false,
+    "isResolved": false,
+    "suggestions": "Verified and confirmed live in front of user",
+    "rawRatings": [
+      {
+        "rating_id": "414",
+        "question_id": 30,
+        "patient_id": "101",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:23:10.297Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "415",
+        "question_id": 31,
+        "patient_id": "101",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:23:10.297Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "416",
+        "question_id": 32,
+        "patient_id": "101",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:23:10.297Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "417",
+        "question_id": 33,
+        "patient_id": "101",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:23:10.297Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "418",
+        "question_id": 34,
+        "patient_id": "101",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:23:10.297Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "419",
+        "question_id": 35,
+        "patient_id": "101",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T08:23:10.297Z",
+        "question_text": "Pharmacy Services "
+      }
+    ],
+    "rawYesNo": [
+      {
+        "yesno_answer_id": "190",
+        "yesno_question_id": "40",
+        "submission_id": "92",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Cleanliness of the hospital environment (Toilets / Other areas) ",
+        "question_ta": "மருத்துவமைனயின் சுற்றுப்புற தூய்ைம (கழிப்பைறகள் /   மற்ற இடங்கள்) ",
+        "question_text": "Cleanliness of the hospital environment (Toilets / Other areas) "
+      },
+      {
+        "yesno_answer_id": "191",
+        "yesno_question_id": "41",
+        "submission_id": "92",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Were you informed about the estimated cost of treatment at   admission counter? ",
+        "question_ta": " நீங்கள் உள்ேநாயாளியாக ேசரும்ேபாது மதிப்பிட்டு   சிகிச்ைசக் கட்டணம் எவ்வளவு ஆகும் என்று   கூறப்பட்டதா? ",
+        "question_text": "Were you informed about the estimated cost of treatment at   admission counter? "
+      },
+      {
+        "yesno_answer_id": "192",
+        "yesno_question_id": "42",
+        "submission_id": "92",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Would you refer (Hospital name)____ to your family  / friends? ",
+        "question_ta": "ருத்துவமைனயின் ேசைவைய   உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும்   பரிந்துைரப்பீர்களா?",
+        "question_text": "Would you refer (Hospital name)____ to your family  / friends? "
+      }
+    ],
+    "rawAppreciations": [
+      {
+        "submission_id": "92",
+        "person_name": "Dr. S. Rajendran",
+        "department": "Cardiology",
+        "comments": "Outstanding medical care and attention"
+      }
+    ],
+    "officeUse": {
+      "status": "Pending",
+      "reviewOfComplaint": "",
+      "dateOfReview": "",
+      "correctiveAction": "",
+      "preventiveAction": "",
+      "inchargeName": ""
+    }
+  },
+  {
     "id": "91",
     "uhid": "UHID_BHARANI_1787309665",
     "patientName": "Bharani Verified",

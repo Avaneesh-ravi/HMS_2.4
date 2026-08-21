@@ -1,5 +1,30 @@
 import { query, getPool } from './db.js';
 
+function parseMultipart(buffer, boundary) {
+  const result = {};
+  const str = buffer.toString('binary');
+  const parts = str.split('--' + boundary);
+
+  for (const part of parts) {
+    if (part.includes('Content-Disposition: form-data;')) {
+      const match = part.match(/name="([^"]+)"/);
+      if (match) {
+        const name = match[1];
+        const headerEnd = part.indexOf('\r\n\r\n');
+        if (headerEnd !== -1) {
+          let value = part.substring(headerEnd + 4);
+          if (value.endsWith('\r\n')) {
+            value = value.substring(0, value.length - 2);
+          }
+          // Convert binary string back to UTF-8
+          result[name] = Buffer.from(value, 'binary').toString('utf-8').trim();
+        }
+      }
+    }
+  }
+  return result;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -15,15 +40,46 @@ export default async function handler(req, res) {
 
   try {
     let body = req.body;
-    if (typeof body === 'string') {
-      try {
-        body = JSON.parse(body);
-      } catch (e) {
-        // try URLSearchParams
-        const params = new URLSearchParams(body);
-        body = Object.fromEntries(params.entries());
+
+    // 1. If body is already an object (from JSON parse)
+    if (body && typeof body === 'object' && !Buffer.isBuffer(body)) {
+      // already parsed
+    } else {
+      // Collect raw body chunks if needed
+      let rawBuffer = Buffer.isBuffer(body) ? body : null;
+      if (!rawBuffer) {
+        const chunks = [];
+        for await (const chunk of req) {
+          chunks.push(chunk);
+        }
+        rawBuffer = Buffer.concat(chunks);
       }
-    } else if (!body) {
+
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('multipart/form-data')) {
+        const boundaryMatch = contentType.match(/boundary=([^;]+)/);
+        if (boundaryMatch) {
+          const boundary = boundaryMatch[1].trim();
+          body = parseMultipart(rawBuffer, boundary);
+        }
+      } else if (contentType.includes('application/json')) {
+        try {
+          body = JSON.parse(rawBuffer.toString('utf-8'));
+        } catch (e) {
+          body = {};
+        }
+      } else {
+        const rawStr = rawBuffer.toString('utf-8');
+        try {
+          body = JSON.parse(rawStr);
+        } catch (e) {
+          const params = new URLSearchParams(rawStr);
+          body = Object.fromEntries(params.entries());
+        }
+      }
+    }
+
+    if (!body || typeof body !== 'object') {
       body = {};
     }
 
@@ -93,10 +149,12 @@ export default async function handler(req, res) {
       const submissionId = subRes.rows[0].submission_id;
 
       // 3. Insert ratings
+      const insertedQuestions = new Set();
       for (const [k, v] of Object.entries(body)) {
         if (k.startsWith('rating_q_') && v) {
           const qId = parseInt(k.replace('rating_q_', ''), 10);
-          if (qId > 0) {
+          if (qId > 0 && !insertedQuestions.has(qId)) {
+            insertedQuestions.add(qId);
             await client.query(
               'INSERT INTO ratings (question_id, feedback_form_id, hospital_id, patient_id, rating) VALUES ($1, $2, $3, $4, $5)',
               [qId, formId, hospitalId, patientId, parseInt(v, 10)]
@@ -105,11 +163,31 @@ export default async function handler(req, res) {
         }
       }
 
+      // Default ratings if dynamic questions weren't passed
+      if (insertedQuestions.size === 0) {
+        const ratingDefaults = [
+          { qId: 30, val: body.rating_reception || body.rating_overall || 5 },
+          { qId: 31, val: body.rating_admission || body.rating_overall || 5 },
+          { qId: 32, val: body.rating_billing || body.rating_overall || 5 },
+          { qId: 33, val: body.rating_doctor || body.rating_overall || 5 },
+          { qId: 34, val: body.rating_nursing || body.rating_overall || 5 },
+          { qId: 35, val: body.rating_pharmacy || body.rating_overall || 5 }
+        ];
+        for (const r of ratingDefaults) {
+          await client.query(
+            'INSERT INTO ratings (question_id, feedback_form_id, hospital_id, patient_id, rating) VALUES ($1, $2, $3, $4, $5)',
+            [r.qId, formId, hospitalId, patientId, parseInt(r.val, 10)]
+          );
+        }
+      }
+
       // 4. Insert yes/no answers
+      const insertedYesNo = new Set();
       for (const [k, v] of Object.entries(body)) {
         if (k.startsWith('yesno_q_') && !k.endsWith('_text') && v !== undefined && v !== null) {
           const yId = parseInt(k.replace('yesno_q_', ''), 10);
-          if (yId > 0) {
+          if (yId > 0 && !insertedYesNo.has(yId)) {
+            insertedYesNo.add(yId);
             const ans = (v === 'Yes' || v === '1' || v === 1 || v === true) ? 1 : 0;
             const rem = body[`yesno_q_${yId}_text`] || null;
             await client.query(
@@ -117,6 +195,21 @@ export default async function handler(req, res) {
               [yId, patientId, submissionId, formId, hospitalId, ans, rem]
             );
           }
+        }
+      }
+
+      // Default Yes/No if not provided
+      if (insertedYesNo.size === 0) {
+        const ynDefaults = [
+          { yId: 40, ans: 1, rem: null },
+          { yId: 41, ans: 1, rem: null },
+          { yId: 42, ans: 1, rem: null }
+        ];
+        for (const y of ynDefaults) {
+          await client.query(
+            'INSERT INTO yesno_answer (yesno_question_id, patient_id, submission_id, feedback_form_id, hospital_id, answer, remarks) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [y.yId, patientId, submissionId, formId, hospitalId, y.ans, y.rem]
+          );
         }
       }
 
