@@ -1074,6 +1074,9 @@ export default function App() {
             window.location.href = window.location.origin + window.location.pathname;
           }
         }}
+        onQuestionsChange={(qs) => setQuestions(qs)}
+        onYesNoQuestionsChange={(yqs) => setFetchedYesNoQuestions(yqs)}
+        onDepartmentsChange={(depts) => setDepartments(depts)}
         onLayoutModeChange={(mode) => setLayoutMode(mode)}
         onCombinePagesChange={(combine) => setCombinePages(combine)}
         onBrandingUpdate={setBranding}

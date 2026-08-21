@@ -253,6 +253,8 @@ function SortableQuestionCard({
                 q.id === question.id ? { ...q, ratingMode: e.target.value as 'emoji' | 'star' } : q
               );
               setQuestions(updatedQuestions);
+              try { localStorage.setItem('hms_saved_questions', JSON.stringify(updatedQuestions)); } catch (e) {}
+              onQuestionsChange?.(updatedQuestions);
             }}
             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
           >
@@ -281,6 +283,8 @@ function SortableQuestionCard({
                           q.id === question.id ? { ...q, backgroundColor: color } : q
                         );
                         setQuestions(updatedQuestions);
+                        try { localStorage.setItem('hms_saved_questions', JSON.stringify(updatedQuestions)); } catch (e) {}
+                        onQuestionsChange?.(updatedQuestions);
                       }}
                       className="w-6 h-6 rounded border border-gray-200 hover:scale-110 transition-transform"
                       style={{ backgroundColor: color }}
@@ -293,6 +297,8 @@ function SortableQuestionCard({
                       q.id === question.id ? { ...q, backgroundColor: undefined } : q
                     );
                     setQuestions(updatedQuestions);
+                    try { localStorage.setItem('hms_saved_questions', JSON.stringify(updatedQuestions)); } catch (e) {}
+                    onQuestionsChange?.(updatedQuestions);
                     setShowColorPicker(null);
                   }}
                   className="text-xs text-teal-600 hover:text-teal-700 font-medium"
@@ -308,7 +314,17 @@ function SortableQuestionCard({
   );
 }
 
-export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutModeChange, onCombinePagesChange, currentBranding }: AdminDashboardProps) {
+export function AdminDashboard({ 
+  onClose, 
+  onLogout, 
+  onBrandingUpdate, 
+  onQuestionsChange,
+  onYesNoQuestionsChange,
+  onDepartmentsChange,
+  onLayoutModeChange, 
+  onCombinePagesChange, 
+  currentBranding 
+}: AdminDashboardProps) {
   const [activeSection, setActiveSection] = useState<SidebarItem>('overview');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
@@ -342,6 +358,30 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutMo
     } catch (e) {}
     return REAL_DB_YESNO;
   });
+
+  const updateQuestions = (updated: Question[]) => {
+    setQuestions(updated);
+    try {
+      localStorage.setItem('hms_saved_questions', JSON.stringify(updated));
+    } catch (e) {}
+    onQuestionsChange?.(updated);
+  };
+
+  const updateYesNoQuestions = (updated: any[]) => {
+    setYesNoQuestions(updated);
+    try {
+      localStorage.setItem('hms_saved_yesno', JSON.stringify(updated));
+    } catch (e) {}
+    onYesNoQuestionsChange?.(updated);
+  };
+
+  const updateDepartments = (updated: string[]) => {
+    setDepartments(updated);
+    try {
+      localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
+    } catch (e) {}
+    onDepartmentsChange?.(updated);
+  };
 
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [editingYesNoQuestion, setEditingYesNoQuestion] = useState<any | null>(null);
@@ -756,7 +796,8 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutMo
 
   const handleSaveEdit = () => {
     if (editingQuestion) {
-      setQuestions(questions.map(q => q.id === editingQuestion.id ? editingQuestion : q));
+      const updated = questions.map(q => q.id === editingQuestion.id ? editingQuestion : q);
+      updateQuestions(updated);
       setEditingQuestion(null);
       toast.success('Question updated successfully');
     }
@@ -764,14 +805,16 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutMo
 
   const handleDeleteQuestion = (id: string) => {
     if (confirm('Are you sure you want to delete this question?')) {
-      setQuestions(questions.filter(q => q.id !== id));
+      const updated = questions.filter(q => q.id !== id);
+      updateQuestions(updated);
       toast.success('Question deleted successfully');
     }
   };
 
   const handleAddQuestion = () => {
     const newId = `new_${Date.now()}`;
-    setQuestions([...questions, { id: newId, ...newQuestion }]);
+    const updated = [...questions, { id: newId, ...newQuestion }];
+    updateQuestions(updated);
     setNewQuestion({ label: '', tamilLabel: '', ratingMode: 'emoji' });
     setShowAddQuestion(false);
     toast.success('Question added successfully');
@@ -791,7 +834,10 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutMo
       setQuestions((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const updated = arrayMove(items, oldIndex, newIndex);
+        try { localStorage.setItem('hms_saved_questions', JSON.stringify(updated)); } catch (e) {}
+        onQuestionsChange?.(updated);
+        return updated;
       });
     }
   };
@@ -2949,7 +2995,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutMo
                 <input type="text" value={newYesNoQuestion.tamilLabel} onChange={(e) => setNewYesNoQuestion({ ...newYesNoQuestion, tamilLabel: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g., உணவு கட்டுப்பாடுகள் ஏதேனும் உண்டா?" />
               </div>
               <div className="flex gap-3 pt-4">
-                <button onClick={() => { setYesNoQuestions([...yesNoQuestions, { id: `yesno_new_${Date.now()}`, ...newYesNoQuestion }]); setNewYesNoQuestion({ label: '', tamilLabel: '' }); setShowAddYesNoQuestion(false); }} disabled={!newYesNoQuestion.label} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300">Add Question</button>
+                <button onClick={() => { const updatedYn = [...yesNoQuestions, { id: `yesno_new_${Date.now()}`, ...newYesNoQuestion }]; updateYesNoQuestions(updatedYn); setNewYesNoQuestion({ label: '', tamilLabel: '' }); setShowAddYesNoQuestion(false); toast.success('Question added'); }} disabled={!newYesNoQuestion.label} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300">Add Question</button>
                 <button onClick={() => { setShowAddYesNoQuestion(false); setNewYesNoQuestion({ label: '', tamilLabel: '' }); }} className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
               </div>
             </div>
@@ -3542,7 +3588,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutMo
                 <input type="text" value={newYesNoQuestion.tamilLabel} onChange={(e) => setNewYesNoQuestion({ ...newYesNoQuestion, tamilLabel: e.target.value })} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none" placeholder="e.g., உணவு கட்டுப்பாடுகள் ஏதேனும் உண்டா?" />
               </div>
               <div className="flex gap-3 pt-4">
-                <button onClick={() => { setYesNoQuestions([...yesNoQuestions, { id: `yesno_new_${Date.now()}`, ...newYesNoQuestion }]); setNewYesNoQuestion({ label: '', tamilLabel: '' }); setShowAddYesNoQuestion(false); }} disabled={!newYesNoQuestion.label} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300">Add Question</button>
+                <button onClick={() => { const updatedYn = [...yesNoQuestions, { id: `yesno_new_${Date.now()}`, ...newYesNoQuestion }]; updateYesNoQuestions(updatedYn); setNewYesNoQuestion({ label: '', tamilLabel: '' }); setShowAddYesNoQuestion(false); toast.success('Question added'); }} disabled={!newYesNoQuestion.label} className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300">Add Question</button>
                 <button onClick={() => { setShowAddYesNoQuestion(false); setNewYesNoQuestion({ label: '', tamilLabel: '' }); }} className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
               </div>
             </div>
