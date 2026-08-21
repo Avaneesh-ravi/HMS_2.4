@@ -259,12 +259,30 @@ export default function App() {
     overall: 0,
   });
 
-  const [questions, setQuestions] = useState<Question[]>(REAL_DB_QUESTIONS as Question[]);
+  const [questions, setQuestions] = useState<Question[]>(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_questions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return REAL_DB_QUESTIONS as Question[];
+  });
   const [dynamicRatings, setDynamicRatings] = useState<Record<string, number>>({
     '30': 0, '31': 0, '32': 0, '33': 0, '34': 0, '35': 0
   });
 
-  const [fetchedYesNoQuestions, setFetchedYesNoQuestions] = useState<any[]>(REAL_DB_YESNO);
+  const [fetchedYesNoQuestions, setFetchedYesNoQuestions] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_yesno');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return REAL_DB_YESNO;
+  });
   const [dynamicYesNo, setDynamicYesNo] = useState<Record<string, { answer: boolean | null, remarks: string }>>({
     '40': { answer: null, remarks: '' },
     '41': { answer: null, remarks: '' },
@@ -276,7 +294,16 @@ export default function App() {
   const [themeColor, setThemeColor] = useState<string>('#0d9488');
   const [fontSize, setFontSize] = useState<string>('Normal');
   const [showPageTitleLabels, setShowPageTitleLabels] = useState<boolean>(true);
-  const [departments, setDepartments] = useState<string[]>(REAL_DB_DEPARTMENTS);
+  const [departments, setDepartments] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_departments');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return REAL_DB_DEPARTMENTS;
+  });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1017,24 +1044,17 @@ export default function App() {
     return (
       <AdminDashboard
         onClose={() => {
-          const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
-          const p = window.location.pathname;
-          let formUrl = `../../frontend/feedback-form.php?hospital_id=${hid}`;
-          if (p.includes('api/frontend')) {
-            formUrl = `feedback-form.php?hospital_id=${hid}`;
-          } else if (!p.includes('api/backend/admin')) {
-            formUrl = `api/frontend/feedback-form.php?hospital_id=${hid}`;
+          setShowAdminDashboard(false);
+          setIsAdminLoggedIn(false);
+          if (isDashboardPage) {
+            window.location.href = 'feedback-form.php?hospital_id=' + (selectedHospital?.id || 1);
           }
-          window.location.href = formUrl;
         }}
         onLogout={() => {
-          const p = window.location.pathname;
-          if (p.includes('api/backend/admin')) {
-            window.location.href = 'logout.php';
-          } else if (p.includes('api/frontend')) {
-            window.location.href = '../backend/admin/login.php';
-          } else {
-            window.location.href = 'api/backend/admin/login.php';
+          setShowAdminDashboard(false);
+          setIsAdminLoggedIn(false);
+          if (isDashboardPage) {
+            window.location.href = 'login.php';
           }
         }}
         onBrandingUpdate={setBranding}

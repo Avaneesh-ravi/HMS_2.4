@@ -321,9 +321,27 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const [logoPreview, setLogoPreview] = useState<string>(currentBranding.logo);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const [questions, setQuestions] = useState<Question[]>(REAL_DB_QUESTIONS as Question[]);
+  const [questions, setQuestions] = useState<Question[]>(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_questions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return REAL_DB_QUESTIONS as Question[];
+  });
 
-  const [yesNoQuestions, setYesNoQuestions] = useState<Omit<Question, 'ratingMode' | 'category'>[]>(REAL_DB_YESNO);
+  const [yesNoQuestions, setYesNoQuestions] = useState<Omit<Question, 'ratingMode' | 'category'>[]>(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_yesno');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return REAL_DB_YESNO;
+  });
 
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [editingYesNoQuestion, setEditingYesNoQuestion] = useState<any | null>(null);
@@ -350,7 +368,16 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const [themeColor, setThemeColor] = useState<string>('#0d9488');
   const [fontSize, setFontSize] = useState<string>('Normal');
   const [showPageTitleLabels, setShowPageTitleLabels] = useState<boolean>(true);
-  const [departments, setDepartments] = useState<string[]>(REAL_DB_DEPARTMENTS);
+  const [departments, setDepartments] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_departments');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return REAL_DB_DEPARTMENTS;
+  });
   const [newDepartment, setNewDepartment] = useState('');
 
   const [officeUse, setOfficeUse] = useState<OfficeUse>({
@@ -761,6 +788,20 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
 
   const handleSaveQuestions = async () => {
     setIsSavingQuestions(true);
+    // Persist immediately to localStorage
+    try {
+      localStorage.setItem('hms_saved_questions', JSON.stringify(questions));
+      localStorage.setItem('hms_saved_yesno', JSON.stringify(yesNoQuestions));
+      localStorage.setItem('hms_saved_departments', JSON.stringify(departments));
+      localStorage.setItem('hms_saved_settings', JSON.stringify({
+        layoutMode,
+        combinePages,
+        themeColor,
+        fontSize,
+        showPageTitleLabels,
+        departments
+      }));
+    } catch (e) {}
     try {
       const getApiUrl = (endpoint: string) => {
         const p = window.location.pathname;
@@ -1604,9 +1645,13 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                         />
                         <button
                           onClick={() => {
-                            if (newDepartment.trim() && !departments.includes(newDepartment.trim())) {
-                              setDepartments([...departments, newDepartment.trim()]);
+                            const trimmed = newDepartment.trim();
+                            if (trimmed && !departments.includes(trimmed)) {
+                              const updated = [...departments, trimmed];
+                              setDepartments(updated);
                               setNewDepartment('');
+                              localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
+                              toast.success('Department added');
                             }
                           }}
                           className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors"
@@ -1620,7 +1665,12 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                           <div key={index} className="flex justify-between items-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
                             <span className="font-medium text-gray-800">{dept}</span>
                             <button
-                              onClick={() => setDepartments(departments.filter((_, i) => i !== index))}
+                              onClick={() => {
+                                const updated = departments.filter((_, i) => i !== index);
+                                setDepartments(updated);
+                                localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
+                                toast.success('Department removed');
+                              }}
                               className="text-red-500 hover:text-red-700 transition-colors"
                             >
                               <Trash2 className="w-5 h-5" />
