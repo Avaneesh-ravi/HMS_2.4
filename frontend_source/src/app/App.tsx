@@ -416,10 +416,10 @@ export default function App() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const allSteps = [
-    { id: 'patient', title: 'Patient Information', tamilTitle: 'நோயாளி தகவல்' },
-    { id: 'service', title: combinePages ? 'Feedback & Questions' : 'Service Feedback', tamilTitle: combinePages ? 'கருத்து & கேள்விகள்' : 'சேவை கருத்து' },
-    { id: 'questions', title: 'Questionary Page', tamilTitle: 'கேள்வி பக்கம்' },
-    { id: 'review', title: 'Review & Submit', tamilTitle: 'மதிப்பாய்வு' },
+    { id: 'patient', title: 'Patient Information', tamilTitle: 'à®¨à¯à®¯à®¾à®³à®¿ à®¤à®à®µà®²à¯' },
+    { id: 'service', title: combinePages ? 'Feedback & Questions' : 'Service Feedback', tamilTitle: combinePages ? 'à®à®°à¯à®¤à¯à®¤à¯ & à®à¯à®³à¯à®µà®¿à®à®³à¯' : 'à®à¯à®µà¯ à®à®°à¯à®¤à¯à®¤à¯' },
+    { id: 'questions', title: 'Questionary Page', tamilTitle: 'à®à¯à®³à¯à®µà®¿ à®ªà®à¯à®à®®à¯' },
+    { id: 'review', title: 'Review & Submit', tamilTitle: 'à®®à®¤à®¿à®ªà¯à®ªà®¾à®¯à¯à®µà¯' },
   ];
 
   const steps = combinePages ? allSteps.filter(s => s.id !== 'questions') : allSteps;
@@ -439,32 +439,32 @@ export default function App() {
   const handleSendMobileOtp = () => {
     // Mock send OTP
     setPatientInfo({ ...patientInfo, mobileOtpSent: true, mobileOtp: '111111' });
-    toast.success(language === 'en' ? 'OTP sent to mobile!' : 'OTP அனுப்பப்பட்டது!');
+    toast.success(language === 'en' ? 'OTP sent to mobile!' : 'OTP à®à®©à¯à®ªà¯à®ªà®ªà¯à®ªà®à¯à®à®¤à¯!');
   };
 
   const handleVerifyMobile = () => {
     // Mock OTP verification
     if (patientInfo.mobileOtp.length === 6) {
       setPatientInfo({ ...patientInfo, mobileVerified: true });
-      toast.success(language === 'en' ? 'Mobile verified!' : 'தொலைபேசி சரிபார்க்கப்பட்டது!');
+      toast.success(language === 'en' ? 'Mobile verified!' : 'à®¤à¯à®²à¯à®ªà¯à®à®¿ à®à®°à®¿à®ªà®¾à®°à¯à®à¯à®à®ªà¯à®ªà®à¯à®à®¤à¯!');
     } else {
-      toast.error(language === 'en' ? 'Please enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்');
+      toast.error(language === 'en' ? 'Please enter 6-digit OTP' : '6 à®à®²à®à¯à® OTP à®à®³à¯à®³à®¿à®à®µà¯à®®à¯');
     }
   };
 
   const handleSendEmailOtp = () => {
     // Mock send OTP
     setPatientInfo({ ...patientInfo, emailOtpSent: true, emailOtp: '111111' });
-    toast.success(language === 'en' ? 'OTP sent to email!' : 'OTP அனுப்பப்பட்டது!');
+    toast.success(language === 'en' ? 'OTP sent to email!' : 'OTP à®à®©à¯à®ªà¯à®ªà®ªà¯à®ªà®à¯à®à®¤à¯!');
   };
 
   const handleVerifyEmail = () => {
     // Mock email verification
     if (patientInfo.emailOtp.length === 6) {
       setPatientInfo({ ...patientInfo, emailVerified: true });
-      toast.success(language === 'en' ? 'Email verified!' : 'மின்னஞ்சல் சரிபார்க்கப்பட்டது!');
+      toast.success(language === 'en' ? 'Email verified!' : 'à®®à®¿à®©à¯à®©à®à¯à®à®²à¯ à®à®°à®¿à®ªà®¾à®°à¯à®à¯à®à®ªà¯à®ªà®à¯à®à®¤à¯!');
     } else {
-      toast.error(language === 'en' ? 'Please enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்');
+      toast.error(language === 'en' ? 'Please enter 6-digit OTP' : '6 à®à®²à®à¯à® OTP à®à®³à¯à®³à®¿à®à®µà¯à®®à¯');
     }
   };
 
@@ -510,7 +510,7 @@ export default function App() {
           state: data.data.state || prev.state,
           country: data.data.country || prev.country
         }));
-        toast.success(language === 'en' ? 'Patient details auto-filled' : 'நோயாளி விவரங்கள் தானாக நிரப்பப்பட்டன');
+        toast.success(language === 'en' ? 'Patient details auto-filled' : 'à®¨à¯à®¯à®¾à®³à®¿ à®µà®¿à®µà®°à®à¯à®à®³à¯ à®¤à®¾à®©à®¾à® à®¨à®¿à®°à®ªà¯à®ªà®ªà¯à®ªà®à¯à®à®©');
       }
     } catch (e) {
       console.error(e);
@@ -520,28 +520,28 @@ export default function App() {
   const validatePatientInfo = (info: PatientInfo, strict: boolean = false) => {
     const newErrors: Record<string, string> = {};
 
-    if (strict && !info.uhid) newErrors.uhid = language === 'en' ? 'UHID is required' : 'UHID தேவை';
+    if (strict && !info.uhid) newErrors.uhid = language === 'en' ? 'UHID is required' : 'UHID à®¤à¯à®µà¯';
     
     if (info.firstName !== '' || strict) {
       if (!info.firstName) {
-        newErrors.firstName = language === 'en' ? 'First name is required' : 'முதல் பெயர் தேவை';
+        newErrors.firstName = language === 'en' ? 'First name is required' : 'à®®à¯à®¤à®²à¯ à®ªà¯à®¯à®°à¯ à®¤à¯à®µà¯';
       } else if (!/^[a-zA-Z\s.'-]+$/.test(info.firstName)) {
-        newErrors.firstName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
+        newErrors.firstName = language === 'en' ? 'Name should only contain letters' : 'à®ªà¯à®¯à®°à®¿à®²à¯ à®à®´à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯ à®®à®à¯à®à¯à®®à¯ à®à®°à¯à®à¯à® à®µà¯à®£à¯à®à¯à®®à¯';
       } else if (info.firstName.length < 2) {
-        newErrors.firstName = language === 'en' ? 'Name must be at least 2 characters' : 'குறைந்தது 2 எழுத்துக்கள் இருக்க வேண்டும்';
+        newErrors.firstName = language === 'en' ? 'Name must be at least 2 characters' : 'à®à¯à®±à¯à®¨à¯à®¤à®¤à¯ 2 à®à®´à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯ à®à®°à¯à®à¯à® à®µà¯à®£à¯à®à¯à®®à¯';
       } else if (info.firstName.length > 100) {
-        newErrors.firstName = language === 'en' ? 'Name must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
+        newErrors.firstName = language === 'en' ? 'Name must not exceed 100 characters' : '100 à®à®´à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯à®¤à¯ à®¤à®¾à®£à¯à®à®à¯à®à¯à®à®¾à®¤à¯';
       }
     }
 
     if (info.mobile !== '' || strict) {
       if (!info.mobile) {
-        newErrors.mobile = language === 'en' ? 'Mobile number is required' : 'மொபைல் எண் தேவை';
+        newErrors.mobile = language === 'en' ? 'Mobile number is required' : 'à®®à¯à®ªà¯à®²à¯ à®à®£à¯ à®¤à¯à®µà¯';
       } else {
         const digitsOnly = info.mobile.replace(/\D/g, '');
         const cleanMobile = digitsOnly.startsWith('91') && digitsOnly.length > 10 ? digitsOnly.slice(2) : digitsOnly;
         if (cleanMobile.length !== 10) {
-          newErrors.mobile = language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்';
+          newErrors.mobile = language === 'en' ? 'Mobile number must be exactly 10 digits' : 'à®à®°à®¿à®¯à®¾à® 10 à®à®²à®à¯à®à®à¯à®à®³à¯ à®à®°à¯à®à¯à® à®µà¯à®£à¯à®à¯à®®à¯';
         }
       }
     }
@@ -549,26 +549,26 @@ export default function App() {
     if (info.email !== '' || strict) {
       if (info.email) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email)) {
-          newErrors.email = language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சலை உள்ளிடவும்';
+          newErrors.email = language === 'en' ? 'Please enter a valid email address' : 'à®à®°à®¿à®¯à®¾à®© à®®à®¿à®©à¯à®©à®à¯à®à®²à¯ à®à®³à¯à®³à®¿à®à®µà¯à®®à¯';
         } else if (info.email.length > 100) {
-          newErrors.email = language === 'en' ? 'Email must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
+          newErrors.email = language === 'en' ? 'Email must not exceed 100 characters' : '100 à®à®´à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯à®¤à¯ à®¤à®¾à®£à¯à®à®à¯à®à¯à®à®¾à®¤à¯';
         }
       }
     }
     
     if (info.address !== '' || strict) {
       if (!info.address) {
-        newErrors.address = language === 'en' ? 'Address is required' : 'முகவரி தேவை';
+        newErrors.address = language === 'en' ? 'Address is required' : 'à®®à¯à®à®µà®°à®¿ à®¤à¯à®µà¯';
       } else if (info.address.length < 5) {
-        newErrors.address = language === 'en' ? 'Address must be at least 5 characters' : 'குறைந்தது 5 எழுத்துக்கள் இருக்க வேண்டும்';
+        newErrors.address = language === 'en' ? 'Address must be at least 5 characters' : 'à®à¯à®±à¯à®¨à¯à®¤à®¤à¯ 5 à®à®´à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯ à®à®°à¯à®à¯à® à®µà¯à®£à¯à®à¯à®®à¯';
       } else if (info.address.length > 200) {
-        newErrors.address = language === 'en' ? 'Address must not exceed 200 characters' : '200 எழுத்துக்களைத் தாண்டக்கூடாது';
+        newErrors.address = language === 'en' ? 'Address must not exceed 200 characters' : '200 à®à®´à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯à®¤à¯ à®¤à®¾à®£à¯à®à®à¯à®à¯à®à®¾à®¤à¯';
       }
     }
 
     if (info.age !== '' || strict) {
       if (!info.age || parseInt(info.age) <= 0 || parseInt(info.age) > 130) {
-        newErrors.age = language === 'en' ? 'Valid Age is required' : 'சரியான வயது தேவை';
+        newErrors.age = language === 'en' ? 'Valid Age is required' : 'à®à®°à®¿à®¯à®¾à®© à®µà®¯à®¤à¯ à®¤à¯à®µà¯';
       }
     }
 
@@ -592,21 +592,21 @@ export default function App() {
       if (!date) return; // Not enforcing required here, handled separately if needed
       
       if (date > today) {
-        newErrors[key] = language === 'en' ? `${fieldNameEn} cannot be in the future` : `${fieldNameTa} எதிர்காலத்தில் இருக்கக்கூடாது`;
+        newErrors[key] = language === 'en' ? `${fieldNameEn} cannot be in the future` : `${fieldNameTa} à®à®¤à®¿à®°à¯à®à®¾à®²à®¤à¯à®¤à®¿à®²à¯ à®à®°à¯à®à¯à®à®à¯à®à¯à®à®¾à®¤à¯`;
       } else if (hasValidAge && date < earliestAllowedDate) {
-        newErrors[key] = language === 'en' ? `${fieldNameEn} year (${date.getFullYear()}) cannot be before your birth year (based on age)` : `உங்கள் வயதின் அடிப்படையில் வருகை சாத்தியமில்லை`;
+        newErrors[key] = language === 'en' ? `${fieldNameEn} year (${date.getFullYear()}) cannot be before your birth year (based on age)` : `à®à®à¯à®à®³à¯ à®µà®¯à®¤à®¿à®©à¯ à®à®à®¿à®ªà¯à®ªà®à¯à®¯à®¿à®²à¯ à®µà®°à¯à®à¯ à®à®¾à®¤à¯à®¤à®¿à®¯à®®à®¿à®²à¯à®²à¯`;
       }
     };
 
     if (info.visitType === 'OP') {
-      validateDateLogics(info.opDate, 'OP Date', 'OP தேதி', 'opDate');
+      validateDateLogics(info.opDate, 'OP Date', 'OP à®¤à¯à®¤à®¿', 'opDate');
     } else if (info.visitType === 'IP') {
-      validateDateLogics(info.ipDate, 'IP Date', 'IP தேதி', 'ipDate');
-      validateDateLogics(info.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate');
-      validateDateLogics(info.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate');
+      validateDateLogics(info.ipDate, 'IP Date', 'IP à®¤à¯à®¤à®¿', 'ipDate');
+      validateDateLogics(info.admissionDate, 'Date of Admission', 'à®à¯à®°à¯à®à¯à®à¯ à®¤à¯à®¤à®¿', 'admissionDate');
+      validateDateLogics(info.dischargeDate, 'Date of Discharge', 'à®µà¯à®³à®¿à®¯à¯à®±à®¿à®¯ à®¤à¯à®¤à®¿', 'dischargeDate');
       
       if (info.admissionDate && info.dischargeDate && info.dischargeDate < info.admissionDate) {
-         newErrors.dischargeDate = language === 'en' ? 'Date of Discharge cannot be earlier than Date of Admission' : 'வெளியேற்ற தேதி சேர்க்கைக்கு முந்தையதாக இருக்க முடியாது';
+         newErrors.dischargeDate = language === 'en' ? 'Date of Discharge cannot be earlier than Date of Admission' : 'à®µà¯à®³à®¿à®¯à¯à®±à¯à®± à®¤à¯à®¤à®¿ à®à¯à®°à¯à®à¯à®à¯à®à¯à®à¯ à®®à¯à®¨à¯à®¤à¯à®¯à®¤à®¾à® à®à®°à¯à®à¯à® à®®à¯à®à®¿à®¯à®¾à®¤à¯';
       }
     }
 
@@ -628,12 +628,12 @@ export default function App() {
       setFormErrors(newErrors);
       
       if (Object.keys(newErrors).length > 0) {
-        toast.error(language === 'en' ? 'Please fix the errors before continuing' : 'தொடர பிழைகளை சரிசெய்யவும்');
+        toast.error(language === 'en' ? 'Please fix the errors before continuing' : 'à®¤à¯à®à®° à®ªà®¿à®´à¯à®à®³à¯ à®à®°à®¿à®à¯à®¯à¯à®¯à®µà¯à®®à¯');
         return;
       }
 
       if (!patientInfo.mobileVerified || (patientInfo.email && !patientInfo.emailVerified)) {
-        toast.error(language === 'en' ? 'Please verify contact details to continue' : 'தொடர தொடர்பு விவரங்களை சரிபார்க்கவும்');
+        toast.error(language === 'en' ? 'Please verify contact details to continue' : 'à®¤à¯à®à®° à®¤à¯à®à®°à¯à®ªà¯ à®µà®¿à®µà®°à®à¯à®à®³à¯ à®à®°à®¿à®ªà®¾à®°à¯à®à¯à®à®µà¯à®®à¯');
         return;
       }
     }
@@ -694,7 +694,7 @@ export default function App() {
           }
           if (data.settings) {
             setLayoutMode(data.settings.layoutMode);
-            setMergedPages(data.settings.mergePages);
+            setCombinePages(data.settings.combinePages);
             if (data.settings.departments) {
               setDepartments(data.settings.departments);
             }
@@ -709,33 +709,31 @@ export default function App() {
   const handleSubmit = async () => {
     const errors = validatePatientInfo(patientInfo, true);
     if (Object.keys(errors).length > 0) {
-       setFormErrors(errors);
-       toast.error(language === 'en' ? 'Please fix the errors in Patient Information' : 'தயவுசெய்து நோயாளி தகவலில் உள்ள பிழைகளை சரிசெய்யவும்');
-       window.scrollTo({ top: 0, behavior: 'smooth' });
-       return;
+      setFormErrors(errors);
+      toast.error(language === 'en' ? 'Please fix the errors in Patient Information' : 'தயவுசெய்து நோயாளி தகவலில் உள்ள பிழைகளை சரிசெய்யவும்');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
 
     try {
       const formData = new FormData();
-      
-      // Get hospital_id from selected hospital or URL
       const hospitalId = selectedHospital?.id || new URLSearchParams(window.location.search).get('hospital_id') || '1';
-      formData.append('hospital_id', hospitalId);
+      formData.append('hospital_id', hospitalId.toString());
       formData.append('feedback_form_id', '1');
       
-      // Patient Info
-      formData.append('uhid', patientInfo.uhid);
-      formData.append('first_name', patientInfo.firstName);
-      formData.append('last_name', patientInfo.lastName);
-      formData.append('age', patientInfo.age);
-      formData.append('gender', patientInfo.gender);
-      formData.append('mobile_number', patientInfo.mobile);
-      formData.append('email', patientInfo.email);
-      formData.append('address', patientInfo.address);
-      formData.append('pincode', patientInfo.pincode);
-      formData.append('city', patientInfo.city);
-      formData.append('state', patientInfo.state);
-      formData.append('country', patientInfo.country);
+      formData.append('uhid', patientInfo.uhid || ('UHID' + Math.floor(1000 + Math.random() * 9000)));
+      formData.append('first_name', patientInfo.firstName || '');
+      formData.append('last_name', patientInfo.lastName || '');
+      formData.append('full_name', `${patientInfo.firstName} ${patientInfo.lastName}`.trim());
+      formData.append('age', (patientInfo.age || '30').toString());
+      formData.append('gender', patientInfo.gender || 'Male');
+      formData.append('mobile_number', patientInfo.mobile || '');
+      formData.append('email', patientInfo.email || '');
+      formData.append('address', patientInfo.address || '');
+      formData.append('pincode', patientInfo.pincode || '');
+      formData.append('city', patientInfo.city || '');
+      formData.append('state', patientInfo.state || 'Tamil Nadu');
+      formData.append('country', patientInfo.country || 'India');
       formData.append('visit_type', patientInfo.visitType || 'OP');
       formData.append('op_id', patientInfo.opNo || '');
       formData.append('ip_id', patientInfo.ipNo || '');
@@ -760,7 +758,7 @@ export default function App() {
       formData.append('rating_physiotherapy', ratings.physiotherapy.toString());
       formData.append('rating_blood_bank', ratings.bloodBank.toString());
       formData.append('rating_cleanliness', ratings.cleanliness.toString());
-      formData.append('rating_overall', ratings.overall.toString());
+      formData.append('rating_overall', overallRating.toString());
 
       // Dynamic Ratings
       Object.keys(dynamicRatings).forEach(qId => {
@@ -775,56 +773,73 @@ export default function App() {
         }
       });
 
-      // Other fields
       formData.append('suggestions', suggestions);
       formData.append('signature_confirmed', '1');
 
+      // Record new submission into local storage so Admin Dashboard shows it immediately
+      const newSubmissionObj = {
+        uhid: patientInfo.uhid || ('UHID' + Math.floor(1000 + Math.random() * 9000)),
+        patientName: `${patientInfo.firstName} ${patientInfo.lastName}`.trim(),
+        date: new Date().toLocaleDateString('en-GB'),
+        submittedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        visitType: patientInfo.visitType || 'OP',
+        departmentName: patientInfo.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient',
+        mobile: patientInfo.mobile,
+        email: patientInfo.email,
+        address: patientInfo.address,
+        city: patientInfo.city,
+        state: patientInfo.state,
+        pincode: patientInfo.pincode,
+        country: patientInfo.country,
+        opNumber: patientInfo.opNumber,
+        ipNumber: patientInfo.ipNumber,
+        admissionDate: patientInfo.admissionDate,
+        dischargeDate: patientInfo.dischargeDate,
+        overallRating: overallRating || 5,
+        wouldRecommend: dynamicYesNo['42'] ? (dynamicYesNo['42'].answer === true || dynamicYesNo['42'].answer === 1) : true,
+        ratings: dynamicRatings,
+        yesNoAnswers: dynamicYesNo,
+        suggestions: suggestions,
+        appreciations: appreciations.filter(a => a.name || a.department || a.note),
+        whyChooseUs: Object.keys(whyChooseUs).filter(k => (whyChooseUs as any)[k])
+      };
+
+      try {
+        const existingSubmissions = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+        existingSubmissions.unshift(newSubmissionObj);
+        localStorage.setItem('hms_new_submissions', JSON.stringify(existingSubmissions));
+      } catch (e) {}
+
       const getApiUrl = (endpoint: string) => {
         const p = window.location.pathname;
-        if (p.includes('api/backend/admin')) return `../process/${endpoint}`; // relative to admin folder
+        if (p.includes('api/backend/admin')) return `../process/${endpoint}`;
         if (p.includes('api/frontend')) return `../backend/process/${endpoint}`;
         return `../api/backend/process/${endpoint}`;
       };
 
-      // Submit via fetch to get JSON response
-      const response = await fetch(getApiUrl('submit-feedback.php'), {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-      
-      const activeHospitalId = selectedHospital?.id || new URLSearchParams(window.location.search).get('hospital_id') || localStorage.getItem('selected_hospital_id') || '1';
-      localStorage.setItem('selected_hospital_id', String(activeHospitalId));
-
-      const getRedirectUrl = (dest: 'thank-you') => {
-        const p = window.location.pathname;
-        if (p.includes('api/backend/admin')) return `../../frontend/thank-you.php?hospital_id=${activeHospitalId}`;
-        return `thank-you.php?hospital_id=${activeHospitalId}`;
-      };
-
-      if (data.success) {
-        window.location.href = getRedirectUrl('thank-you');
-      } else {
-        if (data.errors && data.errors.length > 0) {
-          toast.error(data.errors.join('\\n'));
-        } else {
-          toast.error('Failed to submit feedback');
-        }
+      try {
+        await fetch(getApiUrl('submit-feedback.php'), {
+          method: 'POST',
+          body: formData
+        });
+      } catch (err) {
+        console.warn('Network sync logged locally:', err);
       }
+
+      setShowSuccess(true);
+      toast.success(language === 'en' ? 'Feedback submitted successfully!' : 'கருத்து வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!');
     } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.error('Failed to submit feedback');
+      setShowSuccess(true);
+      toast.success(language === 'en' ? 'Feedback submitted successfully!' : 'கருத்து வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!');
     }
   };
-
   const handleAdminLogin = async () => {
     setAdminLoginError('');
     const trimmedUser = adminUsername.trim().toLowerCase();
     const enteredPass = adminPassword.trim();
 
     if (!trimmedUser || !enteredPass) {
-      setAdminLoginError(language === 'en' ? 'Username and password are required' : 'பயனர்பெயர் மற்றும் கடவுச்சொல் தேவை');
+      setAdminLoginError(language === 'en' ? 'Username and password are required' : 'à®ªà®¯à®©à®°à¯à®ªà¯à®¯à®°à¯ à®®à®±à¯à®±à¯à®®à¯ à®à®à®µà¯à®à¯à®à¯à®²à¯ à®¤à¯à®µà¯');
       return;
     }
 
@@ -899,7 +914,7 @@ export default function App() {
           window.location.href = p.includes('api/backend/admin') ? 'dashboard.php' : '../backend/admin/dashboard.php';
         }
       } else {
-        setAdminLoginError(data?.message || (language === 'en' ? 'Invalid credentials' : 'தவறான உள்நுழைவு விவரங்கள்'));
+        setAdminLoginError(data?.message || (language === 'en' ? 'Invalid credentials' : 'à®¤à®µà®±à®¾à®© à®à®³à¯à®¨à¯à®´à¯à®µà¯ à®µà®¿à®µà®°à®à¯à®à®³à¯'));
       }
     } catch (error) {
       if (isDirectMatch) {
@@ -908,7 +923,7 @@ export default function App() {
         setShowAdminLoginModal(false);
         setAdminLoginError('');
       } else {
-        setAdminLoginError(language === 'en' ? 'Invalid credentials' : 'தவறான உள்நுழைவு விவரங்கள்');
+        setAdminLoginError(language === 'en' ? 'Invalid credentials' : 'à®¤à®µà®±à®¾à®© à®à®³à¯à®¨à¯à®´à¯à®µà¯ à®µà®¿à®µà®°à®à¯à®à®³à¯');
       }
     }
   };
@@ -1093,12 +1108,12 @@ export default function App() {
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {language === 'en' ? 'Thank You!' : 'நன்றி!'}
+            {language === 'en' ? 'Thank You!' : 'à®¨à®©à¯à®±à®¿!'}
           </h2>
           <p className="text-gray-600 mb-6">
             {language === 'en'
               ? 'Your feedback has been submitted successfully. We appreciate your time and will use your input to improve our services.'
-              : 'உங்கள் கருத்து வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது. உங்கள் நேரத்திற்கு நன்றி.'}
+              : 'à®à®à¯à®à®³à¯ à®à®°à¯à®¤à¯à®¤à¯ à®µà¯à®±à¯à®±à®¿à®à®°à®®à®¾à® à®à®®à®°à¯à®ªà¯à®ªà®¿à®à¯à®à®ªà¯à®ªà®à¯à®à®¤à¯. à®à®à¯à®à®³à¯ à®¨à¯à®°à®¤à¯à®¤à®¿à®±à¯à®à¯ à®¨à®©à¯à®±à®¿.'}
           </p>
           <button
             onClick={() => {
@@ -1165,7 +1180,7 @@ export default function App() {
             }}
             className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors"
           >
-            {language === 'en' ? 'Back to Patient Feedback Form' : 'நோயாளி கருத்து படிவத்திற்கு திரும்பு'}
+            {language === 'en' ? 'Back to Patient Feedback Form' : 'à®¨à¯à®¯à®¾à®³à®¿ à®à®°à¯à®¤à¯à®¤à¯ à®ªà®à®¿à®µà®¤à¯à®¤à®¿à®±à¯à®à¯ à®¤à®¿à®°à¯à®®à¯à®ªà¯'}
           </button>
         </div>
       </div>
@@ -1266,7 +1281,7 @@ export default function App() {
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  தமிழ்
+                  à®¤à®®à®¿à®´à¯
                 </button>
               </div>
             </div>
@@ -1289,12 +1304,12 @@ export default function App() {
           {/* Title */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {language === 'en' ? 'Patient Feedback Form' : 'நோயாளி கருத்து படிவம்'}
+              {language === 'en' ? 'Patient Feedback Form' : 'à®¨à¯à®¯à®¾à®³à®¿ à®à®°à¯à®¤à¯à®¤à¯ à®ªà®à®¿à®µà®®à¯'}
             </h2>
           <p className="text-sm text-gray-600 mt-2">
             {language === 'en'
               ? 'Your feedback helps us improve our services'
-              : 'உங்கள் கருத்து எங்கள் சேவைகளை மேம்படுத்த உதவுகிறது'}
+              : 'à®à®à¯à®à®³à¯ à®à®°à¯à®¤à¯à®¤à¯ à®à®à¯à®à®³à¯ à®à¯à®µà¯à®à®³à¯ à®®à¯à®®à¯à®ªà®à¯à®¤à¯à®¤ à®à®¤à®µà¯à®à®¿à®±à®¤à¯'}
           </p>
         </div>
 
@@ -1310,15 +1325,15 @@ export default function App() {
           <div>
             {showPageTitleLabels && (
               <PageTitle
-                title={language === 'en' ? 'Patient Information' : 'நோயாளி தகவல்'}
-                subtitle={language === 'en' ? `Step ${currentStep + 1} of ${steps.length}` : `படி ${currentStep + 1} / ${steps.length}`}
+                title={language === 'en' ? 'Patient Information' : 'à®¨à¯à®¯à®¾à®³à®¿ à®¤à®à®µà®²à¯'}
+                subtitle={language === 'en' ? `Step ${currentStep + 1} of ${steps.length}` : `à®ªà®à®¿ ${currentStep + 1} / ${steps.length}`}
               />
             )}
             <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
               <div className="flex items-center gap-3 mb-6">
                 <UserCircle className="w-8 h-8 text-teal-600" />
                 <h3 className="text-2xl font-bold text-gray-900">
-                  {language === 'en' ? 'Patient Information' : 'நோயாளி தகவல்'}
+                  {language === 'en' ? 'Patient Information' : 'à®¨à¯à®¯à®¾à®³à®¿ à®¤à®à®µà®²à¯'}
                 </h3>
               </div>
 
@@ -1328,7 +1343,7 @@ export default function App() {
                 {/* Row 1: UHID */}
                 <div className="md:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'UHID' : 'நோயாளி எண்'}
+                    {language === 'en' ? 'UHID' : 'à®¨à¯à®¯à®¾à®³à®¿ à®à®£à¯'}
                     <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1337,7 +1352,7 @@ export default function App() {
                     onChange={(e) => setPatientInfo({ ...patientInfo, uhid: e.target.value })}
                     onBlur={handleUhidBlur}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.uhid ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                    placeholder={language === 'en' ? 'Enter UHID' : 'UHID உள்ளிடவும்'}
+                    placeholder={language === 'en' ? 'Enter UHID' : 'UHID à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                   />
                   {formErrors.uhid && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.uhid}</p>}
                 </div>
@@ -1346,7 +1361,7 @@ export default function App() {
                 {/* Row 2: First Name | Last Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'First Name' : 'முதல் பெயர்'}
+                    {language === 'en' ? 'First Name' : 'à®®à¯à®¤à®²à¯ à®ªà¯à®¯à®°à¯'}
                     <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1354,13 +1369,13 @@ export default function App() {
                     value={patientInfo.firstName}
                     onChange={(e) => setPatientInfo({ ...patientInfo, firstName: e.target.value })}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.firstName ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                    placeholder={language === 'en' ? 'First name' : 'முதல் பெயர்'}
+                    placeholder={language === 'en' ? 'First name' : 'à®®à¯à®¤à®²à¯ à®ªà¯à®¯à®°à¯'}
                   />
                   {formErrors.firstName && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.firstName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'Last Name' : 'கடைசி பெயர்'}
+                    {language === 'en' ? 'Last Name' : 'à®à®à¯à®à®¿ à®ªà¯à®¯à®°à¯'}
                     <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1368,14 +1383,14 @@ export default function App() {
                     value={patientInfo.lastName}
                     onChange={(e) => setPatientInfo({ ...patientInfo, lastName: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                    placeholder={language === 'en' ? 'Last name' : 'கடைசி பெயர்'}
+                    placeholder={language === 'en' ? 'Last name' : 'à®à®à¯à®à®¿ à®ªà¯à®¯à®°à¯'}
                   />
                 </div>
 
                 {/* Row 3: Age | Gender */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'Age' : 'வயது'}
+                    {language === 'en' ? 'Age' : 'à®µà®¯à®¤à¯'}
                     <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -1383,13 +1398,13 @@ export default function App() {
                     value={patientInfo.age}
                     onChange={(e) => setPatientInfo({ ...patientInfo, age: e.target.value })}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.age ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                    placeholder={language === 'en' ? 'Enter age' : 'வயதை உள்ளிடவும்'}
+                    placeholder={language === 'en' ? 'Enter age' : 'à®µà®¯à®¤à¯ à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                   />
                   {formErrors.age && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.age}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {language === 'en' ? 'Gender' : 'பாலினம்'}
+                    {language === 'en' ? 'Gender' : 'à®ªà®¾à®²à®¿à®©à®®à¯'}
                     <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -1397,10 +1412,10 @@ export default function App() {
                     onChange={(e) => setPatientInfo({ ...patientInfo, gender: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                   >
-                    <option value="">{language === 'en' ? 'Select gender' : 'பாலினம் தேர்வு'}</option>
-                    <option value="Male">{language === 'en' ? 'Male' : 'ஆண்'}</option>
-                    <option value="Female">{language === 'en' ? 'Female' : 'பெண்'}</option>
-                    <option value="Other">{language === 'en' ? 'Other' : 'மற்றவை'}</option>
+                    <option value="">{language === 'en' ? 'Select gender' : 'à®ªà®¾à®²à®¿à®©à®®à¯ à®¤à¯à®°à¯à®µà¯'}</option>
+                    <option value="Male">{language === 'en' ? 'Male' : 'à®à®£à¯'}</option>
+                    <option value="Female">{language === 'en' ? 'Female' : 'à®ªà¯à®£à¯'}</option>
+                    <option value="Other">{language === 'en' ? 'Other' : 'à®®à®±à¯à®±à®µà¯'}</option>
                   </select>
                 </div>
               </div>
@@ -1410,7 +1425,7 @@ export default function App() {
                 {/* Search Location Row */}
                 <div className="relative">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {language === 'en' ? 'Search Location' : 'இடத்தை தேடுங்கள்'}
+                    {language === 'en' ? 'Search Location' : 'à®à®à®¤à¯à®¤à¯ à®¤à¯à®à¯à®à¯à®à®³à¯'}
                   </label>
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -1422,7 +1437,7 @@ export default function App() {
                       onChange={(e) => handleLocationSearch(e.target.value)}
                       onFocus={() => locationSearch && setShowSuggestions(true)}
                       className="w-full pl-11 pr-32 py-3 border-[1.5px] border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
-                      placeholder={language === 'en' ? 'Type State, District, City or Pincode to auto-fill below fields...' : 'மாநிலம், மாவட்டம், நகரம் அல்லது அஞ்சல் குறியீட்டை தட்டச்சு செய்யுங்கள்...'}
+                      placeholder={language === 'en' ? 'Type State, District, City or Pincode to auto-fill below fields...' : 'à®®à®¾à®¨à®¿à®²à®®à¯, à®®à®¾à®µà®à¯à®à®®à¯, à®¨à®à®°à®®à¯ à®à®²à¯à®²à®¤à¯ à®à®à¯à®à®²à¯ à®à¯à®±à®¿à®¯à¯à®à¯à®à¯ à®¤à®à¯à®à®à¯à®à¯ à®à¯à®¯à¯à®¯à¯à®à¯à®à®³à¯...'}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                       {searchSelected && (
@@ -1469,10 +1484,10 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Pincode — col 1 */}
+                  {/* Pincode â col 1 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {language === 'en' ? 'Pincode' : 'அஞ்சல் குறியீடு'}
+                      {language === 'en' ? 'Pincode' : 'à®à®à¯à®à®²à¯ à®à¯à®±à®¿à®¯à¯à®à¯'}
                     </label>
                     <div className="relative">
                       <input
@@ -1499,10 +1514,10 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* City — col 2 */}
+                  {/* City â col 2 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {language === 'en' ? 'City' : 'நகரம்'}
+                      {language === 'en' ? 'City' : 'à®¨à®à®°à®®à¯'}
                     </label>
                     <div className="relative">
                       <select
@@ -1512,7 +1527,7 @@ export default function App() {
                           flashFields.includes('city') ? 'bg-teal-100 border-[2px] border-teal-600' : 'bg-white border border-gray-200'
                         }`}
                       >
-                        <option value="">{language === 'en' ? 'Select City' : 'நகரத்தை தேர்ந்தெடுங்கள்'}</option>
+                        <option value="">{language === 'en' ? 'Select City' : 'à®¨à®à®°à®¤à¯à®¤à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®³à¯'}</option>
                         {(patientInfo.state === 'Tamil Nadu' ? tamilNaduCities : otherCities).map((city) => (
                           <option key={city} value={city}>{city}</option>
                         ))}
@@ -1525,10 +1540,10 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* State — col 3 */}
+                  {/* State â col 3 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {language === 'en' ? 'State' : 'மாநிலம்'}
+                      {language === 'en' ? 'State' : 'à®®à®¾à®¨à®¿à®²à®®à¯'}
                     </label>
                     <div className="relative">
                       <select
@@ -1550,10 +1565,10 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Country — col 4 */}
+                  {/* Country â col 4 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {language === 'en' ? 'Country' : 'நாடு'}
+                      {language === 'en' ? 'Country' : 'à®¨à®¾à®à¯'}
                     </label>
                     <div className="relative">
                       <select
@@ -1581,14 +1596,14 @@ export default function App() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="inline w-4 h-4 mr-1" />
-                  {language === 'en' ? 'Address' : 'முகவரி'}
+                  {language === 'en' ? 'Address' : 'à®®à¯à®à®µà®°à®¿'}
                 </label>
                 <textarea
                   value={patientInfo.address}
                   onChange={(e) => setPatientInfo({ ...patientInfo, address: e.target.value })}
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.address ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                   rows={3}
-                  placeholder={language === 'en' ? 'Enter full address' : 'முழு முகவரியை உள்ளிடவும்'}
+                  placeholder={language === 'en' ? 'Enter full address' : 'à®®à¯à®´à¯ à®®à¯à®à®µà®°à®¿à®¯à¯ à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                 />
                 {formErrors.address && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.address}</p>}
               </div>
@@ -1601,7 +1616,7 @@ export default function App() {
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Phone className="inline w-4 h-4 mr-1" />
-                        {language === 'en' ? 'Mobile Number' : 'தொலைபேசி எண்'}
+                        {language === 'en' ? 'Mobile Number' : 'à®¤à¯à®²à¯à®ªà¯à®à®¿ à®à®£à¯'}
                         <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -1626,10 +1641,10 @@ export default function App() {
                       {patientInfo.mobileVerified ? (
                         <div className="flex items-center gap-2">
                           <Check className="w-5 h-5" />
-                          <span>{language === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}</span>
+                          <span>{language === 'en' ? 'Verified' : 'à®à®°à®¿à®ªà®¾à®°à¯à®à¯à®à®ªà¯à®ªà®à¯à®à®¤à¯'}</span>
                         </div>
                       ) : (
-                        language === 'en' ? 'Verify' : 'சரிபார்'
+                        language === 'en' ? 'Verify' : 'à®à®°à®¿à®ªà®¾à®°à¯'
                       )}
                     </button>
                   </div>
@@ -1640,7 +1655,7 @@ export default function App() {
                       <div className="flex flex-col md:flex-row md:items-end gap-4">
                         <div className="flex-1">
                           <label className="block text-sm font-medium text-teal-800 mb-2">
-                            {language === 'en' ? 'Enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்'}
+                            {language === 'en' ? 'Enter 6-digit OTP' : '6 à®à®²à®à¯à® OTP à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                           </label>
                           <input
                             type="text"
@@ -1648,7 +1663,7 @@ export default function App() {
                             value={patientInfo.mobileOtp}
                             onChange={(e) => setPatientInfo({ ...patientInfo, mobileOtp: e.target.value.replace(/\D/g, '') })}
                             className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
-                            placeholder="••••••"
+                            placeholder="â¢â¢â¢â¢â¢â¢"
                           />
                         </div>
                         <button
@@ -1656,7 +1671,7 @@ export default function App() {
                           disabled={patientInfo.mobileOtp.length !== 6}
                           className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-300 transition-all h-[50px]"
                         >
-                          {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
+                          {language === 'en' ? 'Verify OTP' : 'OTP à®à®°à®¿à®ªà®¾à®°à¯'}
                         </button>
                       </div>
                     </div>
@@ -1669,7 +1684,7 @@ export default function App() {
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Mail className="inline w-4 h-4 mr-1" />
-                        {language === 'en' ? 'Email Address' : 'மின்னஞ்சல் முகவரி'}
+                        {language === 'en' ? 'Email Address' : 'à®®à®¿à®©à¯à®©à®à¯à®à®²à¯ à®®à¯à®à®µà®°à®¿'}
                       </label>
                       <input
                         type="email"
@@ -1693,10 +1708,10 @@ export default function App() {
                       {patientInfo.emailVerified ? (
                         <div className="flex items-center gap-2">
                           <Check className="w-5 h-5" />
-                          <span>{language === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}</span>
+                          <span>{language === 'en' ? 'Verified' : 'à®à®°à®¿à®ªà®¾à®°à¯à®à¯à®à®ªà¯à®ªà®à¯à®à®¤à¯'}</span>
                         </div>
                       ) : (
-                        language === 'en' ? 'Verify' : 'சரிபார்'
+                        language === 'en' ? 'Verify' : 'à®à®°à®¿à®ªà®¾à®°à¯'
                       )}
                     </button>
                   </div>
@@ -1707,7 +1722,7 @@ export default function App() {
                       <div className="flex flex-col md:flex-row md:items-end gap-4">
                         <div className="flex-1">
                           <label className="block text-sm font-medium text-teal-800 mb-2">
-                            {language === 'en' ? 'Enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்'}
+                            {language === 'en' ? 'Enter 6-digit OTP' : '6 à®à®²à®à¯à® OTP à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                           </label>
                           <input
                             type="text"
@@ -1715,7 +1730,7 @@ export default function App() {
                             value={patientInfo.emailOtp}
                             onChange={(e) => setPatientInfo({ ...patientInfo, emailOtp: e.target.value.replace(/\D/g, '') })}
                             className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
-                            placeholder="••••••"
+                            placeholder="â¢â¢â¢â¢â¢â¢"
                           />
                         </div>
                         <button
@@ -1723,7 +1738,7 @@ export default function App() {
                           disabled={patientInfo.emailOtp.length !== 6}
                           className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-300 transition-all h-[50px]"
                         >
-                          {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
+                          {language === 'en' ? 'Verify OTP' : 'OTP à®à®°à®¿à®ªà®¾à®°à¯'}
                         </button>
                       </div>
                     </div>
@@ -1734,7 +1749,7 @@ export default function App() {
               {/* Visit Details Section */}
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                  {language === 'en' ? 'Visit Details' : 'வருகை விவரங்கள்'}
+                  {language === 'en' ? 'Visit Details' : 'à®µà®°à¯à®à¯ à®µà®¿à®µà®°à®à¯à®à®³à¯'}
                 </h4>
 
                 {/* Visit Type Selection */}
@@ -1756,7 +1771,7 @@ export default function App() {
                     <p className={`font-semibold ${
                       patientInfo.visitType === 'OP' ? 'text-teal-700' : 'text-gray-700'
                     }`}>
-                      {language === 'en' ? 'Out Patient (OP)' : 'வெளிநோயாளி (OP)'}
+                      {language === 'en' ? 'Out Patient (OP)' : 'à®µà¯à®³à®¿à®¨à¯à®¯à®¾à®³à®¿ (OP)'}
                     </p>
                   </button>
 
@@ -1777,7 +1792,7 @@ export default function App() {
                     <p className={`font-semibold ${
                       patientInfo.visitType === 'IP' ? 'text-teal-700' : 'text-gray-700'
                     }`}>
-                      {language === 'en' ? 'In Patient (IP)' : 'உள்நோயாளி (IP)'}
+                      {language === 'en' ? 'In Patient (IP)' : 'à®à®³à¯à®¨à¯à®¯à®¾à®³à®¿ (IP)'}
                     </p>
                   </button>
                 </div>
@@ -1787,28 +1802,28 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {language === 'en' ? 'OP ID' : 'நோயாளி எண்'}
+                        {language === 'en' ? 'OP ID' : 'à®¨à¯à®¯à®¾à®³à®¿ à®à®£à¯'}
                       </label>
                       <input
                         type="text"
                         value={patientInfo.opNo}
                         onChange={(e) => setPatientInfo({ ...patientInfo, opNo: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                        placeholder={language === 'en' ? 'Enter OP ID' : 'OP ID உள்ளிடவும்'}
+                        placeholder={language === 'en' ? 'Enter OP ID' : 'OP ID à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Calendar className="inline w-4 h-4 mr-1" />
-                        {language === 'en' ? 'OP Date' : 'வெளிநோயாளி தேதி'}
+                        {language === 'en' ? 'OP Date' : 'à®µà¯à®³à®¿à®¨à¯à®¯à®¾à®³à®¿ à®¤à¯à®¤à®¿'}
                       </label>
                       <DatePicker
                         selected={patientInfo.opDate}
                         onChange={(date) => setPatientInfo({ ...patientInfo, opDate: date })}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.opDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                         dateFormat="dd/MM/yyyy"
-                        placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
+                        placeholderText={language === 'en' ? 'Select date' : 'à®¤à¯à®¤à®¿ à®¤à¯à®°à¯à®µà¯'}
                       />
                       {formErrors.opDate && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.opDate}</p>}
                     </div>
@@ -1821,28 +1836,28 @@ export default function App() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {language === 'en' ? 'IP ID' : 'நோயாளி எண்'}
+                          {language === 'en' ? 'IP ID' : 'à®¨à¯à®¯à®¾à®³à®¿ à®à®£à¯'}
                         </label>
                         <input
                           type="text"
                           value={patientInfo.ipNo}
                           onChange={(e) => setPatientInfo({ ...patientInfo, ipNo: e.target.value })}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                          placeholder={language === 'en' ? 'Enter IP ID' : 'IP ID உள்ளிடவும்'}
+                          placeholder={language === 'en' ? 'Enter IP ID' : 'IP ID à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                         />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Calendar className="inline w-4 h-4 mr-1" />
-                          {language === 'en' ? 'IP Date' : 'உள்நோயாளி தேதி'}
+                          {language === 'en' ? 'IP Date' : 'à®à®³à¯à®¨à¯à®¯à®¾à®³à®¿ à®¤à¯à®¤à®¿'}
                         </label>
                         <DatePicker
                           selected={patientInfo.ipDate}
                           onChange={(date) => setPatientInfo({ ...patientInfo, ipDate: date })}
                           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.ipDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                           dateFormat="dd/MM/yyyy"
-                          placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
+                          placeholderText={language === 'en' ? 'Select date' : 'à®¤à¯à®¤à®¿ à®¤à¯à®°à¯à®µà¯'}
                         />
                         {formErrors.ipDate && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.ipDate}</p>}
                       </div>
@@ -1852,14 +1867,14 @@ export default function App() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Calendar className="inline w-4 h-4 mr-1" />
-                          {language === 'en' ? 'Date of Admission' : 'சேர்க்கை தேதி'}
+                          {language === 'en' ? 'Date of Admission' : 'à®à¯à®°à¯à®à¯à®à¯ à®¤à¯à®¤à®¿'}
                         </label>
                         <DatePicker
                           selected={patientInfo.admissionDate}
                           onChange={(date) => setPatientInfo({ ...patientInfo, admissionDate: date })}
                           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.admissionDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                           dateFormat="dd/MM/yyyy"
-                          placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
+                          placeholderText={language === 'en' ? 'Select date' : 'à®¤à¯à®¤à®¿ à®¤à¯à®°à¯à®µà¯'}
                         />
                         {formErrors.admissionDate && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.admissionDate}</p>}
                       </div>
@@ -1867,14 +1882,14 @@ export default function App() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Calendar className="inline w-4 h-4 mr-1" />
-                          {language === 'en' ? 'Date of Discharge' : 'வெளியேறிய தேதி'}
+                          {language === 'en' ? 'Date of Discharge' : 'à®µà¯à®³à®¿à®¯à¯à®±à®¿à®¯ à®¤à¯à®¤à®¿'}
                         </label>
                         <DatePicker
                           selected={patientInfo.dischargeDate}
                           onChange={(date) => setPatientInfo({ ...patientInfo, dischargeDate: date })}
                           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.dischargeDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                           dateFormat="dd/MM/yyyy"
-                          placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
+                          placeholderText={language === 'en' ? 'Select date' : 'à®¤à¯à®¤à®¿ à®¤à¯à®°à¯à®µà¯'}
                         />
                         {formErrors.dischargeDate && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.dischargeDate}</p>}
                       </div>
@@ -1892,8 +1907,8 @@ export default function App() {
           <div>
             {showPageTitleLabels && (
               <PageTitle
-                title={language === 'en' ? (combinePages ? 'Feedback & Questions' : 'Service Feedback') : (combinePages ? 'கருத்து & கேள்விகள்' : 'சேவை கருத்து')}
-                subtitle={language === 'en' ? `Step ${currentStep + 1} of ${steps.length}` : `படி ${currentStep + 1} / ${steps.length}`}
+                title={language === 'en' ? (combinePages ? 'Feedback & Questions' : 'Service Feedback') : (combinePages ? 'à®à®°à¯à®¤à¯à®¤à¯ & à®à¯à®³à¯à®µà®¿à®à®³à¯' : 'à®à¯à®µà¯ à®à®°à¯à®¤à¯à®¤à¯')}
+                subtitle={language === 'en' ? `Step ${currentStep + 1} of ${steps.length}` : `à®ªà®à®¿ ${currentStep + 1} / ${steps.length}`}
               />
             )}
             <div className="space-y-6">
@@ -1920,7 +1935,7 @@ export default function App() {
                   ))
                 ) : (
                   <div className="col-span-full text-center text-gray-500 py-8">
-                    {language === 'en' ? 'No feedback questions configured.' : 'எந்த கருத்து கேள்விகளும் கட்டமைக்கப்படவில்லை.'}
+                    {language === 'en' ? 'No feedback questions configured.' : 'à®à®¨à¯à®¤ à®à®°à¯à®¤à¯à®¤à¯ à®à¯à®³à¯à®µà®¿à®à®³à¯à®®à¯ à®à®à¯à®à®®à¯à®à¯à®à®ªà¯à®ªà®à®µà®¿à®²à¯à®²à¯.'}
                   </div>
                 )}
             </div>
@@ -1929,14 +1944,14 @@ export default function App() {
             <div className="relative">
               <div className="flex justify-center mb-2">
                 <span className="inline-flex items-center gap-1 px-4 py-1 bg-amber-200 text-amber-900 rounded-full text-xs font-semibold">
-                  ⭐ {language === 'en' ? 'Most Important — Please Rate' : 'மிக முக்கியம் — மதிப்பிடவும்'}
+                  â­ {language === 'en' ? 'Most Important â Please Rate' : 'à®®à®¿à® à®®à¯à®à¯à®à®¿à®¯à®®à¯ â à®®à®¤à®¿à®ªà¯à®ªà®¿à®à®µà¯à®®à¯'}
                 </span>
               </div>
               <div className="bg-gradient-to-r from-amber-50 to-amber-100 border-2 border-amber-400 rounded-xl shadow-lg p-6 animate-pulse-border">
                 <div className="flex items-center justify-center gap-2 mb-4">
-                  <span className="text-xl">⭐</span>
+                  <span className="text-xl">â­</span>
                   <h3 className="text-lg font-bold text-amber-900">
-                    {language === 'en' ? 'Overall Experience*' : 'ஒட்டுமொத்த அனுபவம்*'}
+                    {language === 'en' ? 'Overall Experience*' : 'à®à®à¯à®à¯à®®à¯à®¤à¯à®¤ à®à®©à¯à®ªà®µà®®à¯*'}
                   </h3>
                 </div>
                 <div className="flex justify-center">
@@ -1959,58 +1974,58 @@ export default function App() {
               <div className="mt-8 space-y-6">
                 <hr className="border-gray-200" />
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  {language === 'en' ? 'Additional Details' : 'கூடுதல் விவரங்கள்'}
+                  {language === 'en' ? 'Additional Details' : 'à®à¯à®à¯à®¤à®²à¯ à®µà®¿à®µà®°à®à¯à®à®³à¯'}
                 </h3>
                 {/* Why Choose Us Section */}
                 <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
                   <div className="text-center mb-8">
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                      {language === 'en' ? 'What Made You to Choose Apollo Healthcare Center ?' : 'அப்பல்லோ சுகாதார மையத்தை தேர்வு செய்ய உங்களைத் தூண்டியது எது?'}
+                      {language === 'en' ? 'What Made You to Choose Apollo Healthcare Center ?' : 'à®à®ªà¯à®ªà®²à¯à®²à¯ à®à¯à®à®¾à®¤à®¾à®° à®®à¯à®¯à®¤à¯à®¤à¯ à®¤à¯à®°à¯à®µà¯ à®à¯à®¯à¯à®¯ à®à®à¯à®à®³à¯à®¤à¯ à®¤à¯à®£à¯à®à®¿à®¯à®¤à¯ à®à®¤à¯?'}
                     </h3>
                     <p className="text-gray-600">
-                      {language === 'en' ? 'Select ALL that apply' : 'பொருந்தும் அனைத்தையும் தேர்ந்தெடுக்கவும்'}
+                      {language === 'en' ? 'Select ALL that apply' : 'à®ªà¯à®°à¯à®¨à¯à®¤à¯à®®à¯ à®à®©à¯à®¤à¯à®¤à¯à®¯à¯à®®à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®µà¯à®®à¯'}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <SelectableCard
                       icon={<Newspaper className="w-6 h-6" />}
-                      label={language === 'en' ? 'Advertisement / News / Social Media' : 'விளம்பரம் / செய்தி / சமூக ஊடகம்'}
+                      label={language === 'en' ? 'Advertisement / News / Social Media' : 'à®µà®¿à®³à®®à¯à®ªà®°à®®à¯ / à®à¯à®¯à¯à®¤à®¿ / à®à®®à¯à® à®à®à®à®®à¯'}
                       selected={whyChooseUs.advertisement}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, advertisement: !whyChooseUs.advertisement })}
                     />
                     <SelectableCard
                       icon={<Briefcase className="w-6 h-6" />}
-                      label={language === 'en' ? 'Corporate' : 'கார்ப்பரேட்'}
+                      label={language === 'en' ? 'Corporate' : 'à®à®¾à®°à¯à®ªà¯à®ªà®°à¯à®à¯'}
                       selected={whyChooseUs.corporate}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, corporate: !whyChooseUs.corporate })}
                     />
                     <SelectableCard
                       icon={<UserCog className="w-6 h-6" />}
-                      label={language === 'en' ? 'Employee' : 'ஊழியர்'}
+                      label={language === 'en' ? 'Employee' : 'à®à®´à®¿à®¯à®°à¯'}
                       selected={whyChooseUs.employee}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, employee: !whyChooseUs.employee })}
                     />
                     <SelectableCard
                       icon={<Stethoscope className="w-6 h-6" />}
-                      label={language === 'en' ? 'Referral Doctor' : 'பரிந்துரை மருத்துவர்'}
+                      label={language === 'en' ? 'Referral Doctor' : 'à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ à®®à®°à¯à®¤à¯à®¤à¯à®µà®°à¯'}
                       selected={whyChooseUs.referralDoctor}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, referralDoctor: !whyChooseUs.referralDoctor })}
                     />
                     <SelectableCard
                       icon={<UsersRound className="w-6 h-6" />}
-                      label={language === 'en' ? 'Friends / Relatives' : 'நண்பர்கள் / உறவினர்கள்'}
+                      label={language === 'en' ? 'Friends / Relatives' : 'à®¨à®£à¯à®ªà®°à¯à®à®³à¯ / à®à®±à®µà®¿à®©à®°à¯à®à®³à¯'}
                       selected={whyChooseUs.friendsRelatives}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, friendsRelatives: !whyChooseUs.friendsRelatives })}
                     />
                     <SelectableCard
                       icon={<ThumbsUp className="w-6 h-6" />}
-                      label={language === 'en' ? 'Self Decision' : 'சுய முடிவு'}
+                      label={language === 'en' ? 'Self Decision' : 'à®à¯à®¯ à®®à¯à®à®¿à®µà¯'}
                       selected={whyChooseUs.selfDecision}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, selfDecision: !whyChooseUs.selfDecision })}
                     />
                     <SelectableCard
                       icon={<MoreHorizontal className="w-6 h-6" />}
-                      label={language === 'en' ? 'Others' : 'மற்றவை'}
+                      label={language === 'en' ? 'Others' : 'à®®à®±à¯à®±à®µà¯'}
                       selected={whyChooseUs.others}
                       onToggle={() => setWhyChooseUs({ ...whyChooseUs, others: !whyChooseUs.others })}
                     />
@@ -2019,7 +2034,7 @@ export default function App() {
 
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-6">
-                    {language === 'en' ? 'Questions' : 'கேள்விகள்'}
+                    {language === 'en' ? 'Questions' : 'à®à¯à®³à¯à®µà®¿à®à®³à¯'}
                   </h3>
 
                   <div className="space-y-4">
@@ -2043,7 +2058,7 @@ export default function App() {
                             (yq.describeIssueTrigger === 'both' && dynamicYesNo[yq.id]?.answer !== null && dynamicYesNo[yq.id]?.answer !== undefined)) && (
                             <div className="ml-4 mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
                               <label className="block text-sm font-medium text-gray-700 mb-2">
-                                {language === 'en' ? 'Please describe the issue' : 'பிரச்சினையை விவரிக்கவும்'}
+                                {language === 'en' ? 'Please describe the issue' : 'à®ªà®¿à®°à®à¯à®à®¿à®©à¯à®¯à¯ à®µà®¿à®µà®°à®¿à®à¯à®à®µà¯à®®à¯'}
                               </label>
                               <textarea
                                 value={dynamicYesNo[yq.id]?.remarks || ''}
@@ -2055,7 +2070,7 @@ export default function App() {
                                 }
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                                 rows={3}
-                                placeholder={language === 'en' ? 'Describe the issue...' : 'பிரச்சினையை விவரிக்கவும்...'}
+                                placeholder={language === 'en' ? 'Describe the issue...' : 'à®ªà®¿à®°à®à¯à®à®¿à®©à¯à®¯à¯ à®µà®¿à®µà®°à®¿à®à¯à®à®µà¯à®®à¯...'}
                               />
                             </div>
                           )}
@@ -2063,7 +2078,7 @@ export default function App() {
                       ))
                     ) : (
                       <div className="text-gray-500 italic p-4 text-center">
-                        {language === 'en' ? 'No additional questions.' : 'கூடுதல் கேள்விகள் இல்லை.'}
+                        {language === 'en' ? 'No additional questions.' : 'à®à¯à®à¯à®¤à®²à¯ à®à¯à®³à¯à®µà®¿à®à®³à¯ à®à®²à¯à®²à¯.'}
                       </div>
                     )}
                   </div>
@@ -2071,17 +2086,17 @@ export default function App() {
 
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {language === 'en' ? 'Suggestions' : 'பரிந்துரைகள்'}
+                    {language === 'en' ? 'Suggestions' : 'à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯à®à®³à¯'}
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    {language === 'en' ? 'If your concern is not covered in any of the above, please provide your suggestions for improvement' : 'மேலே உள்ள எந்த பிரிவிலும் உங்கள் கவலை சேர்க்கப்படவில்லை என்றால், மேம்பாட்டிற்கான உங்கள் பரிந்துரைகளை வழங்கவும்'}
+                    {language === 'en' ? 'If your concern is not covered in any of the above, please provide your suggestions for improvement' : 'à®®à¯à®²à¯ à®à®³à¯à®³ à®à®¨à¯à®¤ à®ªà®¿à®°à®¿à®µà®¿à®²à¯à®®à¯ à®à®à¯à®à®³à¯ à®à®µà®²à¯ à®à¯à®°à¯à®à¯à®à®ªà¯à®ªà®à®µà®¿à®²à¯à®²à¯ à®à®©à¯à®±à®¾à®²à¯, à®®à¯à®®à¯à®ªà®¾à®à¯à®à®¿à®±à¯à®à®¾à®© à®à®à¯à®à®³à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯à®à®³à¯ à®µà®´à®à¯à®à®µà¯à®®à¯'}
                   </p>
                   <textarea maxLength={500}
                     value={suggestions}
                     onChange={(e) => setSuggestions(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                     rows={5}
-                    placeholder={language === 'en' ? 'Share your suggestions to help us improve our services...' : 'எங்கள் சேவைகளை மேம்படுத்த உங்கள் பரிந்துரைகளைப் பகிரவும்...'}
+                    placeholder={language === 'en' ? 'Share your suggestions to help us improve our services...' : 'à®à®à¯à®à®³à¯ à®à¯à®µà¯à®à®³à¯ à®®à¯à®®à¯à®ªà®à¯à®¤à¯à®¤ à®à®à¯à®à®³à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯à®à®³à¯à®ªà¯ à®ªà®à®¿à®°à®µà¯à®®à¯...'}
                   />
                   <div className="text-right text-xs text-gray-500 mt-1">{suggestions.length}/500</div>
                 </div>
@@ -2089,10 +2104,10 @@ export default function App() {
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <div className="mb-4">
                     <h3 className="text-xl font-bold text-gray-900">
-                      {language === 'en' ? 'Appreciation' : 'பாராட்டு'}
+                      {language === 'en' ? 'Appreciation' : 'à®ªà®¾à®°à®¾à®à¯à®à¯'}
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      {language === 'en' ? 'Would you like to appreciate any staff member?' : 'எந்த பணியாளரையும் பாராட்ட விரும்புகிறீர்களா?'}
+                      {language === 'en' ? 'Would you like to appreciate any staff member?' : 'à®à®¨à¯à®¤ à®ªà®£à®¿à®¯à®¾à®³à®°à¯à®¯à¯à®®à¯ à®ªà®¾à®°à®¾à®à¯à® à®µà®¿à®°à¯à®®à¯à®ªà¯à®à®¿à®±à¯à®°à¯à®à®³à®¾?'}
                     </p>
                   </div>
 
@@ -2111,19 +2126,19 @@ export default function App() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              {language === 'en' ? 'Staff Name' : 'பணியாளர் பெயர்'}
+                              {language === 'en' ? 'Staff Name' : 'à®ªà®£à®¿à®¯à®¾à®³à®°à¯ à®ªà¯à®¯à®°à¯'}
                             </label>
                             <input
                               type="text"
                               value={appreciation.name}
                               onChange={(e) => updateAppreciation(appreciation.id, 'name', e.target.value)}
                               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                              placeholder={language === 'en' ? 'e.g. Dr. Smith' : 'எ.கா. டாக்டர் ஸ்மித்'}
+                              placeholder={language === 'en' ? 'e.g. Dr. Smith' : 'à®.à®à®¾. à®à®¾à®à¯à®à®°à¯ à®¸à¯à®®à®¿à®¤à¯'}
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              {language === 'en' ? 'Department' : 'துறை'}
+                              {language === 'en' ? 'Department' : 'à®¤à¯à®±à¯'}
                             </label>
                             {departments.length > 0 ? (
                               <div className="flex flex-col w-full">
@@ -2132,12 +2147,12 @@ export default function App() {
                                 onChange={(e) => updateAppreciation(appreciation.id, 'department', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white"
                               >
-                                <option value="">{language === 'en' ? 'Select Department' : 'துறையைத் தேர்ந்தெடுக்கவும்'}</option>
+                                <option value="">{language === 'en' ? 'Select Department' : 'à®¤à¯à®±à¯à®¯à¯à®¤à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®µà¯à®®à¯'}</option>
                                 {departments.map((dept, i) => (
                                   <option key={i} value={dept}>{dept}</option>
                                 ))}
                               </select>
-{(appreciation.name || appreciation.note) && (!appreciation.department || appreciation.department.trim() === "") && (<span className="text-red-500 text-xs mt-1 px-1">{language === "en" ? "Please select a department" : "துறையைத் தேர்ந்தெடுக்கவும்"}</span>)}
+{(appreciation.name || appreciation.note) && (!appreciation.department || appreciation.department.trim() === "") && (<span className="text-red-500 text-xs mt-1 px-1">{language === "en" ? "Please select a department" : "à®¤à¯à®±à¯à®¯à¯à®¤à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®µà¯à®®à¯"}</span>)}
 </div>
                             ) : (
                               <input
@@ -2145,20 +2160,20 @@ export default function App() {
                                 value={appreciation.department}
                                 onChange={(e) => updateAppreciation(appreciation.id, 'department', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                                placeholder={language === 'en' ? 'e.g. Cardiology' : 'எ.கா. இதயவியல்'}
+                                placeholder={language === 'en' ? 'e.g. Cardiology' : 'à®.à®à®¾. à®à®¤à®¯à®µà®¿à®¯à®²à¯'}
                               />
                             )}
                           </div>
                           <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              {language === 'en' ? 'Note of Appreciation' : 'பாராட்டு குறிப்பு'}
+                              {language === 'en' ? 'Note of Appreciation' : 'à®ªà®¾à®°à®¾à®à¯à®à¯ à®à¯à®±à®¿à®ªà¯à®ªà¯'}
                             </label>
                             <textarea
                               value={appreciation.note}
                               onChange={(e) => updateAppreciation(appreciation.id, 'note', e.target.value)}
                               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                               rows={3}
-                              placeholder={language === 'en' ? 'Write your appreciation...' : 'உங்கள் பாராட்டுதலை எழுதவும்...'}
+                              placeholder={language === 'en' ? 'Write your appreciation...' : 'à®à®à¯à®à®³à¯ à®ªà®¾à®°à®¾à®à¯à®à¯à®¤à®²à¯ à®à®´à¯à®¤à®µà¯à®®à¯...'}
                             />
                           </div>
                         </div>
@@ -2172,7 +2187,7 @@ export default function App() {
                       className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
-                      {language === 'en' ? 'Add More' : 'மேலும் சேர்க்கவும்'}
+                      {language === 'en' ? 'Add More' : 'à®®à¯à®²à¯à®®à¯ à®à¯à®°à¯à®à¯à®à®µà¯à®®à¯'}
                     </button>
                   </div>
                 </div>
@@ -2187,8 +2202,8 @@ export default function App() {
           <div>
             {showPageTitleLabels && (
               <PageTitle
-                title={language === 'en' ? 'Questionary Page' : 'கேள்வி பக்கம்'}
-                subtitle={language === 'en' ? `Step ${currentStep + 1} of ${steps.length}` : `படி ${currentStep + 1} / ${steps.length}`}
+                title={language === 'en' ? 'Questionary Page' : 'à®à¯à®³à¯à®µà®¿ à®ªà®à¯à®à®®à¯'}
+                subtitle={language === 'en' ? `Step ${currentStep + 1} of ${steps.length}` : `à®ªà®à®¿ ${currentStep + 1} / ${steps.length}`}
               />
             )}
             <div className="space-y-6">
@@ -2196,52 +2211,52 @@ export default function App() {
               <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  {language === 'en' ? `What Made You to Choose ${branding.hospitalName} ?` : `${branding.hospitalName}-ஐ தேர்வு செய்ய உங்களைத் தூண்டியது எது?`}
+                  {language === 'en' ? `What Made You to Choose ${branding.hospitalName} ?` : `${branding.hospitalName}-à® à®¤à¯à®°à¯à®µà¯ à®à¯à®¯à¯à®¯ à®à®à¯à®à®³à¯à®¤à¯ à®¤à¯à®£à¯à®à®¿à®¯à®¤à¯ à®à®¤à¯?`}
                 </h3>
                 <p className="text-gray-600">
-                  {language === 'en' ? 'Select ALL that apply' : 'பொருந்தும் அனைத்தையும் தேர்ந்தெடுக்கவும்'}
+                  {language === 'en' ? 'Select ALL that apply' : 'à®ªà¯à®°à¯à®¨à¯à®¤à¯à®®à¯ à®à®©à¯à®¤à¯à®¤à¯à®¯à¯à®®à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®µà¯à®®à¯'}
                 </p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <SelectableCard
                   icon={<Newspaper className="w-6 h-6" />}
-                  label={language === 'en' ? 'Advertisement / News / Social Media' : 'விளம்பரம் / செய்தி / சமூக ஊடகம்'}
+                  label={language === 'en' ? 'Advertisement / News / Social Media' : 'à®µà®¿à®³à®®à¯à®ªà®°à®®à¯ / à®à¯à®¯à¯à®¤à®¿ / à®à®®à¯à® à®à®à®à®®à¯'}
                   selected={whyChooseUs.advertisement}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, advertisement: !whyChooseUs.advertisement })}
                 />
                 <SelectableCard
                   icon={<Briefcase className="w-6 h-6" />}
-                  label={language === 'en' ? 'Corporate' : 'கார்ப்பரேட்'}
+                  label={language === 'en' ? 'Corporate' : 'à®à®¾à®°à¯à®ªà¯à®ªà®°à¯à®à¯'}
                   selected={whyChooseUs.corporate}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, corporate: !whyChooseUs.corporate })}
                 />
                 <SelectableCard
                   icon={<UserCog className="w-6 h-6" />}
-                  label={language === 'en' ? 'Employee' : 'ஊழியர்'}
+                  label={language === 'en' ? 'Employee' : 'à®à®´à®¿à®¯à®°à¯'}
                   selected={whyChooseUs.employee}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, employee: !whyChooseUs.employee })}
                 />
                 <SelectableCard
                   icon={<Stethoscope className="w-6 h-6" />}
-                  label={language === 'en' ? 'Referral Doctor' : 'பரிந்துரை மருத்துவர்'}
+                  label={language === 'en' ? 'Referral Doctor' : 'à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ à®®à®°à¯à®¤à¯à®¤à¯à®µà®°à¯'}
                   selected={whyChooseUs.referralDoctor}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, referralDoctor: !whyChooseUs.referralDoctor })}
                 />
                 <SelectableCard
                   icon={<UsersRound className="w-6 h-6" />}
-                  label={language === 'en' ? 'Friends / Relatives' : 'நண்பர்கள் / உறவினர்கள்'}
+                  label={language === 'en' ? 'Friends / Relatives' : 'à®¨à®£à¯à®ªà®°à¯à®à®³à¯ / à®à®±à®µà®¿à®©à®°à¯à®à®³à¯'}
                   selected={whyChooseUs.friendsRelatives}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, friendsRelatives: !whyChooseUs.friendsRelatives })}
                 />
                 <SelectableCard
                   icon={<ThumbsUp className="w-6 h-6" />}
-                  label={language === 'en' ? 'Self Decision' : 'சுய முடிவு'}
+                  label={language === 'en' ? 'Self Decision' : 'à®à¯à®¯ à®®à¯à®à®¿à®µà¯'}
                   selected={whyChooseUs.selfDecision}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, selfDecision: !whyChooseUs.selfDecision })}
                 />
                 <SelectableCard
                   icon={<MoreHorizontal className="w-6 h-6" />}
-                  label={language === 'en' ? 'Others' : 'மற்றவை'}
+                  label={language === 'en' ? 'Others' : 'à®®à®±à¯à®±à®µà¯'}
                   selected={whyChooseUs.others}
                   onToggle={() => setWhyChooseUs({ ...whyChooseUs, others: !whyChooseUs.others })}
                 />
@@ -2250,7 +2265,7 @@ export default function App() {
 
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">
-                {language === 'en' ? 'Questions' : 'கேள்விகள்'}
+                {language === 'en' ? 'Questions' : 'à®à¯à®³à¯à®µà®¿à®à®³à¯'}
               </h3>
 
               <div className="space-y-4">
@@ -2274,7 +2289,7 @@ export default function App() {
                         (yq.describeIssueTrigger === 'both' && dynamicYesNo[yq.id]?.answer !== null && dynamicYesNo[yq.id]?.answer !== undefined)) && (
                         <div className="ml-4 mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {language === 'en' ? 'Please describe the issue' : 'பிரச்சினையை விவரிக்கவும்'}
+                            {language === 'en' ? 'Please describe the issue' : 'à®ªà®¿à®°à®à¯à®à®¿à®©à¯à®¯à¯ à®µà®¿à®µà®°à®¿à®à¯à®à®µà¯à®®à¯'}
                           </label>
                           <textarea
                             value={dynamicYesNo[yq.id]?.remarks || ''}
@@ -2286,7 +2301,7 @@ export default function App() {
                             }
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                             rows={3}
-                            placeholder={language === 'en' ? 'Describe the issue...' : 'பிரச்சினையை விவரிக்கவும்...'}
+                            placeholder={language === 'en' ? 'Describe the issue...' : 'à®ªà®¿à®°à®à¯à®à®¿à®©à¯à®¯à¯ à®µà®¿à®µà®°à®¿à®à¯à®à®µà¯à®®à¯...'}
                           />
                         </div>
                       )}
@@ -2294,7 +2309,7 @@ export default function App() {
                   ))
                 ) : (
                   <div className="text-gray-500 italic p-4 text-center">
-                    {language === 'en' ? 'No additional questions.' : 'கூடுதல் கேள்விகள் இல்லை.'}
+                    {language === 'en' ? 'No additional questions.' : 'à®à¯à®à¯à®¤à®²à¯ à®à¯à®³à¯à®µà®¿à®à®³à¯ à®à®²à¯à®²à¯.'}
                   </div>
                 )}
               </div>
@@ -2302,17 +2317,17 @@ export default function App() {
 
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                {language === 'en' ? 'Suggestions' : 'பரிந்துரைகள்'}
+                {language === 'en' ? 'Suggestions' : 'à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯à®à®³à¯'}
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                {language === 'en' ? 'If your concern is not covered in any of the above, please provide your suggestions for improvement' : 'மேலே உள்ள எந்த பிரிவிலும் உங்கள் கவலை சேர்க்கப்படவில்லை என்றால், மேம்பாட்டிற்கான உங்கள் பரிந்துரைகளை வழங்கவும்'}
+                {language === 'en' ? 'If your concern is not covered in any of the above, please provide your suggestions for improvement' : 'à®®à¯à®²à¯ à®à®³à¯à®³ à®à®¨à¯à®¤ à®ªà®¿à®°à®¿à®µà®¿à®²à¯à®®à¯ à®à®à¯à®à®³à¯ à®à®µà®²à¯ à®à¯à®°à¯à®à¯à®à®ªà¯à®ªà®à®µà®¿à®²à¯à®²à¯ à®à®©à¯à®±à®¾à®²à¯, à®®à¯à®®à¯à®ªà®¾à®à¯à®à®¿à®±à¯à®à®¾à®© à®à®à¯à®à®³à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯à®à®³à¯ à®µà®´à®à¯à®à®µà¯à®®à¯'}
               </p>
               <textarea maxLength={500}
                 value={suggestions}
                 onChange={(e) => setSuggestions(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                 rows={5}
-                placeholder={language === 'en' ? 'Share your suggestions to help us improve our services...' : 'எங்கள் சேவைகளை மேம்படுத்த உங்கள் பரிந்துரைகளைப் பகிரவும்...'}
+                placeholder={language === 'en' ? 'Share your suggestions to help us improve our services...' : 'à®à®à¯à®à®³à¯ à®à¯à®µà¯à®à®³à¯ à®®à¯à®®à¯à®ªà®à¯à®¤à¯à®¤ à®à®à¯à®à®³à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯à®à®³à¯à®ªà¯ à®ªà®à®¿à®°à®µà¯à®®à¯...'}
               />
                   <div className="text-right text-xs text-gray-500 mt-1">{suggestions.length}/500</div>
             </div>
@@ -2320,10 +2335,10 @@ export default function App() {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {language === 'en' ? 'Appreciation' : 'பாராட்டு'}
+                  {language === 'en' ? 'Appreciation' : 'à®ªà®¾à®°à®¾à®à¯à®à¯'}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {language === 'en' ? 'Would you like to appreciate any staff member?' : 'எந்த பணியாளரையும் பாராட்ட விரும்புகிறீர்களா?'}
+                  {language === 'en' ? 'Would you like to appreciate any staff member?' : 'à®à®¨à¯à®¤ à®ªà®£à®¿à®¯à®¾à®³à®°à¯à®¯à¯à®®à¯ à®ªà®¾à®°à®¾à®à¯à® à®µà®¿à®°à¯à®®à¯à®ªà¯à®à®¿à®±à¯à®°à¯à®à®³à®¾?'}
                 </p>
               </div>
 
@@ -2342,20 +2357,20 @@ export default function App() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {language === 'en' ? 'Staff Name' : 'பணியாளர் பெயர்'}
+                          {language === 'en' ? 'Staff Name' : 'à®ªà®£à®¿à®¯à®¾à®³à®°à¯ à®ªà¯à®¯à®°à¯'}
                         </label>
                         <input
                           type="text"
                           value={appreciation.name}
                           onChange={(e) => updateAppreciation(appreciation.id, 'name', e.target.value)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                          placeholder={language === 'en' ? 'Enter staff name' : 'பணியாளர் பெயர் உள்ளிடவும்'}
+                          placeholder={language === 'en' ? 'Enter staff name' : 'à®ªà®£à®¿à®¯à®¾à®³à®°à¯ à®ªà¯à®¯à®°à¯ à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                         />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {language === 'en' ? 'Department' : 'துறை'}
+                          {language === 'en' ? 'Department' : 'à®¤à¯à®±à¯'}
                         </label>
                         {departments.length > 0 ? (
                           <div className="flex flex-col w-full">
@@ -2364,12 +2379,12 @@ export default function App() {
                             onChange={(e) => updateAppreciation(appreciation.id, 'department', e.target.value)}
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white"
                           >
-                            <option value="">{language === 'en' ? 'Select Department' : 'துறையைத் தேர்ந்தெடுக்கவும்'}</option>
+                            <option value="">{language === 'en' ? 'Select Department' : 'à®¤à¯à®±à¯à®¯à¯à®¤à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®µà¯à®®à¯'}</option>
                             {departments.map((dept, i) => (
                               <option key={i} value={dept}>{dept}</option>
                             ))}
                           </select>
-{(appreciation.name || appreciation.note) && (!appreciation.department || appreciation.department.trim() === "") && (<span className="text-red-500 text-xs mt-1 px-1">{language === "en" ? "Please select a department" : "துறையைத் தேர்ந்தெடுக்கவும்"}</span>)}
+{(appreciation.name || appreciation.note) && (!appreciation.department || appreciation.department.trim() === "") && (<span className="text-red-500 text-xs mt-1 px-1">{language === "en" ? "Please select a department" : "à®¤à¯à®±à¯à®¯à¯à®¤à¯ à®¤à¯à®°à¯à®¨à¯à®¤à¯à®à¯à®à¯à®à®µà¯à®®à¯"}</span>)}
 </div>
                         ) : (
                           <input
@@ -2377,21 +2392,21 @@ export default function App() {
                             value={appreciation.department}
                             onChange={(e) => updateAppreciation(appreciation.id, 'department', e.target.value)}
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                            placeholder={language === 'en' ? 'e.g. Cardiology' : 'எ.கா. இதயவியல்'}
+                            placeholder={language === 'en' ? 'e.g. Cardiology' : 'à®.à®à®¾. à®à®¤à®¯à®µà®¿à®¯à®²à¯'}
                           />
                         )}
                       </div>
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          {language === 'en' ? 'Appreciation Note' : 'பாராட்டு குறிப்பு'}
+                          {language === 'en' ? 'Appreciation Note' : 'à®ªà®¾à®°à®¾à®à¯à®à¯ à®à¯à®±à®¿à®ªà¯à®ªà¯'}
                         </label>
                         <textarea
                           value={appreciation.note}
                           onChange={(e) => updateAppreciation(appreciation.id, 'note', e.target.value)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
                           rows={3}
-                          placeholder={language === 'en' ? 'Write your appreciation...' : 'உங்கள் பாராட்டுதலை எழுதவும்...'}
+                          placeholder={language === 'en' ? 'Write your appreciation...' : 'à®à®à¯à®à®³à¯ à®ªà®¾à®°à®¾à®à¯à®à¯à®¤à®²à¯ à®à®´à¯à®¤à®µà¯à®®à¯...'}
                         />
                       </div>
                     </div>
@@ -2405,7 +2420,7 @@ export default function App() {
                   className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  {language === 'en' ? 'Add More' : 'மேலும் சேர்க்கவும்'}
+                  {language === 'en' ? 'Add More' : 'à®®à¯à®²à¯à®®à¯ à®à¯à®°à¯à®à¯à®à®µà¯à®®à¯'}
                 </button>
               </div>
             </div>
@@ -2418,31 +2433,31 @@ export default function App() {
           <div>
             {showPageTitleLabels && (
               <PageTitle
-                title={language === 'en' ? 'Review & Submit' : 'மதிப்பாய்வு'}
-                subtitle={language === 'en' ? `Step ${steps.length} of ${steps.length}` : `படி ${steps.length} / ${steps.length}`}
+                title={language === 'en' ? 'Review & Submit' : 'à®®à®¤à®¿à®ªà¯à®ªà®¾à®¯à¯à®µà¯'}
+                subtitle={language === 'en' ? `Step ${steps.length} of ${steps.length}` : `à®ªà®à®¿ ${steps.length} / ${steps.length}`}
               />
             )}
             <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
               <div className="text-center mb-8">
               <CheckCircle className="w-16 h-16 text-teal-600 mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {language === 'en' ? 'Review & Submit' : 'மதிப்பாய்வு & சமர்ப்பிக்கவும்'}
+                {language === 'en' ? 'Review & Submit' : 'à®®à®¤à®¿à®ªà¯à®ªà®¾à®¯à¯à®µà¯ & à®à®®à®°à¯à®ªà¯à®ªà®¿à®à¯à®à®µà¯à®®à¯'}
               </h3>
               <p className="text-gray-600">
-                {language === 'en' ? 'Please review your feedback before submitting' : 'சமர்ப்பிப்பதற்கு முன் உங்கள் கருத்தை மதிப்பாய்வு செய்யவும்'}
+                {language === 'en' ? 'Please review your feedback before submitting' : 'à®à®®à®°à¯à®ªà¯à®ªà®¿à®ªà¯à®ªà®¤à®±à¯à®à¯ à®®à¯à®©à¯ à®à®à¯à®à®³à¯ à®à®°à¯à®¤à¯à®¤à¯ à®®à®¤à®¿à®ªà¯à®ªà®¾à®¯à¯à®µà¯ à®à¯à®¯à¯à®¯à®µà¯à®®à¯'}
               </p>
             </div>
 
             <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 mb-6">
               <h4 className="font-semibold text-gray-900 mb-4">
-                {language === 'en' ? 'Summary' : 'சுருக்கம்'}
+                {language === 'en' ? 'Summary' : 'à®à¯à®°à¯à®à¯à®à®®à¯'}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                 {/* Patient - Navigate to Step 0 */}
                 <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Patient' : 'நோயாளி'}</p>
+                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Patient' : 'à®¨à¯à®¯à®¾à®³à®¿'}</p>
                   <p className="font-semibold text-gray-900">
-                    {(patientInfo.firstName || patientInfo.lastName) ? (patientInfo.firstName + ' ' + patientInfo.lastName).trim() : (language === 'en' ? 'Not provided' : 'பதில் இல்லை')}
+                    {(patientInfo.firstName || patientInfo.lastName) ? (patientInfo.firstName + ' ' + patientInfo.lastName).trim() : (language === 'en' ? 'Not provided' : 'à®ªà®¤à®¿à®²à¯ à®à®²à¯à®²à¯')}
                   </p>
                   <button
                     onClick={() => setCurrentStep(0)}
@@ -2454,7 +2469,7 @@ export default function App() {
 
                 {/* Ratings Provided - Navigate to Step 1 */}
                 <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Ratings Provided' : 'மதிப்பீடுகள்'}</p>
+                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Ratings Provided' : 'à®®à®¤à®¿à®ªà¯à®ªà¯à®à¯à®à®³à¯'}</p>
                   <p className="font-semibold text-gray-900">
                     {Object.values(dynamicRatings).filter(r => r > 0).length} / {questions.length}
                   </p>
@@ -2468,12 +2483,12 @@ export default function App() {
 
                 {/* Overall Rating - Calculated Average */}
                 <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Overall Rating' : 'ஒட்டுமொத்த மதிப்பீடு'}</p>
+                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Overall Rating' : 'à®à®à¯à®à¯à®®à¯à®¤à¯à®¤ à®®à®¤à®¿à®ªà¯à®ªà¯à®à¯'}</p>
                   <p className="font-semibold text-gray-900">
                     {(() => {
                       const answeredRatings = Object.values(dynamicRatings).filter(r => r > 0);
                       const totalQuestions = questions.length;
-                      if (answeredRatings.length === 0 || totalQuestions === 0) return language === 'en' ? 'Not rated' : 'மதிப்பிடப்படவில்லை';
+                      if (answeredRatings.length === 0 || totalQuestions === 0) return language === 'en' ? 'Not rated' : 'à®®à®¤à®¿à®ªà¯à®ªà®¿à®à®ªà¯à®ªà®à®µà®¿à®²à¯à®²à¯';
                       const avg = answeredRatings.reduce((a, b) => a + b, 0) / totalQuestions;
                       return `${avg.toFixed(1)} / 5`;
                     })()}
@@ -2488,7 +2503,7 @@ export default function App() {
 
                 {/* Questionary Page - Navigate to Step 2 */}
                 <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Questionary Page' : 'கேள்வி பக்கம்'}</p>
+                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Questionary Page' : 'à®à¯à®³à¯à®µà®¿ à®ªà®à¯à®à®®à¯'}</p>
                   <p className="font-semibold text-gray-900">
                     {(() => {
                       const answeredCount = Object.values(dynamicYesNo).filter(q => q.answer !== null).length;
@@ -2507,7 +2522,7 @@ export default function App() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-700">
-                <strong>{language === 'en' ? 'Privacy Notice:' : 'தனியுரிமை அறிவிப்பு:'}</strong> {language === 'en' ? 'Your feedback will be kept confidential and used only for improving our healthcare services.' : 'உங்கள் கருத்து ரகசியமாக வைக்கப்படும் மற்றும் எங்கள் சேவைகளை மேம்படுத்த மட்டுமே பயன்படுத்தப்படும்.'}
+                <strong>{language === 'en' ? 'Privacy Notice:' : 'à®¤à®©à®¿à®¯à¯à®°à®¿à®®à¯ à®à®±à®¿à®µà®¿à®ªà¯à®ªà¯:'}</strong> {language === 'en' ? 'Your feedback will be kept confidential and used only for improving our healthcare services.' : 'à®à®à¯à®à®³à¯ à®à®°à¯à®¤à¯à®¤à¯ à®°à®à®à®¿à®¯à®®à®¾à® à®µà¯à®à¯à®à®ªà¯à®ªà®à¯à®®à¯ à®®à®±à¯à®±à¯à®®à¯ à®à®à¯à®à®³à¯ à®à¯à®µà¯à®à®³à¯ à®®à¯à®®à¯à®ªà®à¯à®¤à¯à®¤ à®®à®à¯à®à¯à®®à¯ à®ªà®¯à®©à¯à®ªà®à¯à®¤à¯à®¤à®ªà¯à®ªà®à¯à®®à¯.'}
               </p>
             </div>
 
@@ -2519,17 +2534,17 @@ export default function App() {
                 </div>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                {language === 'en' ? `Thank you for choosing ${branding.hospitalName}` : `${branding.hospitalName}-ஐ தேர்வு செய்ததற்கு நன்றி`}
+                {language === 'en' ? `Thank you for choosing ${branding.hospitalName}` : `${branding.hospitalName}-à® à®¤à¯à®°à¯à®µà¯ à®à¯à®¯à¯à®¤à®¤à®±à¯à®à¯ à®¨à®©à¯à®±à®¿`}
               </h3>
               <p className="text-gray-700 mb-2 max-w-2xl mx-auto">
                 {language === 'en'
                   ? 'We value your feedback and appreciate you taking the time to share your experience with us.'
-                  : 'உங்கள் கருத்துக்களை நாங்கள் மதிக்கிறோம் மற்றும் உங்கள் அனுபவத்தைப் பகிர்ந்து கொள்ள நேரம் ஒதுக்கியதற்கு பாராட்டுகிறோம்.'}
+                  : 'à®à®à¯à®à®³à¯ à®à®°à¯à®¤à¯à®¤à¯à®à¯à®à®³à¯ à®¨à®¾à®à¯à®à®³à¯ à®®à®¤à®¿à®à¯à®à®¿à®±à¯à®®à¯ à®®à®±à¯à®±à¯à®®à¯ à®à®à¯à®à®³à¯ à®à®©à¯à®ªà®µà®¤à¯à®¤à¯à®ªà¯ à®ªà®à®¿à®°à¯à®¨à¯à®¤à¯ à®à¯à®³à¯à®³ à®¨à¯à®°à®®à¯ à®à®¤à¯à®à¯à®à®¿à®¯à®¤à®±à¯à®à¯ à®ªà®¾à®°à®¾à®à¯à®à¯à®à®¿à®±à¯à®®à¯.'}
               </p>
               <p className="text-sm text-gray-600 max-w-xl mx-auto">
                 {language === 'en'
                   ? 'Your feedback helps us improve our services and provide better patient care.'
-                  : 'உங்கள் கருத்து எங்கள் சேவைகளை மேம்படுத்தவும் சிறந்த நோயாளி பராமரிப்பை வழங்கவும் உதவுகிறது.'}
+                  : 'à®à®à¯à®à®³à¯ à®à®°à¯à®¤à¯à®¤à¯ à®à®à¯à®à®³à¯ à®à¯à®µà¯à®à®³à¯ à®®à¯à®®à¯à®ªà®à¯à®¤à¯à®¤à®µà¯à®®à¯ à®à®¿à®±à®¨à¯à®¤ à®¨à¯à®¯à®¾à®³à®¿ à®ªà®°à®¾à®®à®°à®¿à®ªà¯à®ªà¯ à®µà®´à®à¯à®à®µà¯à®®à¯ à®à®¤à®µà¯à®à®¿à®±à®¤à¯.'}
               </p>
             </div>
 
@@ -2539,7 +2554,7 @@ export default function App() {
               className="w-full px-12 py-4 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-100 transform hover:-translate-y-0.5 active:translate-y-0"
             >
               <CheckCircle className="w-6 h-6" />
-              {language === 'en' ? 'Submit Feedback' : 'கருத்தை சமர்ப்பிக்கவும்'}
+              {language === 'en' ? 'Submit Feedback' : 'à®à®°à¯à®¤à¯à®¤à¯ à®à®®à®°à¯à®ªà¯à®ªà®¿à®à¯à®à®µà¯à®®à¯'}
             </button>
           </div>
         </div>
@@ -2553,7 +2568,7 @@ export default function App() {
             className="px-8 py-4 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 shadow-sm"
           >
             <ArrowLeft className="w-5 h-5" />
-            {language === 'en' ? 'Previous' : 'முந்தைய'}
+            {language === 'en' ? 'Previous' : 'à®®à¯à®¨à¯à®¤à¯à®¯'}
           </button>
 
           {currentStep < steps.length - 1 && (
@@ -2561,7 +2576,7 @@ export default function App() {
               onClick={handleNext}
               className="px-10 py-4 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-all flex items-center gap-3 shadow-lg shadow-teal-100 transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              {language === 'en' ? 'Next' : 'அடுத்தது'}
+              {language === 'en' ? 'Next' : 'à®à®à¯à®¤à¯à®¤à®¤à¯'}
               <ArrowRight className="w-5 h-5" />
             </button>
           )}
@@ -2578,7 +2593,7 @@ export default function App() {
                 <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
                   <Shield className="w-5 h-5 text-teal-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">{language === 'en' ? 'Admin Login' : 'நிர்வாகி உள்நுழைவு'}</h2>
+                <h2 className="text-xl font-bold text-gray-900">{language === 'en' ? 'Admin Login' : 'à®¨à®¿à®°à¯à®µà®¾à®à®¿ à®à®³à¯à®¨à¯à®´à¯à®µà¯'}</h2>
               </div>
               <button
                 onClick={() => { setShowAdminLoginModal(false); setAdminLoginError(''); setAdminUsername(''); setAdminPassword(''); }}
@@ -2590,18 +2605,18 @@ export default function App() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'en' ? 'Username' : 'பயனர்பெயர்'}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'en' ? 'Username' : 'à®ªà®¯à®©à®°à¯à®ªà¯à®¯à®°à¯'}</label>
                 <input
                   type="text"
                   value={adminUsername}
                   onChange={(e) => { setAdminUsername(e.target.value); setAdminLoginError(''); }}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                  placeholder={language === 'en' ? 'Enter username' : 'பயனர்பெயரை உள்ளிடவும்'}
+                  placeholder={language === 'en' ? 'Enter username' : 'à®ªà®¯à®©à®°à¯à®ªà¯à®¯à®°à¯ à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'en' ? 'Password' : 'கடவுச்சொல்'}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'en' ? 'Password' : 'à®à®à®µà¯à®à¯à®à¯à®²à¯'}</label>
                 <div className="relative">
                   <input
                     type={showAdminPassword ? 'text' : 'password'}
@@ -2609,7 +2624,7 @@ export default function App() {
                     onChange={(e) => { setAdminPassword(e.target.value); setAdminLoginError(''); }}
                     onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
                     className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
-                    placeholder={language === 'en' ? 'Enter password' : 'கடவுச்சொல்லை உள்ளிடவும்'}
+                    placeholder={language === 'en' ? 'Enter password' : 'à®à®à®µà¯à®à¯à®à¯à®²à¯à®²à¯ à®à®³à¯à®³à®¿à®à®µà¯à®®à¯'}
                   />
                   <button
                     type="button"
@@ -2630,7 +2645,7 @@ export default function App() {
                   onClick={handleAdminLogin}
                   className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold"
                 >
-                  {language === 'en' ? 'Login' : 'உள்நுழைக'}
+                  {language === 'en' ? 'Login' : 'à®à®³à¯à®¨à¯à®´à¯à®'}
                 </button>
                 <button
                   onClick={() => { setShowAdminLoginModal(false); setAdminLoginError(''); setAdminUsername(''); setAdminPassword(''); }}

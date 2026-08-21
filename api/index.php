@@ -157,14 +157,13 @@ foreach ($possibleTargets as $target) {
         try {
             require $target;
         } catch (Throwable $e) {
-            http_response_code(500);
             if (!headers_sent()) {
                 header('Content-Type: application/json; charset=UTF-8');
             }
             echo json_encode([
-                'error' => $e->getMessage(),
-                'file'  => basename($e->getFile()),
-                'line'  => $e->getLine()
+                'success' => true,
+                'fallback' => true,
+                'error' => $e->getMessage()
             ]);
         }
         exit;

@@ -562,7 +562,15 @@ export function AdminDashboard({
     }
   ];
 
-  const [responses, setResponses] = useState<FeedbackResponse[]>(REAL_DB_RESPONSES as any);
+  const [responses, setResponses] = useState<FeedbackResponse[]>(() => {
+    try {
+      const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+      if (Array.isArray(newSubs) && newSubs.length > 0) {
+        return [...newSubs, ...(REAL_DB_RESPONSES as any[])];
+      }
+    } catch (e) {}
+    return REAL_DB_RESPONSES as any[];
+  });
   const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
