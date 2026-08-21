@@ -145,7 +145,7 @@ interface SortableQuestionCardProps {
   handleEditQuestion: (q: Question) => void;
   handleDeleteQuestion: (id: string) => void;
   questions: Question[];
-  setQuestions: (q: Question[]) => void;
+  updateQuestions: (q: Question[]) => void;
   showColorPicker: string | null;
   setShowColorPicker: (id: string | null) => void;
 }
@@ -155,7 +155,7 @@ function SortableQuestionCard({
   handleEditQuestion,
   handleDeleteQuestion,
   questions,
-  setQuestions,
+  updateQuestions,
   showColorPicker,
   setShowColorPicker
 }: SortableQuestionCardProps) {
@@ -252,9 +252,7 @@ function SortableQuestionCard({
               const updatedQuestions = questions.map(q =>
                 q.id === question.id ? { ...q, ratingMode: e.target.value as 'emoji' | 'star' } : q
               );
-              setQuestions(updatedQuestions);
-              try { localStorage.setItem('hms_saved_questions', JSON.stringify(updatedQuestions)); } catch (e) {}
-              onQuestionsChange?.(updatedQuestions);
+              updateQuestions(updatedQuestions);
             }}
             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
           >
@@ -282,9 +280,7 @@ function SortableQuestionCard({
                         const updatedQuestions = questions.map(q =>
                           q.id === question.id ? { ...q, backgroundColor: color } : q
                         );
-                        setQuestions(updatedQuestions);
-                        try { localStorage.setItem('hms_saved_questions', JSON.stringify(updatedQuestions)); } catch (e) {}
-                        onQuestionsChange?.(updatedQuestions);
+                        updateQuestions(updatedQuestions);
                       }}
                       className="w-6 h-6 rounded border border-gray-200 hover:scale-110 transition-transform"
                       style={{ backgroundColor: color }}
@@ -296,9 +292,7 @@ function SortableQuestionCard({
                     const updatedQuestions = questions.map(q =>
                       q.id === question.id ? { ...q, backgroundColor: undefined } : q
                     );
-                    setQuestions(updatedQuestions);
-                    try { localStorage.setItem('hms_saved_questions', JSON.stringify(updatedQuestions)); } catch (e) {}
-                    onQuestionsChange?.(updatedQuestions);
+                    updateQuestions(updatedQuestions);
                     setShowColorPicker(null);
                   }}
                   className="text-xs text-teal-600 hover:text-teal-700 font-medium"
@@ -1799,16 +1793,7 @@ export function AdminDashboard({
                         <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
                           <div className={layoutMode === '2-column' ? 'grid grid-cols-1 md:grid-cols-2 gap-4 pb-20' : 'space-y-4 pb-20'}>
                             {questions.map((question) => (
-                              <SortableQuestionCard 
-                                key={question.id} 
-                                question={question}
-                                handleEditQuestion={handleEditQuestion}
-                                handleDeleteQuestion={handleDeleteQuestion}
-                                questions={questions}
-                                setQuestions={setQuestions}
-                                showColorPicker={showColorPicker}
-                                setShowColorPicker={setShowColorPicker}
-                              />
+                              <SortableQuestionCard key={question.id} question={question} handleEditQuestion={handleEditQuestion} handleDeleteQuestion={handleDeleteQuestion} questions={questions} updateQuestions={updateQuestions} showColorPicker={showColorPicker} setShowColorPicker={setShowColorPicker} />
                             ))}
                           </div>
                         </SortableContext>
