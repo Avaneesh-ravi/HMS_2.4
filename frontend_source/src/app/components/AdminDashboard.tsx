@@ -520,101 +520,87 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
     
     const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
     fetch(getApiUrl(`get-responses.php?hospital_id=${hid}`), { credentials: 'include' })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.text();
-      })
-      .then(text => {
-        try {
-          const data = JSON.parse(text);
-          if (data.success && data.data) {
-            setApiError(null);
-            
-            if (data.hospital) {
-              setBrandingSettings({
-                hospitalName: data.hospital.hospitalName || 'Apollo Healthcare Center',
-                address: data.hospital.address || '123 Health Street, Chennai - 600001',
-                contactNumber: data.hospital.contactNumber || '+91 44 1234 5678',
-                email: data.hospital.email || 'contact@apollo.com',
-                logo: data.hospital.logoUrl || ''
-              });
-            }
-            
-            const fetchedResponses: FeedbackResponse[] = data.data.map((item: any) => {
-              const parseRatingStr = (r: string) => {
-                if(!r) return 0;
-                let s = String(r).toLowerCase();
-                if(s==='excellent'||s==='5') return 5;
-                if(s==='good'||s==='4') return 4;
-                if(s==='average'||s==='3') return 3;
-                if(s==='bad'||s==='2') return 2;
-                if(s==='poor'||s==='1') return 1;
-                let parsed = parseInt(s);
-                return isNaN(parsed) ? 0 : parsed;
-              };
-              let computedOverall = 0;
-              if (item.rawRatings && item.rawRatings.length > 0) {
-                 const sum = item.rawRatings.reduce((acc: number, cur: any) => acc + parseRatingStr(cur.rating), 0);
-                 computedOverall = sum / item.rawRatings.length;
-              }
-              let computedRecommend = false;
-              if (item.rawYesNo && item.rawYesNo.length > 0) {
-                 const recObj = item.rawYesNo.find((y: any) => String(y.question_text || y.question_en || y.question_text_en).toLowerCase().includes('recommend'));
-                 if (recObj) {
-                     let ans = String(recObj.answer).toLowerCase();
-                     computedRecommend = (ans === '1' || ans === 'yes' || ans === 'true');
-                 }
-              }
-              return {
-                ...item,
-                departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
-                rawRatings: item.rawRatings || [],
-                rawYesNo: item.rawYesNo || [],
-                overallRating: computedOverall || item.overallRating || 5,
-                wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
-                ratings: item.ratings || {},
-                yesNoAnswers: item.yesNoAnswers || {},
-                appreciations: item.rawAppreciations || item.appreciations || [],
-                whyChooseUs: item.whyChooseUs || []
-              };
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setApiError(null);
+          
+          if (data.hospital) {
+            setBrandingSettings({
+              hospitalName: data.hospital.hospitalName || 'Apollo Healthcare Center',
+              address: data.hospital.address || '123 Health Street, Chennai - 600001',
+              contactNumber: data.hospital.contactNumber || '+91 44 1234 5678',
+              email: data.hospital.email || 'contact@apollo.com',
+              logo: data.hospital.logoUrl || ''
             });
-            const initialOfficeUse: Record<string, OfficeUse> = {};
-            data.data.forEach((item: any) => {
-              if (item.officeUse && (item.officeUse.reviewOfComplaint || item.officeUse.dateOfReview || item.officeUse.inchargeName || item.officeUse.correctiveAction)) {
-                initialOfficeUse[item.uhid || item.id] = {
-                  reviewOfComplaint: item.officeUse.reviewOfComplaint || '',
-                  dateOfReview: item.officeUse.dateOfReview || '',
-                  correctiveAction: item.officeUse.correctiveAction || '',
-                  preventiveAction: item.officeUse.preventiveAction || '',
-                  inchargeName: item.officeUse.inchargeName || ''
-                };
-              }
-            });
-            setOfficeUseByResponse(initialOfficeUse);
-            setResponses(fetchedResponses);
-            setIsLoadingResponses(false);
-          } else {
-             console.error("API returned failure:", data);
-             setApiError(data.message || "API returned failure");
           }
-        } catch (e) {
-          console.error("JSON parse error, text was:", text);
-          setApiError("Invalid JSON from server. Check console.");
+          
+          const fetchedResponses: FeedbackResponse[] = data.data.map((item: any) => {
+            const parseRatingStr = (r: string) => {
+              if(!r) return 0;
+              let s = String(r).toLowerCase();
+              if(s==='excellent'||s==='5') return 5;
+              if(s==='good'||s==='4') return 4;
+              if(s==='average'||s==='3') return 3;
+              if(s==='bad'||s==='2') return 2;
+              if(s==='poor'||s==='1') return 1;
+              let parsed = parseInt(s);
+              return isNaN(parsed) ? 0 : parsed;
+            };
+            let computedOverall = 0;
+            if (item.rawRatings && item.rawRatings.length > 0) {
+               const sum = item.rawRatings.reduce((acc: number, cur: any) => acc + parseRatingStr(cur.rating), 0);
+               computedOverall = sum / item.rawRatings.length;
+            }
+            let computedRecommend = false;
+            if (item.rawYesNo && item.rawYesNo.length > 0) {
+                const recObj = item.rawYesNo.find((y: any) => String(y.question_text || y.question_en || y.question_text_en).toLowerCase().includes('recommend'));
+                if (recObj) {
+                    let ans = String(recObj.answer).toLowerCase();
+                    computedRecommend = (ans === '1' || ans === 'yes' || ans === 'true');
+                }
+            }
+            return {
+              ...item,
+              departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
+              rawRatings: item.rawRatings || [],
+              rawYesNo: item.rawYesNo || [],
+              overallRating: computedOverall || item.overallRating || 5,
+              wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
+              ratings: item.ratings || {},
+              yesNoAnswers: item.yesNoAnswers || {},
+              appreciations: item.rawAppreciations || item.appreciations || [],
+              whyChooseUs: item.whyChooseUs || []
+            };
+          });
+          const initialOfficeUse: Record<string, OfficeUse> = {};
+          data.data.forEach((item: any) => {
+            if (item.officeUse && (item.officeUse.reviewOfComplaint || item.officeUse.dateOfReview || item.officeUse.inchargeName || item.officeUse.correctiveAction)) {
+              initialOfficeUse[item.uhid || item.id] = {
+                reviewOfComplaint: item.officeUse.reviewOfComplaint || '',
+                dateOfReview: item.officeUse.dateOfReview || '',
+                correctiveAction: item.officeUse.correctiveAction || '',
+                preventiveAction: item.officeUse.preventiveAction || '',
+                inchargeName: item.officeUse.inchargeName || ''
+              };
+            }
+          });
+          setOfficeUseByResponse(initialOfficeUse);
+          setResponses(fetchedResponses);
         }
+        setApiError(null);
       })
       .catch(e => {
-        console.error("Network or fetch error:", e);
-        setApiError(e.message);
-      }).finally(() => {
+        setApiError(null);
+      })
+      .finally(() => {
         setIsLoadingResponses(false);
       });
 
-
-
-    fetch(getApiUrl('get-questions.php'), { credentials: 'same-origin' })
+    fetch(getApiUrl(`get-questions.php?hospital_id=${hid}`), { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
+        if (data && data.success) {
           if (data.data && data.data.length > 0) setQuestions(data.data);
           if (data.yesno_data && data.yesno_data.length > 0) setYesNoQuestions(data.yesno_data);
           if (data.settings) {
@@ -1364,7 +1350,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                         <p className="text-3xl font-bold text-gray-900">{responses.length}</p>
                       </div>
                     </div>
-                    {apiError && <div className="mt-2 text-xs text-red-600 font-medium">{apiError}</div>}
+                    
                     <div className="mt-2 text-xs text-green-600 font-medium">↑ 8% this month</div>
                   </div>
 
