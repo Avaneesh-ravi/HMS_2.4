@@ -1,6 +1,519 @@
 // Real Database Snapshot synchronized with Supabase PostgreSQL
 export const REAL_DB_RESPONSES = [
   {
+    "id": "96",
+    "uhid": "APL010",
+    "patientName": "Avaneesh R",
+    "date": "21/08/2026",
+    "submittedAt": "2026-08-21T09:43:46.516Z",
+    "visitType": "OP",
+    "departmentId": 1,
+    "departmentName": "Cardiology",
+    "mobile": "9876543210",
+    "email": "avaneesh@example.com",
+    "address": "Erode Medical Street",
+    "city": "Erode",
+    "state": "Tamil Nadu",
+    "pincode": "638001",
+    "country": "India",
+    "opNumber": "OP010",
+    "ipNumber": "",
+    "admissionDate": "",
+    "dischargeDate": "",
+    "overallRating": 5,
+    "wouldRecommend": true,
+    "isProblem": false,
+    "isResolved": false,
+    "suggestions": "Submitted with UHID APL010",
+    "rawRatings": [
+      {
+        "rating_id": "440",
+        "question_id": 30,
+        "patient_id": "105",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T09:43:46.516Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "441",
+        "question_id": 31,
+        "patient_id": "105",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T09:43:46.516Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "442",
+        "question_id": 32,
+        "patient_id": "105",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T09:43:46.516Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "443",
+        "question_id": 33,
+        "patient_id": "105",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T09:43:46.516Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "444",
+        "question_id": 34,
+        "patient_id": "105",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T09:43:46.516Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "445",
+        "question_id": 35,
+        "patient_id": "105",
+        "feedback_form_id": "1",
+        "rating": "5",
+        "created_at": "2026-08-21T09:43:46.516Z",
+        "question_text": "Pharmacy Services "
+      }
+    ],
+    "rawYesNo": [
+      {
+        "yesno_answer_id": "202",
+        "yesno_question_id": "40",
+        "submission_id": "96",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Cleanliness of the hospital environment (Toilets / Other areas) ",
+        "question_ta": "மருத்துவமைனயின் சுற்றுப்புற தூய்ைம (கழிப்பைறகள் /   மற்ற இடங்கள்) ",
+        "question_text": "Cleanliness of the hospital environment (Toilets / Other areas) "
+      },
+      {
+        "yesno_answer_id": "203",
+        "yesno_question_id": "41",
+        "submission_id": "96",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Were you informed about the estimated cost of treatment at   admission counter? ",
+        "question_ta": " நீங்கள் உள்ேநாயாளியாக ேசரும்ேபாது மதிப்பிட்டு   சிகிச்ைசக் கட்டணம் எவ்வளவு ஆகும் என்று   கூறப்பட்டதா? ",
+        "question_text": "Were you informed about the estimated cost of treatment at   admission counter? "
+      },
+      {
+        "yesno_answer_id": "204",
+        "yesno_question_id": "42",
+        "submission_id": "96",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Would you refer (Hospital name)____ to your family  / friends? ",
+        "question_ta": "ருத்துவமைனயின் ேசைவைய   உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும்   பரிந்துைரப்பீர்களா?",
+        "question_text": "Would you refer (Hospital name)____ to your family  / friends? "
+      }
+    ],
+    "rawAppreciations": [],
+    "officeUse": {
+      "status": "Pending",
+      "reviewOfComplaint": "",
+      "dateOfReview": "",
+      "correctiveAction": "",
+      "preventiveAction": "",
+      "inchargeName": ""
+    }
+  },
+  {
+    "id": "95",
+    "uhid": "APL567",
+    "patientName": "Avaneesh Ravi",
+    "date": "21/08/2026",
+    "submittedAt": "2026-08-21T09:43:17.694Z",
+    "visitType": "OP",
+    "departmentId": 1,
+    "departmentName": "Cardiology",
+    "mobile": "+919842951881",
+    "email": "avaneeshravi4084@gmail.com",
+    "address": "5/88,Sulaipudur\r\nMurungatholuvu (po)",
+    "city": "Erode",
+    "state": "Tamil Nadu",
+    "pincode": "638001",
+    "country": "India",
+    "opNumber": "123",
+    "ipNumber": "",
+    "admissionDate": "",
+    "dischargeDate": "",
+    "overallRating": 1,
+    "wouldRecommend": true,
+    "isProblem": false,
+    "isResolved": false,
+    "suggestions": "",
+    "rawRatings": [
+      {
+        "rating_id": "426",
+        "question_id": 27,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Overall Experience"
+      },
+      {
+        "rating_id": "427",
+        "question_id": 30,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "428",
+        "question_id": 31,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "429",
+        "question_id": 32,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "430",
+        "question_id": 33,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "431",
+        "question_id": 34,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "432",
+        "question_id": 35,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Pharmacy Services "
+      },
+      {
+        "rating_id": "433",
+        "question_id": 27,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Overall Experience"
+      },
+      {
+        "rating_id": "434",
+        "question_id": 30,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "435",
+        "question_id": 31,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "436",
+        "question_id": 32,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "437",
+        "question_id": 33,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "438",
+        "question_id": 34,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "439",
+        "question_id": 35,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Pharmacy Services "
+      }
+    ],
+    "rawYesNo": [
+      {
+        "yesno_answer_id": "199",
+        "yesno_question_id": "40",
+        "submission_id": "95",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Cleanliness of the hospital environment (Toilets / Other areas) ",
+        "question_ta": "மருத்துவமைனயின் சுற்றுப்புற தூய்ைம (கழிப்பைறகள் /   மற்ற இடங்கள்) ",
+        "question_text": "Cleanliness of the hospital environment (Toilets / Other areas) "
+      },
+      {
+        "yesno_answer_id": "200",
+        "yesno_question_id": "41",
+        "submission_id": "95",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Were you informed about the estimated cost of treatment at   admission counter? ",
+        "question_ta": " நீங்கள் உள்ேநாயாளியாக ேசரும்ேபாது மதிப்பிட்டு   சிகிச்ைசக் கட்டணம் எவ்வளவு ஆகும் என்று   கூறப்பட்டதா? ",
+        "question_text": "Were you informed about the estimated cost of treatment at   admission counter? "
+      },
+      {
+        "yesno_answer_id": "201",
+        "yesno_question_id": "42",
+        "submission_id": "95",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Would you refer (Hospital name)____ to your family  / friends? ",
+        "question_ta": "ருத்துவமைனயின் ேசைவைய   உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும்   பரிந்துைரப்பீர்களா?",
+        "question_text": "Would you refer (Hospital name)____ to your family  / friends? "
+      }
+    ],
+    "rawAppreciations": [],
+    "officeUse": {
+      "status": "Pending",
+      "reviewOfComplaint": "",
+      "dateOfReview": "",
+      "correctiveAction": "",
+      "preventiveAction": "",
+      "inchargeName": ""
+    }
+  },
+  {
+    "id": "94",
+    "uhid": "APL567",
+    "patientName": "Avaneesh Ravi",
+    "date": "21/08/2026",
+    "submittedAt": "2026-08-21T09:43:13.947Z",
+    "visitType": "OP",
+    "departmentId": 1,
+    "departmentName": "Cardiology",
+    "mobile": "+919842951881",
+    "email": "avaneeshravi4084@gmail.com",
+    "address": "5/88,Sulaipudur\r\nMurungatholuvu (po)",
+    "city": "Erode",
+    "state": "Tamil Nadu",
+    "pincode": "638001",
+    "country": "India",
+    "opNumber": "123",
+    "ipNumber": "",
+    "admissionDate": "",
+    "dischargeDate": "",
+    "overallRating": 1,
+    "wouldRecommend": true,
+    "isProblem": false,
+    "isResolved": false,
+    "suggestions": "",
+    "rawRatings": [
+      {
+        "rating_id": "426",
+        "question_id": 27,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Overall Experience"
+      },
+      {
+        "rating_id": "427",
+        "question_id": 30,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "428",
+        "question_id": 31,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "429",
+        "question_id": 32,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "430",
+        "question_id": 33,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "431",
+        "question_id": 34,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "432",
+        "question_id": 35,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:13.947Z",
+        "question_text": "Pharmacy Services "
+      },
+      {
+        "rating_id": "433",
+        "question_id": 27,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Overall Experience"
+      },
+      {
+        "rating_id": "434",
+        "question_id": 30,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Responsiveness at Reception "
+      },
+      {
+        "rating_id": "435",
+        "question_id": 31,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Admission Process"
+      },
+      {
+        "rating_id": "436",
+        "question_id": 32,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": " Billing Services"
+      },
+      {
+        "rating_id": "437",
+        "question_id": 33,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Doctor's Treatment "
+      },
+      {
+        "rating_id": "438",
+        "question_id": 34,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": " Nursing Care"
+      },
+      {
+        "rating_id": "439",
+        "question_id": 35,
+        "patient_id": "103",
+        "feedback_form_id": "1",
+        "rating": "1",
+        "created_at": "2026-08-21T09:43:17.694Z",
+        "question_text": "Pharmacy Services "
+      }
+    ],
+    "rawYesNo": [
+      {
+        "yesno_answer_id": "196",
+        "yesno_question_id": "40",
+        "submission_id": "94",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Cleanliness of the hospital environment (Toilets / Other areas) ",
+        "question_ta": "மருத்துவமைனயின் சுற்றுப்புற தூய்ைம (கழிப்பைறகள் /   மற்ற இடங்கள்) ",
+        "question_text": "Cleanliness of the hospital environment (Toilets / Other areas) "
+      },
+      {
+        "yesno_answer_id": "197",
+        "yesno_question_id": "41",
+        "submission_id": "94",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Were you informed about the estimated cost of treatment at   admission counter? ",
+        "question_ta": " நீங்கள் உள்ேநாயாளியாக ேசரும்ேபாது மதிப்பிட்டு   சிகிச்ைசக் கட்டணம் எவ்வளவு ஆகும் என்று   கூறப்பட்டதா? ",
+        "question_text": "Were you informed about the estimated cost of treatment at   admission counter? "
+      },
+      {
+        "yesno_answer_id": "198",
+        "yesno_question_id": "42",
+        "submission_id": "94",
+        "answer": 1,
+        "remarks": null,
+        "question_en": "Would you refer (Hospital name)____ to your family  / friends? ",
+        "question_ta": "ருத்துவமைனயின் ேசைவைய   உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும்   பரிந்துைரப்பீர்களா?",
+        "question_text": "Would you refer (Hospital name)____ to your family  / friends? "
+      }
+    ],
+    "rawAppreciations": [],
+    "officeUse": {
+      "status": "Pending",
+      "reviewOfComplaint": "",
+      "dateOfReview": "",
+      "correctiveAction": "",
+      "preventiveAction": "",
+      "inchargeName": ""
+    }
+  },
+  {
     "id": "93",
     "uhid": "APL123",
     "patientName": "Avaneesh R",
