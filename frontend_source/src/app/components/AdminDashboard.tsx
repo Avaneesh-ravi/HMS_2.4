@@ -1,5 +1,5 @@
 import { REAL_DB_RESPONSES, REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from '../real_db_data';
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   Home, Image, Layout, MessageSquare, Settings, ChevronLeft, ChevronRight,
   Upload, Save, Filter, Download, Star, Smile, ArrowUpDown,
@@ -7,7 +7,7 @@ import {
   Hospital, User, TrendingUp, ThumbsUp, Pencil, Columns2, RectangleVertical,
   Building2, UserCircle, CreditCard, Stethoscope, Users, Pill, Activity,
   Shield, Utensils, HeartPulse, Droplet, Sparkles, Lock, Calendar, UserCircle2,
-  Printer, Search, CheckCircle2, ChevronUp, ChevronDown, HelpCircle, BarChart3, Award
+  Printer, Search, CheckCircle2, ChevronUp, ChevronDown, HelpCircle, BarChart3, Award, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
