@@ -289,8 +289,20 @@ export default function App() {
     '42': { answer: null, remarks: '' }
   });
 
-  const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>('2-column');
-  const [combinePages, setCombinePages] = useState<boolean>(false);
+  const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>(() => {
+    try {
+      const saved = localStorage.getItem('hms_layout_mode');
+      if (saved === '1-column' || saved === '2-column') return saved;
+    } catch (e) {}
+    return '2-column';
+  });
+  const [combinePages, setCombinePages] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('hms_combine_pages');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
+    return false;
+  });
   const [themeColor, setThemeColor] = useState<string>('#0d9488');
   const [fontSize, setFontSize] = useState<string>('Normal');
   const [showPageTitleLabels, setShowPageTitleLabels] = useState<boolean>(true);
@@ -1053,10 +1065,17 @@ export default function App() {
         onLogout={() => {
           setShowAdminDashboard(false);
           setIsAdminLoggedIn(false);
+          localStorage.removeItem('is_admin_logged_in');
+          localStorage.removeItem('admin_user');
+          setSelectedHospital(null);
           if (isDashboardPage) {
             window.location.href = 'login.php';
+          } else {
+            window.location.href = window.location.origin + window.location.pathname;
           }
         }}
+        onLayoutModeChange={(mode) => setLayoutMode(mode)}
+        onCombinePagesChange={(combine) => setCombinePages(combine)}
         onBrandingUpdate={setBranding}
         currentBranding={branding}
       />

@@ -308,7 +308,7 @@ function SortableQuestionCard({
   );
 }
 
-export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBranding }: AdminDashboardProps) {
+export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, onLayoutModeChange, onCombinePagesChange, currentBranding }: AdminDashboardProps) {
   const [activeSection, setActiveSection] = useState<SidebarItem>('overview');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
@@ -359,10 +359,22 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
   const [officeUseByResponse, setOfficeUseByResponse] = useState<Record<string, OfficeUse>>({});
   const [officeUseModalResponse, setOfficeUseModalResponse] = useState<FeedbackResponse | null>(null);
   const [officeUseModalData, setOfficeUseModalData] = useState<OfficeUse>({ reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
-  const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>('2-column');
+  const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>(() => {
+    try {
+      const saved = localStorage.getItem('hms_layout_mode');
+      if (saved === '1-column' || saved === '2-column') return saved;
+    } catch (e) {}
+    return '2-column';
+  });
   const [yesNoLayoutMode, setYesNoLayoutMode] = useState<'2-column' | '1-column'>('2-column');
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, boolean | null>>({});
-  const [combinePages, setCombinePages] = useState<boolean>(false);
+  const [combinePages, setCombinePages] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('hms_combine_pages');
+      if (saved !== null) return saved === 'true';
+    } catch (e) {}
+    return false;
+  });
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
 
   const [themeColor, setThemeColor] = useState<string>('#0d9488');
@@ -1693,10 +1705,15 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                           {/* Layout Toggle */}
                           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                             <button
-                              onClick={() => setLayoutMode('2-column')}
+                              onClick={() => {
+                                setLayoutMode('2-column');
+                                localStorage.setItem('hms_layout_mode', '2-column');
+                                onLayoutModeChange?.('2-column');
+                                toast.success('Layout set to 2 Columns');
+                              }}
                               className={`flex items-center gap-2 px-3 py-2 rounded-md font-semibold text-xs transition-all ${
                                 layoutMode === '2-column'
-                                  ? 'bg-teal-600 text-white'
+                                  ? 'bg-teal-600 text-white shadow-sm'
                                   : 'text-gray-600 hover:bg-gray-200'
                               }`}
                               title="2 Column"
@@ -1705,10 +1722,15 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                               2 Column
                             </button>
                             <button
-                              onClick={() => setLayoutMode('1-column')}
+                              onClick={() => {
+                                setLayoutMode('1-column');
+                                localStorage.setItem('hms_layout_mode', '1-column');
+                                onLayoutModeChange?.('1-column');
+                                toast.success('Layout set to 1 Column');
+                              }}
                               className={`flex items-center gap-2 px-3 py-2 rounded-md font-semibold text-xs transition-all ${
                                 layoutMode === '1-column'
-                                  ? 'bg-teal-600 text-white'
+                                  ? 'bg-teal-600 text-white shadow-sm'
                                   : 'text-gray-600 hover:bg-gray-200'
                               }`}
                               title="1 Column"
@@ -1849,7 +1871,13 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                               type="checkbox" 
                               className="sr-only peer" 
                               checked={combinePages}
-                              onChange={(e) => setCombinePages(e.target.checked)}
+                              onChange={(e) => {
+                                const val = e.target.checked;
+                                setCombinePages(val);
+                                localStorage.setItem('hms_combine_pages', String(val));
+                                onCombinePagesChange?.(val);
+                                toast.success(val ? 'Service Feedback and Questionary pages combined' : 'Service Feedback and Questionary pages separated');
+                              }}
                             />
                             <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
                           </label>
