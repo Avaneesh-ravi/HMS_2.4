@@ -1273,15 +1273,44 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
         {/* Bottom Section */}
         <div className="p-4 space-y-2 border-t border-white/20">
           <button
-            onClick={onClose}
-            className={`w-full text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-colors text-sm flex items-center gap-2 ${sidebarCollapsed ? 'justify-center' : ''}`}
+            onClick={() => {
+              if (onClose) {
+                onClose();
+              } else {
+                const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+                const p = window.location.pathname;
+                let formUrl = `../../frontend/feedback-form.php?hospital_id=${hid}`;
+                if (p.includes('api/frontend')) {
+                  formUrl = `feedback-form.php?hospital_id=${hid}`;
+                } else if (!p.includes('api/backend/admin')) {
+                  formUrl = `api/frontend/feedback-form.php?hospital_id=${hid}`;
+                }
+                window.location.href = formUrl;
+              }
+            }}
+            className={`w-full text-white px-4 py-2 rounded-lg hover:bg-white/10 transition-colors text-sm flex items-center gap-2 cursor-pointer ${sidebarCollapsed ? 'justify-center' : ''}`}
+            title="Return to Feedback Form"
           >
             <ChevronLeft className="w-4 h-4 flex-shrink-0" />
             {!sidebarCollapsed && 'Back to Form'}
           </button>
           <button
-            onClick={onLogout}
-            className={`w-full bg-red-500/20 text-white px-4 py-2 rounded-lg hover:bg-red-500/30 transition-colors text-sm flex items-center gap-2 ${sidebarCollapsed ? 'justify-center' : ''}`}
+            onClick={() => {
+              if (onLogout) {
+                onLogout();
+              } else {
+                const p = window.location.pathname;
+                if (p.includes('api/backend/admin')) {
+                  window.location.href = 'logout.php';
+                } else if (p.includes('api/frontend')) {
+                  window.location.href = '../backend/admin/login.php';
+                } else {
+                  window.location.href = 'api/backend/admin/login.php';
+                }
+              }
+            }}
+            className={`w-full bg-red-500/20 text-white px-4 py-2 rounded-lg hover:bg-red-500/30 transition-colors text-sm flex items-center gap-2 cursor-pointer ${sidebarCollapsed ? 'justify-center' : ''}`}
+            title="Logout to Hospital Login"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
             {!sidebarCollapsed && 'Logout'}
@@ -1426,32 +1455,7 @@ export function AdminDashboard({ onClose, onLogout, onBrandingUpdate, currentBra
                     </div>
 
                     <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Hospital Logo</label>
-                        <div className="flex items-center gap-4">
-                          <div className="w-24 h-24 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden border-2 border-gray-200">
-                            {logoPreview ? (
-                              <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
-                            ) : (
-                              <Image className="w-8 h-8 text-gray-400" />
-                            )}
-                          </div>
-                          <input
-                            ref={logoInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                          />
-                          <button
-                            onClick={handleLogoClick}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-all transform hover:scale-105"
-                          >
-                            <Upload className="w-4 h-4" />
-                            Upload Logo
-                          </button>
-                        </div>
-                      </div>
+
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Hospital Name</label>

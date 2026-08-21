@@ -8,5 +8,5 @@ setcookie('hms_admin_auth', '', time() - 3600, '/');
 setcookie('hms_admin_token', '', time() - 3600, '/');
 setcookie('hms_hospital_id', '', time() - 3600, '/');
 
-header('Location: ../../../frontend/index.html');
+header('Location: login.php');
 exit;

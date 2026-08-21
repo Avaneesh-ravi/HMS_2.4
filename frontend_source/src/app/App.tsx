@@ -900,19 +900,24 @@ export default function App() {
     return (
       <AdminDashboard
         onClose={() => {
-          if (isDashboardPage) {
-            const hid = (window as any).ADMIN_HOSPITAL_ID;
-            const destUrl = hid ? `../../frontend/patient-login.php?hospital_id=${hid}` : '../../frontend/patient-login.php';
-            window.location.href = destUrl;
-          } else {
-            setShowAdminDashboard(false);
+          const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+          const p = window.location.pathname;
+          let formUrl = `../../frontend/feedback-form.php?hospital_id=${hid}`;
+          if (p.includes('api/frontend')) {
+            formUrl = `feedback-form.php?hospital_id=${hid}`;
+          } else if (!p.includes('api/backend/admin')) {
+            formUrl = `api/frontend/feedback-form.php?hospital_id=${hid}`;
           }
+          window.location.href = formUrl;
         }}
         onLogout={() => {
-          if (isDashboardPage) {
+          const p = window.location.pathname;
+          if (p.includes('api/backend/admin')) {
             window.location.href = 'logout.php';
+          } else if (p.includes('api/frontend')) {
+            window.location.href = '../backend/admin/login.php';
           } else {
-            handleAdminLogout();
+            window.location.href = 'api/backend/admin/login.php';
           }
         }}
         onBrandingUpdate={setBranding}
