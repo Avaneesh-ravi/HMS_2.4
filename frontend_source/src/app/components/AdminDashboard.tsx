@@ -574,7 +574,10 @@ export function AdminDashboard({
   const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [isRefreshingResponses, setIsRefreshingResponses] = useState<boolean>(false);
+
+  const fetchResponses = useCallback(() => {
+    setIsRefreshingResponses(true);
     const getApiUrl = (endpoint: string) => {
       const p = window.location.pathname;
       if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
@@ -661,7 +664,7 @@ export function AdminDashboard({
           } catch (e) {}
           setResponses(finalResponses);
         } else {
-          // If no data from API, keep local new submissions merged with DB snapshot
+          // If no data from API, merge localStorage submissions with DB snapshot
           try {
             const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
             if (Array.isArray(newSubs) && newSubs.length > 0) {
@@ -686,8 +689,36 @@ export function AdminDashboard({
       })
       .finally(() => {
         setIsLoadingResponses(false);
+        setIsRefreshingResponses(false);
       });
+  }, []);
 
+  useEffect(() => {
+    fetchResponses();
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'hms_new_submissions') {
+        fetchResponses();
+      }
+    };
+    const handleFocus = () => {
+      fetchResponses();
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchResponses]);
+
+  useEffect(() => {
+    const getApiUrl = (endpoint: string) => {
+      const p = window.location.pathname;
+      if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+      if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+      return `../api/backend/ajax/${endpoint}`;
+    };
+    const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
     fetch(getApiUrl(`get-questions.php?hospital_id=${hid}`), { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
@@ -1446,7 +1477,17 @@ export function AdminDashboard({
             {/* Overview Section */}
             {activeSection === 'overview' && (
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-8">Dashboard Overview</h2>
+                <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+                  <h2 className="text-3xl font-bold text-gray-900">Dashboard Overview</h2>
+                  <button
+                    onClick={() => { fetchResponses(); toast.success('Dashboard refreshed'); }}
+                    disabled={isRefreshingResponses}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-sm font-medium rounded-xl shadow-sm transition-all disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRefreshingResponses ? 'animate-spin' : ''}`} />
+                    {isRefreshingResponses ? 'Refreshing...' : 'Refresh Data'}
+                  </button>
+                </div>
 
                 {/* Stat Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
