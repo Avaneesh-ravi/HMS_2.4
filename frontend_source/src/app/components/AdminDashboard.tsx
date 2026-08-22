@@ -324,6 +324,13 @@ export function AdminDashboard({
   const [toDate, setToDate] = useState<string>('');
   const [sortField, setSortField] = useState<'date' | 'patientName' | 'overallRating'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [showFilterPanel, setShowFilterPanel] = useState<boolean>(false);
+  const [filterSearch, setFilterSearch] = useState<string>('');
+  const [filterRating, setFilterRating] = useState<string>('all');
+  const [filterRecommend, setFilterRecommend] = useState<'all' | 'yes' | 'no'>('all');
+  const [filterVisitType, setFilterVisitType] = useState<'all' | 'OP' | 'IP'>('all');
+  const [filterOfficeUse, setFilterOfficeUse] = useState<'all' | 'resolved' | 'unresolved'>('all');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [formBuilderTab, setFormBuilderTab] = useState<FormBuilderTab>('service-feedback');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -1313,16 +1320,56 @@ export function AdminDashboard({
     toast.success('Feedback Report CSV exported successfully!');
   };
 
-    // Filtering & Sorting
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filterSearch && filterSearch.trim()) count++;
+    if (fromDate) count++;
+    if (toDate) count++;
+    if (filterRating !== 'all') count++;
+    if (filterRecommend !== 'all') count++;
+    if (filterVisitType !== 'all') count++;
+    if (filterOfficeUse !== 'all') count++;
+    if (filterDepartment !== 'all') count++;
+    return count;
+  }, [filterSearch, fromDate, toDate, filterRating, filterRecommend, filterVisitType, filterOfficeUse, filterDepartment]);
+
+  const handleResetFilters = () => {
+    setFilterSearch('');
+    setFromDate('');
+    setToDate('');
+    setFilterRating('all');
+    setFilterRecommend('all');
+    setFilterVisitType('all');
+    setFilterOfficeUse('all');
+    setFilterDepartment('all');
+    setSortField('date');
+    setSortDirection('desc');
+    toast.success('All filters reset');
+  };
+
+  // Filtering & Sorting
   const filteredAndSortedResponses = useMemo(() => {
     let result = [...responses];
 
-    // date filter
+    // Search query filter (Patient Name, UHID, Mobile, Email, Suggestions)
+    if (filterSearch && filterSearch.trim()) {
+      const q = filterSearch.toLowerCase().trim();
+      result = result.filter(res => 
+        (res.patientName && String(res.patientName).toLowerCase().includes(q)) ||
+        (res.uhid && String(res.uhid).toLowerCase().includes(q)) ||
+        (res.mobile && String(res.mobile).includes(q)) ||
+        (res.email && String(res.email).toLowerCase().includes(q)) ||
+        (res.suggestions && String(res.suggestions).toLowerCase().includes(q)) ||
+        (res.departmentName && String(res.departmentName).toLowerCase().includes(q))
+      );
+    }
+
+    // Date range filter
     if (fromDate || toDate) {
       result = result.filter(res => {
         const parts = String(res.date).split('/');
         if (parts.length === 3) {
-          const rDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          const rDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
           if (fromDate && rDate < fromDate) return false;
           if (toDate && rDate > toDate) return false;
         }
@@ -1330,25 +1377,72 @@ export function AdminDashboard({
       });
     }
 
-    // sort
+    // Rating filter
+    if (filterRating !== 'all') {
+      result = result.filter(res => {
+        const r = Number(res.overallRating || 0);
+        if (filterRating === '5') return r >= 4.5;
+        if (filterRating === '4') return r >= 3.5 && r < 4.5;
+        if (filterRating === '3') return r >= 2.5 && r < 3.5;
+        if (filterRating === '2') return r >= 1.5 && r < 2.5;
+        if (filterRating === '1') return r < 1.5;
+        if (filterRating === 'high') return r >= 4.0;
+        if (filterRating === 'low') return r <= 2.5;
+        return true;
+      });
+    }
+
+    // Recommend filter
+    if (filterRecommend !== 'all') {
+      result = result.filter(res => {
+        if (filterRecommend === 'yes') return res.wouldRecommend === true;
+        if (filterRecommend === 'no') return res.wouldRecommend === false;
+        return true;
+      });
+    }
+
+    // Visit Type filter
+    if (filterVisitType !== 'all') {
+      result = result.filter(res => String(res.visitType || '').toUpperCase() === filterVisitType);
+    }
+
+    // Office Use filter
+    if (filterOfficeUse !== 'all') {
+      result = result.filter(res => {
+        const isResolved = !!(officeUseByResponse[res.uhid]?.reviewOfComplaint || officeUseByResponse[res.uhid]?.inchargeName);
+        if (filterOfficeUse === 'resolved') return isResolved;
+        if (filterOfficeUse === 'unresolved') return !isResolved;
+        return true;
+      });
+    }
+
+    // Department filter
+    if (filterDepartment !== 'all') {
+      result = result.filter(res => {
+        const dept = (res.departmentName || '').toLowerCase().trim();
+        return dept === filterDepartment.toLowerCase().trim();
+      });
+    }
+
+    // Sort
     result.sort((a, b) => {
       let comp = 0;
       if (sortField === 'date') {
         const aP = String(a.date).split('/');
         const bP = String(b.date).split('/');
-        const tA = (aP.length===3) ? new Date(`${aP[2]}-${aP[1]}-${aP[0]}`).getTime() : 0;
-        const tB = (bP.length===3) ? new Date(`${bP[2]}-${bP[1]}-${bP[0]}`).getTime() : 0;
+        const tA = (aP.length === 3) ? new Date(`${aP[2]}-${aP[1]}-${aP[0]}`).getTime() : 0;
+        const tB = (bP.length === 3) ? new Date(`${bP[2]}-${bP[1]}-${bP[0]}`).getTime() : 0;
         comp = tA > tB ? 1 : tA < tB ? -1 : 0;
       } else if (sortField === 'patientName') {
         comp = (String(a.patientName || '')).localeCompare(String(b.patientName || ''));
       } else if (sortField === 'overallRating') {
-        comp = (a.overallRating || 0) - (b.overallRating || 0);
+        comp = (Number(a.overallRating) || 0) - (Number(b.overallRating) || 0);
       }
       return sortDirection === 'desc' ? -comp : comp;
     });
 
     return result;
-  }, [responses, fromDate, toDate, sortField, sortDirection]);
+  }, [responses, filterSearch, fromDate, toDate, filterRating, filterRecommend, filterVisitType, filterOfficeUse, filterDepartment, sortField, sortDirection, officeUseByResponse]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -2003,36 +2097,321 @@ export function AdminDashboard({
                 <h2 className="text-3xl font-bold text-gray-900 mb-8">Feedback Responses</h2>
 
                 <div className="bg-white rounded-2xl shadow-md p-6 border-l-4 border-teal-500">
-                  <div className="flex items-center gap-4 mb-6">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </button>
-                    <div className="flex gap-2 items-center text-sm ml-auto">
-  <label className="text-gray-600 font-medium whitespace-nowrap">From:</label>
-  <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="border border-gray-300 rounded px-2 py-1 outline-none focus:border-teal-500" />
-</div>
-<div className="flex gap-2 items-center text-sm mr-4">
-  <label className="text-gray-600 font-medium whitespace-nowrap">To:</label>
-  <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border border-gray-300 rounded px-2 py-1 outline-none focus:border-teal-500" />
-</div>
+                  {/* Top Action Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <button 
+                        onClick={() => setShowFilterPanel(!showFilterPanel)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all shadow-sm cursor-pointer ${
+                          showFilterPanel || activeFilterCount > 0 
+                            ? 'bg-teal-600 text-white shadow-teal-100 hover:bg-teal-700 ring-2 ring-teal-600 ring-offset-2' 
+                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Filter className="w-4 h-4" />
+                        <span>Filter</span>
+                        {activeFilterCount > 0 && (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                            showFilterPanel || activeFilterCount > 0 ? 'bg-white text-teal-700' : 'bg-teal-100 text-teal-800'
+                          }`}>
+                            {activeFilterCount}
+                          </span>
+                        )}
+                        {showFilterPanel ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                      </button>
+
+                      {/* Quick Search */}
+                      <div className="relative flex-1 sm:w-64 max-w-xs">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={filterSearch}
+                          onChange={(e) => setFilterSearch(e.target.value)}
+                          placeholder="Search patient, UHID..."
+                          className="w-full pl-9 pr-8 py-2 bg-gray-50 hover:bg-white focus:bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all"
+                        />
+                        {filterSearch && (
+                          <button onClick={() => setFilterSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {activeFilterCount > 0 && (
+                        <button
+                          onClick={handleResetFilters}
+                          className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Clear Filters
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-gray-500 self-end sm:self-auto">
+                      <span>Showing <strong>{filteredAndSortedResponses.length}</strong> of {responses.length} responses</span>
+                    </div>
                   </div>
+
+                  {/* Expandable Filter Panel */}
+                  {showFilterPanel && (
+                    <div className="mb-6 p-5 bg-gradient-to-r from-gray-50 to-teal-50/30 rounded-2xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200/80">
+                        <div className="flex items-center gap-2">
+                          <Filter className="w-4 h-4 text-teal-600" />
+                          <h4 className="text-sm font-bold text-gray-800">Filter Responses</h4>
+                          {activeFilterCount > 0 && (
+                            <span className="px-2 py-0.5 bg-teal-100 text-teal-800 text-xs font-bold rounded-full">
+                              {activeFilterCount} active
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {activeFilterCount > 0 && (
+                            <button
+                              onClick={handleResetFilters}
+                              className="text-xs font-semibold text-gray-600 hover:text-gray-900 px-2.5 py-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Reset
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setShowFilterPanel(false)}
+                            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {/* Rating Filter */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Rating</label>
+                          <select
+                            value={filterRating}
+                            onChange={(e) => setFilterRating(e.target.value)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all font-medium text-gray-700"
+                          >
+                            <option value="all">All Ratings</option>
+                            <option value="5">⭐⭐⭐⭐⭐ 5 Stars (Excellent)</option>
+                            <option value="4">⭐⭐⭐⭐ 4 Stars (Good)</option>
+                            <option value="3">⭐⭐⭐ 3 Stars (Average)</option>
+                            <option value="2">⭐⭐ 2 Stars (Poor)</option>
+                            <option value="1">⭐ 1 Star (Very Poor)</option>
+                            <option value="high">⭐ 4+ Stars (High)</option>
+                            <option value="low">⚠️ 2 or below (Needs Attention)</option>
+                          </select>
+                        </div>
+
+                        {/* Recommendation Filter */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Recommendation</label>
+                          <select
+                            value={filterRecommend}
+                            onChange={(e) => setFilterRecommend(e.target.value as any)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all font-medium text-gray-700"
+                          >
+                            <option value="all">All (Yes & No)</option>
+                            <option value="yes">👍 Recommended (Yes)</option>
+                            <option value="no">👎 Not Recommended (No)</option>
+                          </select>
+                        </div>
+
+                        {/* Visit Type Filter */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Visit Type</label>
+                          <select
+                            value={filterVisitType}
+                            onChange={(e) => setFilterVisitType(e.target.value as any)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all font-medium text-gray-700"
+                          >
+                            <option value="all">All Visit Types</option>
+                            <option value="OP">Outpatient (OP)</option>
+                            <option value="IP">Inpatient (IP)</option>
+                          </select>
+                        </div>
+
+                        {/* Office Use Status */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Office Review</label>
+                          <select
+                            value={filterOfficeUse}
+                            onChange={(e) => setFilterOfficeUse(e.target.value as any)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all font-medium text-gray-700"
+                          >
+                            <option value="all">All Statuses</option>
+                            <option value="resolved">✓ Resolved</option>
+                            <option value="unresolved">✏️ Pending Review</option>
+                          </select>
+                        </div>
+
+                        {/* From Date */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">From Date</label>
+                          <input
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all text-gray-700"
+                          />
+                        </div>
+
+                        {/* To Date */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">To Date</label>
+                          <input
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all text-gray-700"
+                          />
+                        </div>
+
+                        {/* Sort Field */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Sort By</label>
+                          <div className="flex gap-2">
+                            <select
+                              value={sortField}
+                              onChange={(e) => setSortField(e.target.value as any)}
+                              className="flex-1 bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-all font-medium text-gray-700"
+                            >
+                              <option value="date">Date</option>
+                              <option value="patientName">Patient Name</option>
+                              <option value="overallRating">Rating</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                              className="px-3 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl text-xs font-bold text-gray-700 transition-colors flex items-center gap-1 cursor-pointer"
+                              title={`Currently ${sortDirection === 'desc' ? 'Descending' : 'Ascending'} - Click to toggle`}
+                            >
+                              <ArrowUpDown className="w-3.5 h-3.5" />
+                              {sortDirection.toUpperCase()}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1.5">Date Presets</label>
+                          <div className="flex gap-1.5 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const todayStr = new Date().toISOString().split('T')[0];
+                                setFromDate(todayStr);
+                                setToDate(todayStr);
+                              }}
+                              className="px-2.5 py-1.5 bg-white border border-gray-200 hover:bg-teal-50 hover:border-teal-300 rounded-lg text-xs font-medium text-gray-700 transition-all cursor-pointer"
+                            >
+                              Today
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const now = new Date();
+                                const weekAgo = new Date();
+                                weekAgo.setDate(now.getDate() - 7);
+                                setFromDate(weekAgo.toISOString().split('T')[0]);
+                                setToDate(now.toISOString().split('T')[0]);
+                              }}
+                              className="px-2.5 py-1.5 bg-white border border-gray-200 hover:bg-teal-50 hover:border-teal-300 rounded-lg text-xs font-medium text-gray-700 transition-all cursor-pointer"
+                            >
+                              7 Days
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const now = new Date();
+                                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                                setFromDate(firstDay.toISOString().split('T')[0]);
+                                setToDate(now.toISOString().split('T')[0]);
+                              }}
+                              className="px-2.5 py-1.5 bg-white border border-gray-200 hover:bg-teal-50 hover:border-teal-300 rounded-lg text-xs font-medium text-gray-700 transition-all cursor-pointer"
+                            >
+                              This Month
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFromDate('');
+                                setToDate('');
+                              }}
+                              className="px-2.5 py-1.5 bg-white border border-gray-200 hover:bg-gray-100 rounded-lg text-xs font-medium text-gray-500 transition-all cursor-pointer"
+                            >
+                              All Time
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b-2 border-gray-200">
-                          <th className="text-left py-4 px-4 font-semibold text-gray-700">Date</th>
+                        <tr className="border-b-2 border-gray-200 bg-gray-50/50">
+                          <th 
+                            onClick={() => {
+                              if (sortField === 'date') setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                              else { setSortField('date'); setSortDirection('desc'); }
+                            }}
+                            className="text-left py-4 px-4 font-semibold text-gray-700 cursor-pointer hover:text-teal-600 transition-colors select-none"
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              Date
+                              <ArrowUpDown className={`w-3.5 h-3.5 ${sortField === 'date' ? 'text-teal-600 font-bold' : 'text-gray-400'}`} />
+                            </span>
+                          </th>
                           <th className="text-left py-4 px-4 font-semibold text-gray-700">UHID</th>
-                          <th className="text-left py-4 px-4 font-semibold text-gray-700">Patient Name</th>
-                          <th className="text-left py-4 px-4 font-semibold text-gray-700">Overall Rating</th>
+                          <th 
+                            onClick={() => {
+                              if (sortField === 'patientName') setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                              else { setSortField('patientName'); setSortDirection('asc'); }
+                            }}
+                            className="text-left py-4 px-4 font-semibold text-gray-700 cursor-pointer hover:text-teal-600 transition-colors select-none"
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              Patient Name
+                              <ArrowUpDown className={`w-3.5 h-3.5 ${sortField === 'patientName' ? 'text-teal-600 font-bold' : 'text-gray-400'}`} />
+                            </span>
+                          </th>
+                          <th 
+                            onClick={() => {
+                              if (sortField === 'overallRating') setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                              else { setSortField('overallRating'); setSortDirection('desc'); }
+                            }}
+                            className="text-left py-4 px-4 font-semibold text-gray-700 cursor-pointer hover:text-teal-600 transition-colors select-none"
+                          >
+                            <span className="inline-flex items-center gap-1.5">
+                              Overall Rating
+                              <ArrowUpDown className={`w-3.5 h-3.5 ${sortField === 'overallRating' ? 'text-teal-600 font-bold' : 'text-gray-400'}`} />
+                            </span>
+                          </th>
                           <th className="text-left py-4 px-4 font-semibold text-gray-700">Recommendation</th>
-                          <th className="text-left py-4 px-4 font-semibold text-gray-700">View</th>
+                          <th className="text-center py-4 px-4 font-semibold text-gray-700">View</th>
                           <th className="text-left py-4 px-4 font-semibold text-gray-700">Office Use</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredAndSortedResponses.map((response) => {
+                        {filteredAndSortedResponses.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="text-center py-12 text-gray-500">
+                              <Filter className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                              <p className="font-semibold text-gray-700">No matching responses found</p>
+                              <p className="text-xs text-gray-400 mt-1">Try adjusting your search, rating, or date filters</p>
+                              <button
+                                onClick={handleResetFilters}
+                                className="mt-3 px-4 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-xs rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                Reset All Filters
+                              </button>
+                            </td>
+                          </tr>
+                        ) : filteredAndSortedResponses.map((response) => {
                           const officeUseFilled = !!(officeUseByResponse[response.uhid]?.reviewOfComplaint || officeUseByResponse[response.uhid]?.inchargeName);
                           return (
                             <tr key={response.uhid} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
