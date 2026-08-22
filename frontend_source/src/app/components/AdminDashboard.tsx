@@ -1367,9 +1367,17 @@ export function AdminDashboard({
     // Date range filter
     if (fromDate || toDate) {
       result = result.filter(res => {
-        const parts = String(res.date).split('/');
-        if (parts.length === 3) {
-          const rDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        const rawDate = String(res.date || res.submittedAt || '').trim();
+        let rDate = '';
+        if (rawDate.includes('/')) {
+          const parts = rawDate.split('/');
+          if (parts.length === 3) {
+            rDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          }
+        } else if (rawDate.includes('-')) {
+          rDate = rawDate.split('T')[0];
+        }
+        if (rDate) {
           if (fromDate && rDate < fromDate) return false;
           if (toDate && rDate > toDate) return false;
         }
@@ -2411,39 +2419,51 @@ export function AdminDashboard({
                               </button>
                             </td>
                           </tr>
-                        ) : filteredAndSortedResponses.map((response) => {
-                          const officeUseFilled = !!(officeUseByResponse[response.uhid]?.reviewOfComplaint || officeUseByResponse[response.uhid]?.inchargeName);
+                        ) : filteredAndSortedResponses.map((response, idx) => {
+                          const safeUhid = response.uhid || ('UHID_' + idx);
+                          const safeId = response.id ? ('sub_' + response.id) : (safeUhid + '_' + idx);
+                          const officeUseFilled = !!(officeUseByResponse[safeUhid]?.reviewOfComplaint || officeUseByResponse[safeUhid]?.inchargeName);
+                          const ratingNum = Math.round(Number(response.overallRating || 5) * 10) / 10;
+                          const isRec = response.wouldRecommend === true || response.wouldRecommend === 1 || String(response.wouldRecommend).toLowerCase() === 'yes';
+
                           return (
-                            <tr key={response.uhid} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                              <td className="py-4 px-4">{response.date}</td>
-                              <td className="py-4 px-4 font-medium">{response.uhid}</td>
-                              <td className="py-4 px-4">{response.patientName}</td>
-                              <td className="py-4 px-4">
-                                <span className="inline-flex items-center gap-1 text-yellow-600">
-                                  <Star className="w-4 h-4 fill-current" />
-                                  {Math.round(Number(response.overallRating || 0) * 10) / 10}
+                            <tr key={safeId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                              <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-600">
+                                {response.date || (response.submittedAt ? String(response.submittedAt).split('T')[0] : '—')}
+                              </td>
+                              <td className="py-4 px-4 font-medium text-sm text-gray-900">
+                                {response.uhid || '—'}
+                              </td>
+                              <td className="py-4 px-4 text-sm font-semibold text-gray-800">
+                                {response.patientName || 'Patient'}
+                              </td>
+                              <td className="py-4 px-4 text-sm">
+                                <span className="inline-flex items-center gap-1 text-yellow-600 font-bold bg-yellow-50 px-2 py-0.5 rounded-lg border border-yellow-200">
+                                  <Star className="w-3.5 h-3.5 fill-current" />
+                                  {ratingNum}
                                 </span>
                               </td>
-                              <td className="py-4 px-4">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  response.wouldRecommend ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                              <td className="py-4 px-4 text-sm">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${
+                                  isRec ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                 }`}>
-                                  {response.wouldRecommend ? 'Yes' : 'No'}
+                                  {isRec ? '👍 Yes' : '👎 No'}
                                 </span>
                               </td>
-                              <td className="py-4 px-4">
+                              <td className="py-4 px-4 text-center">
                                 <button
                                   onClick={() => setSelectedResponse(response)}
-                                  className="p-2 hover:bg-teal-50 rounded-lg transition-colors flex items-center justify-center m-auto"
+                                  className="p-2 hover:bg-teal-50 rounded-lg transition-colors inline-flex items-center justify-center text-teal-600 cursor-pointer"
+                                  title="View Feedback Details"
                                 >
-                                  <Eye className="w-5 h-5 text-teal-600" />
+                                  <Eye className="w-5 h-5" />
                                 </button>
                               </td>
-                              <td className="py-4 px-4">
+                              <td className="py-4 px-4 text-sm">
                                 {officeUseFilled ? (
                                   <button
                                     onClick={() => {
-                                      setOfficeUseModalData(officeUseByResponse[response.uhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                      setOfficeUseModalData(officeUseByResponse[safeUhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
                                       setOfficeUseModalResponse(response);
                                     }}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -2455,7 +2475,7 @@ export function AdminDashboard({
                                 ) : (
                                   <button
                                     onClick={() => {
-                                      setOfficeUseModalData(officeUseByResponse[response.uhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                      setOfficeUseModalData(officeUseByResponse[safeUhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
                                       setOfficeUseModalResponse(response);
                                     }}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
