@@ -2681,23 +2681,7 @@ export function AdminDashboard({
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <button
-                      onClick={() => window.print()}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors shadow-sm text-sm"
-                    >
-                      <Printer className="w-4 h-4 text-gray-600" />
-                      Print Report
-                    </button>
-                    <button
-                      onClick={handleExportCSV}
-                      className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-xl transition-colors shadow-sm text-sm"
-                    >
-                      <Download className="w-4 h-4" />
-                      Export CSV
-                    </button>
-                  </div>
+
                 </div>
 
                 {/* Filters Strip */}
