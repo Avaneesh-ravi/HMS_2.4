@@ -1118,12 +1118,13 @@ export function AdminDashboard({
         });
       });
 
-      // Aggregate responses strictly for the hospital's configured rating questions
+      // Aggregate responses for the hospital's configured rating questions
       deptResponses.forEach(r => {
+        let hasCountedRating = false;
         if (r.rawRatings && r.rawRatings.length > 0) {
           r.rawRatings.forEach(item => {
             const qId = String(item.question_id || '');
-            const qTxt = (item.question_text || '').trim().toLowerCase();
+            const qTxt = (item.question_text || (item as any).question_text_en || '').trim().toLowerCase();
             const score = parseRatingVal(item.rating);
 
             if (score >= 1 && score <= 5) {
@@ -1136,7 +1137,22 @@ export function AdminDashboard({
                   }
                 }
               }
-              // Only accumulate if the question belongs to this hospital's active configuration
+              // Category keyword matching
+              if (!entry && qTxt) {
+                const keywords = ['reception', 'admission', 'billing', 'doctor', 'nurs', 'pharmac', 'clean', 'food', 'wait'];
+                for (const kw of keywords) {
+                  if (qTxt.includes(kw)) {
+                    for (const val of ratingMap.values()) {
+                      if (val.label.toLowerCase().includes(kw)) {
+                        entry = val;
+                        break;
+                      }
+                    }
+                    if (entry) break;
+                  }
+                }
+              }
+
               if (entry) {
                 if (score === 5) entry.count5++;
                 else if (score === 4) entry.count4++;
@@ -1146,7 +1162,26 @@ export function AdminDashboard({
 
                 entry.totalRated++;
                 entry.sumScores += score;
+                hasCountedRating = true;
               }
+            }
+          });
+        }
+
+        // If no individual rating questions matched or rawRatings was empty, distribute the response's overallRating
+        if (!hasCountedRating && (r.overallRating || (r.ratings && Object.keys(r.ratings).length > 0))) {
+          const overallScore = Math.min(5, Math.max(1, Math.round(Number(r.overallRating || 5))));
+          questions.forEach(q => {
+            const entry = ratingMap.get(String(q.id));
+            if (entry) {
+              if (overallScore === 5) entry.count5++;
+              else if (overallScore === 4) entry.count4++;
+              else if (overallScore === 3) entry.count3++;
+              else if (overallScore === 2) entry.count2++;
+              else if (overallScore === 1) entry.count1++;
+
+              entry.totalRated++;
+              entry.sumScores += overallScore;
             }
           });
         }
@@ -1194,8 +1229,9 @@ export function AdminDashboard({
         });
       });
 
-      // Aggregate responses strictly for the hospital's configured Yes/No questions
+      // Aggregate responses for the hospital's configured Yes/No questions
       deptResponses.forEach(r => {
+        let hasCountedYesNo = false;
         if (r.rawYesNo && r.rawYesNo.length > 0) {
           r.rawYesNo.forEach(yn => {
             const yId = String(yn.yesno_question_id || '');
@@ -1211,14 +1247,15 @@ export function AdminDashboard({
                 }
               }
             }
-            // Only accumulate if the question belongs to this hospital's active configuration
             if (entry) {
               if (isYesAnswer(ans)) {
                 entry.yesCount++;
                 entry.totalAnswered++;
+                hasCountedYesNo = true;
               } else if (isNoAnswer(ans)) {
                 entry.noCount++;
                 entry.totalAnswered++;
+                hasCountedYesNo = true;
               }
 
               if (yn.remarks && String(yn.remarks).trim()) {
@@ -1229,6 +1266,17 @@ export function AdminDashboard({
                   text: String(yn.remarks).trim()
                 });
               }
+            }
+          });
+        }
+
+        if (!hasCountedYesNo && r.wouldRecommend !== undefined) {
+          yesNoQuestions.forEach(yq => {
+            const entry = yesNoMap.get(String(yq.id));
+            if (entry) {
+              if (r.wouldRecommend) entry.yesCount++;
+              else entry.noCount++;
+              entry.totalAnswered++;
             }
           });
         }
