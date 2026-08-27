@@ -443,12 +443,12 @@ export default function App() {
   };
 
   const handleVerifyMobile = () => {
-    // Mock OTP verification
-    if (patientInfo.mobileOtp.length === 6) {
+    const cleanOtp = (patientInfo.mobileOtp || '').trim();
+    if (cleanOtp.length === 6) {
       setPatientInfo({ ...patientInfo, mobileVerified: true });
       toast.success(language === 'en' ? 'Mobile verified!' : 'தொலைபேசி சரிபார்க்கப்பட்டது!');
     } else {
-      toast.error(language === 'en' ? 'Please enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்');
+      toast.error(language === 'en' ? 'Please enter a 6-digit OTP' : 'தயவுசெய்து 6 இலக்க OTP ஐ உள்ளிடவும்');
     }
   };
 
@@ -459,12 +459,12 @@ export default function App() {
   };
 
   const handleVerifyEmail = () => {
-    // Mock email verification
-    if (patientInfo.emailOtp.length === 6) {
+    const cleanOtp = (patientInfo.emailOtp || '').trim();
+    if (cleanOtp.length === 6) {
       setPatientInfo({ ...patientInfo, emailVerified: true });
       toast.success(language === 'en' ? 'Email verified!' : 'மின்னஞ்சல் சரிபார்க்கப்பட்டது!');
     } else {
-      toast.error(language === 'en' ? 'Please enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்');
+      toast.error(language === 'en' ? 'Please enter a 6-digit OTP' : 'தயவுசெய்து 6 இலக்க OTP ஐ உள்ளிடவும்');
     }
   };
 
@@ -532,6 +532,20 @@ export default function App() {
       } else if (info.firstName.length > 100) {
         newErrors.firstName = language === 'en' ? 'Name must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
       }
+    }
+
+    if (info.lastName !== '' || strict) {
+      if (!info.lastName) {
+        newErrors.lastName = language === 'en' ? 'Last name is required' : 'கடைசி பெயர் தேவை';
+      } else if (!/^[a-zA-Z\s.'-]+$/.test(info.lastName)) {
+        newErrors.lastName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
+      } else if (info.lastName.length > 100) {
+        newErrors.lastName = language === 'en' ? 'Name must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
+      }
+    }
+
+    if (strict && !info.gender) {
+      newErrors.gender = language === 'en' ? 'Gender is required' : 'பாலினம் தேவை';
     }
 
     if (info.mobile !== '' || strict) {
@@ -624,16 +638,33 @@ export default function App() {
     // Step 0: Patient Information Validation
     if (currentStep === 0) {
       const newErrors = validatePatientInfo(patientInfo, true);
-
       setFormErrors(newErrors);
       
       if (Object.keys(newErrors).length > 0) {
-        toast.error(language === 'en' ? 'Please fix the errors before continuing' : 'தொடர பிழைகளை சரிசெய்யவும்');
+        const isAllEmpty = !patientInfo.uhid && !patientInfo.firstName && !patientInfo.lastName && !patientInfo.age && !patientInfo.mobile;
+        if (isAllEmpty) {
+          toast.error(language === 'en' ? 'Kindly enter the patient details' : 'தயவுசெய்து நோயாளி விவரங்களை உள்ளிடவும்');
+        } else {
+          const missing = [];
+          if (newErrors.uhid) missing.push('UHID');
+          if (newErrors.firstName) missing.push('First Name');
+          if (newErrors.lastName) missing.push('Last Name');
+          if (newErrors.age) missing.push('Age');
+          if (newErrors.gender) missing.push('Gender');
+          if (newErrors.mobile) missing.push('Mobile Number');
+          if (newErrors.address) missing.push('Address');
+
+          if (missing.length > 0) {
+            toast.error(language === 'en' ? `Kindly enter mandatory patient details (${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '...' : ''})` : 'தயவுசெய்து தேவையான நோயாளி விவரங்களை உள்ளிடவும்');
+          } else {
+            toast.error(language === 'en' ? 'Kindly enter the patient details' : 'தயவுசெய்து நோயாளி விவரங்களை உள்ளிடவும்');
+          }
+        }
         return;
       }
 
       if (!patientInfo.mobileVerified || (patientInfo.email && !patientInfo.emailVerified)) {
-        toast.error(language === 'en' ? 'Please verify contact details to continue' : 'தொடர தொடர்பு விவரங்களை சரிபார்க்கவும்');
+        toast.error(language === 'en' ? 'Please verify mobile number with OTP to continue' : 'தொடர மொபைல் எண்ணை OTP மூலம் சரிபார்க்கவும்');
         return;
       }
     }
@@ -1449,9 +1480,10 @@ export default function App() {
                     type="text"
                     value={patientInfo.lastName}
                     onChange={(e) => setPatientInfo({ ...patientInfo, lastName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.lastName ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                     placeholder={language === 'en' ? 'Last name' : 'கடைசி பெயர்'}
                   />
+                  {formErrors.lastName && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.lastName}</p>}
                 </div>
 
                 {/* Row 3: Age | Gender */}
@@ -1477,13 +1509,14 @@ export default function App() {
                   <select
                     value={patientInfo.gender}
                     onChange={(e) => setPatientInfo({ ...patientInfo, gender: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.gender ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                   >
                     <option value="">{language === 'en' ? 'Select gender' : 'பாலினம் தேர்வு'}</option>
                     <option value="Male">{language === 'en' ? 'Male' : 'ஆண்'}</option>
                     <option value="Female">{language === 'en' ? 'Female' : 'பெண்'}</option>
                     <option value="Other">{language === 'en' ? 'Other' : 'மற்றவை'}</option>
                   </select>
+                  {formErrors.gender && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.gender}</p>}
                 </div>
               </div>
 
@@ -1735,8 +1768,7 @@ export default function App() {
                         </div>
                         <button
                           onClick={handleVerifyMobile}
-                          disabled={patientInfo.mobileOtp.length !== 6}
-                          className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-300 transition-all h-[50px]"
+                          className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all h-[50px] cursor-pointer"
                         >
                           {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
                         </button>
@@ -1802,8 +1834,7 @@ export default function App() {
                         </div>
                         <button
                           onClick={handleVerifyEmail}
-                          disabled={patientInfo.emailOtp.length !== 6}
-                          className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-300 transition-all h-[50px]"
+                          className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all h-[50px] cursor-pointer"
                         >
                           {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
                         </button>
