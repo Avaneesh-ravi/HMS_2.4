@@ -1,36 +1,120 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/info", "destination": "/api/info.js" },
-    { "source": "/api/backend/ajax/get-patient.php", "destination": "/api/get-patient.js" },
-    { "source": "/api/backend/ajax/get-patient", "destination": "/api/get-patient.js" },
-    { "source": "/api/backend/ajax/get-responses.php", "destination": "/api/get-responses.js" },
-    { "source": "/api/backend/ajax/get-responses", "destination": "/api/get-responses.js" },
-    { "source": "/api/backend/process/submit-feedback.php", "destination": "/api/submit-feedback.js" },
-    { "source": "/api/backend/process/submit-feedback", "destination": "/api/submit-feedback.js" },
-    { "source": "/api/backend/ajax/get-questions.php", "destination": "/api/get-questions.js" },
-    { "source": "/api/backend/ajax/get-questions", "destination": "/api/get-questions.js" },
-    { "source": "/api/get-patient", "destination": "/api/get-patient.js" },
-    { "source": "/api/get-responses", "destination": "/api/get-responses.js" },
-    { "source": "/api/submit-feedback", "destination": "/api/submit-feedback.js" },
-    { "source": "/api/get-questions", "destination": "/api/get-questions.js" },
-    { "source": "/((?!api/|assets/|favicon.ico).*)", "destination": "/public/index.html" }
+    {
+      "source": "/api/info",
+      "destination": "/api/info.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-hospitals.php",
+      "destination": "/api/get-hospitals.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-hospitals",
+      "destination": "/api/get-hospitals.js"
+    },
+    {
+      "source": "/api/get-hospitals",
+      "destination": "/api/get-hospitals.js"
+    },
+    {
+      "source": "/api/backend/ajax/login-ajax.php",
+      "destination": "/api/login-ajax.js"
+    },
+    {
+      "source": "/api/backend/ajax/login-ajax",
+      "destination": "/api/login-ajax.js"
+    },
+    {
+      "source": "/api/login-ajax",
+      "destination": "/api/login-ajax.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-patient.php",
+      "destination": "/api/get-patient.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-patient",
+      "destination": "/api/get-patient.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-responses.php",
+      "destination": "/api/get-responses.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-responses",
+      "destination": "/api/get-responses.js"
+    },
+    {
+      "source": "/api/backend/process/submit-feedback.php",
+      "destination": "/api/submit-feedback.js"
+    },
+    {
+      "source": "/api/backend/process/submit-feedback",
+      "destination": "/api/submit-feedback.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-questions.php",
+      "destination": "/api/get-questions.js"
+    },
+    {
+      "source": "/api/backend/ajax/get-questions",
+      "destination": "/api/get-questions.js"
+    },
+    {
+      "source": "/api/get-patient",
+      "destination": "/api/get-patient.js"
+    },
+    {
+      "source": "/api/get-responses",
+      "destination": "/api/get-responses.js"
+    },
+    {
+      "source": "/api/submit-feedback",
+      "destination": "/api/submit-feedback.js"
+    },
+    {
+      "source": "/api/get-questions",
+      "destination": "/api/get-questions.js"
+    },
+    {
+      "source": "/((?!api/|assets/|favicon.ico).*)",
+      "destination": "/public/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*).html",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
       ]
     },
     {
       "source": "/",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
       ]
     }
   ]
