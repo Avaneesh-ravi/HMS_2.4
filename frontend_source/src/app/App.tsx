@@ -137,6 +137,38 @@ export default function App() {
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
+
+  // Auto-close Admin Login modal after 10 seconds of inactivity
+  useEffect(() => {
+    if (!showAdminLoginModal) return;
+
+    let timeoutId: any;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setShowAdminLoginModal(false);
+        setAdminLoginError('');
+        setAdminUsername('');
+        setAdminPassword('');
+        toast.info(language === 'en' ? 'Returned to Feedback Form due to inactivity' : 'செயலற்ற நிலை காரணமாக கருத்து படிவத்திற்கு திரும்பியது');
+      }, 10000); // 10 seconds
+    };
+
+    resetInactivityTimer();
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    activityEvents.forEach(evt => {
+      window.addEventListener(evt, resetInactivityTimer, { passive: true });
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+      activityEvents.forEach(evt => {
+        window.removeEventListener(evt, resetInactivityTimer);
+      });
+    };
+  }, [showAdminLoginModal, language]);
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -2691,11 +2723,14 @@ export default function App() {
                 <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
                   <Shield className="w-5 h-5 text-teal-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">{language === 'en' ? 'Admin Login' : 'நிர்வாகி உள்நுழைவு'}</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{language === 'en' ? 'Admin Login' : 'நிர்வாகி உள்நுழைவு'}</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">{language === 'en' ? 'Auto-closes after 10s of inactivity' : '10 வினாடிகளில் தானாக மூடப்படும்'}</p>
+                </div>
               </div>
               <button
                 onClick={() => { setShowAdminLoginModal(false); setAdminLoginError(''); setAdminUsername(''); setAdminPassword(''); }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
