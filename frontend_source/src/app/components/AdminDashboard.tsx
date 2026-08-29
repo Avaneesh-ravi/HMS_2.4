@@ -1032,7 +1032,7 @@ export function AdminDashboard({
         const p = window.location.pathname;
         if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
         if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
-        return `../api/backend/ajax/${endpoint}`;
+        return `/api/backend/ajax/${endpoint}`;
       };
 
       const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
@@ -1046,6 +1046,7 @@ export function AdminDashboard({
           hospital_id: hid,
           questions, 
           yesno_questions: yesNoQuestions,
+          departments,
           settings: {
             layoutMode,
             combinePages,
@@ -1059,16 +1060,23 @@ export function AdminDashboard({
 
       const data = await response.json();
       if (data.success) {
-        toast.success('Form configuration saved successfully to DB!');
-        // Ideally we fetch again to get the real DB IDs for new questions
-        const refreshRes = await fetch(getApiUrl('get-questions.php'), { credentials: 'same-origin' });
-        const refreshData = await refreshRes.json();
-        if (refreshData.success) {
-          if (refreshData.data && refreshData.data.length > 0) setQuestions(refreshData.data);
-          if (refreshData.yesno_data && refreshData.yesno_data.length > 0) setYesNoQuestions(refreshData.yesno_data);
-          if (refreshData.departments) setDepartments(refreshData.departments);
-          else if (refreshData.settings?.departments) setDepartments(refreshData.settings.departments);
-        }
+        toast.success('Form configuration saved successfully!');
+        
+        const finalRatingQs = (Array.isArray(data.data) && data.data.length > 0) ? data.data : questions;
+        const finalYesNoQs = (Array.isArray(data.yesno_data) && data.yesno_data.length > 0) ? data.yesno_data : yesNoQuestions;
+        const finalDepts = (Array.isArray(data.departments) && data.departments.length > 0) ? data.departments : departments;
+
+        setQuestions(finalRatingQs);
+        onQuestionsChange?.(finalRatingQs);
+        try { localStorage.setItem('hms_saved_questions', JSON.stringify(finalRatingQs)); } catch (e) {}
+
+        setYesNoQuestions(finalYesNoQs);
+        onYesNoQuestionsChange?.(finalYesNoQs);
+        try { localStorage.setItem('hms_saved_yesno', JSON.stringify(finalYesNoQs)); } catch (e) {}
+
+        setDepartments(finalDepts);
+        onDepartmentsChange?.(finalDepts);
+        try { localStorage.setItem('hms_saved_departments', JSON.stringify(finalDepts)); } catch (e) {}
       } else {
         toast.error(data.message || 'Failed to save questions');
       }

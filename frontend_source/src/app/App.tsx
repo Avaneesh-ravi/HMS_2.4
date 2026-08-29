@@ -408,16 +408,18 @@ export default function App() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          if (data.data) {
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
             setQuestions(data.data);
+            try { localStorage.setItem('hms_saved_questions', JSON.stringify(data.data)); } catch (e) {}
             const initialRatings: Record<string, number> = {};
             data.data.forEach((q: Question) => {
               initialRatings[q.id] = 0;
             });
             setDynamicRatings(initialRatings);
           }
-          if (data.yesno_data) {
+          if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
             setFetchedYesNoQuestions(data.yesno_data);
+            try { localStorage.setItem('hms_saved_yesno', JSON.stringify(data.yesno_data)); } catch (e) {}
             const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
             data.yesno_data.forEach((yq: any) => {
               initialYesNo[yq.id] = { answer: null, remarks: '' };
