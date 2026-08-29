@@ -1,6 +1,6 @@
 import { REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from './real_db_data';
 // @ts-nocheck
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Building2, UserCircle, Phone, Mail, MapPin, Calendar,
   Stethoscope, Users, CreditCard, Pill, Activity, Shield,
