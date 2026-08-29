@@ -908,7 +908,18 @@ export default function App() {
         admissionDate: patientInfo.admissionDate ? patientInfo.admissionDate.toISOString().split('T')[0] : '',
         dischargeDate: patientInfo.dischargeDate ? patientInfo.dischargeDate.toISOString().split('T')[0] : '',
         overallRating: (ratings.overall || 5),
-        wouldRecommend: dynamicYesNo['42'] ? (dynamicYesNo['42'].answer === true || dynamicYesNo['42'].answer === 1) : true,
+        wouldRecommend: (() => {
+          const recEntry = Object.entries(dynamicYesNo).find(([id, val]) => {
+            const q = fetchedYesNoQuestions.find(y => String(y.id) === String(id));
+            const qText = ((q ? q.label : '') + ' ' + (q ? q.tamilLabel : '')).toLowerCase();
+            return qText.includes('refer') || qText.includes('recommend') || qText.includes('family') || qText.includes('friend') || qText.includes('பரிந்துரை');
+          });
+          if (recEntry && recEntry[1].answer !== null) {
+            const a = String(recEntry[1].answer).toLowerCase();
+            return a === 'true' || a === '1' || a === 'yes' || a === 'ஆம்';
+          }
+          return (ratings.overall || 5) >= 3;
+        })(),
         ratings: dynamicRatings,
         yesNoAnswers: dynamicYesNo,
         rawRatings: generatedRawRatings,
@@ -949,7 +960,9 @@ export default function App() {
           discharge_date: newSubmissionObj.dischargeDate || '',
           suggestions: suggestions || '',
           rating_overall: (ratings.overall || 5),
-          signature_confirmed: '1'
+          signature_confirmed: '1',
+          appreciations: appreciations.filter(a => (a.name && a.name.trim()) || (a.note && a.note.trim())),
+          why_choose_us: Object.keys(whyChooseUs).filter(k => (whyChooseUs as any)[k])
         };
 
         Object.entries(dynamicRatings).forEach(([qId, val]) => {

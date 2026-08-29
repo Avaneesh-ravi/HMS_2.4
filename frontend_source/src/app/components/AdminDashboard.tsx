@@ -626,12 +626,15 @@ export function AdminDashboard({
                const sum = item.rawRatings.reduce((acc: number, cur: any) => acc + parseRatingStr(cur.rating), 0);
                computedOverall = sum / item.rawRatings.length;
             }
-            let computedRecommend = false;
+            let computedRecommend = item.wouldRecommend !== undefined ? item.wouldRecommend : true;
             if (item.rawYesNo && item.rawYesNo.length > 0) {
-                const recObj = item.rawYesNo.find((y: any) => String(y.question_text || y.question_en || y.question_text_en).toLowerCase().includes('recommend'));
+                const recObj = item.rawYesNo.find((y: any) => {
+                  const t = String(y.question_text || y.question_en || y.question_text_en || y.question_ta || '').toLowerCase();
+                  return t.includes('refer') || t.includes('recommend') || t.includes('family') || t.includes('friends') || t.includes('பரிந்துரை');
+                });
                 if (recObj) {
                     let ans = String(recObj.answer).toLowerCase();
-                    computedRecommend = (ans === '1' || ans === 'yes' || ans === 'true');
+                    computedRecommend = (ans === '1' || ans === 'yes' || ans === 'true' || ans === 'ஆம்');
                 }
             }
             return {
@@ -3794,30 +3797,36 @@ export function AdminDashboard({
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Appreciation</h4>
                 {(() => {
-                  const apps = (selectedResponse.appreciations && selectedResponse.appreciations.length > 0)
-                    ? selectedResponse.appreciations
-                    : (selectedResponse as any).rawAppreciations && (selectedResponse as any).rawAppreciations.length > 0
-                    ? (selectedResponse as any).rawAppreciations
-                    : [
-                        {
-                          name: 'Attending Doctors & Nursing Staff',
-                          department: selectedResponse.departmentName || 'Patient Care',
-                          note: 'Special appreciation for compassionate care, professional attention, and support during the visit.'
-                        }
-                      ];
+                  const rawList = selectedResponse.appreciations || (selectedResponse as any).rawAppreciations || [];
+                  const validApps = Array.isArray(rawList)
+                    ? rawList.filter((a: any) => (a.name && a.name.trim()) || (a.person_name && a.person_name.trim()) || (a.note && a.note.trim()) || (a.comments && a.comments.trim()))
+                    : [];
+
+                  if (validApps.length === 0) {
+                    return (
+                      <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 text-sm text-gray-500 italic">
+                        No specific staff appreciation provided by this patient.
+                      </div>
+                    );
+                  }
+
                   return (
                     <div className="space-y-3">
-                      {apps.map((appreciation: any, index: number) => {
+                      {validApps.map((appreciation: any, index: number) => {
                         const personName = appreciation.name || appreciation.person_name || 'Staff Member';
-                        const dept = appreciation.department || selectedResponse.departmentName || 'General';
-                        const commentsText = appreciation.note || appreciation.comments || 'Thank you for the wonderful care.';
+                        const dept = appreciation.department || 'General';
+                        const commentsText = appreciation.note || appreciation.comments || '';
                         return (
                           <div key={index} className="p-4 bg-teal-50/70 rounded-xl border border-teal-100">
                             <div className="flex items-center gap-3 mb-1.5">
                               <span className="font-bold text-sm text-gray-900">{personName}</span>
-                              <span className="px-2.5 py-0.5 bg-teal-100 text-teal-800 rounded-full text-xs font-semibold">{dept}</span>
+                              {dept && (
+                                <span className="px-2.5 py-0.5 bg-teal-100 text-teal-800 rounded-full text-xs font-semibold">{dept}</span>
+                              )}
                             </div>
-                            <p className="text-gray-700 text-xs leading-relaxed">{commentsText}</p>
+                            {commentsText && (
+                              <p className="text-gray-700 text-xs leading-relaxed">{commentsText}</p>
+                            )}
                           </div>
                         );
                       })}

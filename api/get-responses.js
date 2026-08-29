@@ -129,9 +129,13 @@ export default async function handler(req, res) {
         }
 
         let wouldRec = true;
-        const recObj = rawY.find(y => String(y.question_text || '').toLowerCase().includes('recommend') || String(y.question_text || '').toLowerCase().includes('refer'));
+        const recObj = rawY.find(y => {
+          const t = String(y.question_text || y.question_en || y.question_ta || '').toLowerCase();
+          return t.includes('refer') || t.includes('recommend') || t.includes('family') || t.includes('friends') || t.includes('பரிந்துரை');
+        });
         if (recObj) {
-          wouldRec = recObj.answer === 1 || recObj.answer === '1' || String(recObj.answer).toLowerCase() === 'yes';
+          const ansStr = String(recObj.answer).toLowerCase();
+          wouldRec = (ansStr === '1' || ansStr === 'yes' || ansStr === 'true' || ansStr === 'ஆம்');
         }
 
         let formattedDate = '';
@@ -171,13 +175,7 @@ export default async function handler(req, res) {
           rawRatings: rawR,
           rawYesNo: rawY,
           rawAppreciations: rawA,
-          appreciations: rawA.length > 0 ? rawA : [
-            {
-              name: 'Dr. Ramesh Kumar',
-              department: r.department_name || 'Medical Team',
-              note: 'Appreciated for prompt attention and thorough treatment guidance.'
-            }
-          ],
+          appreciations: rawA,
           whyChooseUs: [
             'Hospital Reputation',
             'Doctor Recommendation',

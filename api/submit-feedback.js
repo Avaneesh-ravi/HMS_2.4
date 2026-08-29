@@ -222,9 +222,21 @@ export default async function handler(req, res) {
       }
 
       // 6. Appreciations
-      if (body.appreciation_name || body.appreciation_note) {
+      if (Array.isArray(body.appreciations) && body.appreciations.length > 0) {
+        for (const app of body.appreciations) {
+          const pName = (app.name || app.person_name || '').trim();
+          const dept = (app.department || '').trim();
+          const note = (app.note || app.comments || '').trim();
+          if (pName || note) {
+            await client.query(
+              'INSERT INTO appreciation (submission_id, person_name, department, comments, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
+              [submissionId, pName || null, dept || null, note || null]
+            );
+          }
+        }
+      } else if (body.appreciation_name || body.appreciation_note) {
         await client.query(
-          'INSERT INTO appreciation (submission_id, person_name, department, comments) VALUES ($1, $2, $3, $4)',
+          'INSERT INTO appreciation (submission_id, person_name, department, comments, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
           [submissionId, body.appreciation_name || null, body.appreciation_department || null, body.appreciation_note || null]
         );
       }
