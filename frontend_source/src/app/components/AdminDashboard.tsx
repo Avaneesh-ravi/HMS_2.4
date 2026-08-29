@@ -7,7 +7,7 @@ import {
   Hospital, User, TrendingUp, ThumbsUp, Pencil, Columns2, RectangleVertical,
   Building2, UserCircle, CreditCard, Stethoscope, Users, Pill, Activity,
   Shield, Utensils, HeartPulse, Droplet, Sparkles, Lock, Calendar, UserCircle2,
-  Printer, Search, CheckCircle2, ChevronUp, ChevronDown, HelpCircle, BarChart3, Award, RefreshCw
+  Printer, Search, CheckCircle2, Check, ChevronUp, ChevronDown, HelpCircle, BarChart3, Award, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
