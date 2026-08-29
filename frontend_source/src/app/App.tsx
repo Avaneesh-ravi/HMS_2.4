@@ -995,6 +995,81 @@ export default function App() {
     }
   };
 
+  // Reset entire form to initial state with default language 'ta' (Tamil)
+  const resetFormToInitialState = useCallback(() => {
+    setShowSuccess(false);
+    setCurrentStep(0);
+    setLanguage('ta'); // Always default to Tamil for next patient!
+    setPatientInfo({
+      uhid: '',
+      firstName: '',
+      lastName: '',
+      age: '',
+      gender: '',
+      mobile: '',
+      mobileOtpSent: false,
+      mobileOtp: '',
+      mobileVerified: false,
+      email: '',
+      emailOtpSent: false,
+      emailOtp: '',
+      emailVerified: false,
+      city: '',
+      state: 'Tamil Nadu',
+      country: 'India',
+      pincode: '',
+      address: '',
+      visitType: '',
+      opNo: '',
+      opDate: null,
+      ipNo: '',
+      ipDate: null,
+      admissionDate: null,
+      dischargeDate: null,
+    });
+    setWhyChooseUs({
+      selfDecision: false,
+      advertisement: false,
+      friendsRelatives: false,
+      corporate: false,
+      employee: false,
+      referralDoctor: false,
+      others: false,
+    });
+    setRatings({
+      reception: 0,
+      admission: 0,
+      billing: 0,
+      doctor: 0,
+      nursing: 0,
+      pharmacy: 0,
+      lab: 0,
+      insurance: 0,
+      food: 0,
+      physiotherapy: 0,
+      bloodBank: 0,
+      cleanliness: 0,
+      overall: 0,
+    });
+    setDynamicRatings({});
+    const resetYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+    fetchedYesNoQuestions.forEach(yq => { resetYesNo[yq.id] = { answer: null, remarks: '' }; });
+    setDynamicYesNo(resetYesNo);
+    setSuggestions('');
+    setAppreciations([{ id: 1, name: '', department: '', note: '' }]);
+    setFormErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [fetchedYesNoQuestions]);
+
+  // Auto-reset timer (7 seconds) on Thank You screen returning to default Tamil form
+  useEffect(() => {
+    if (!showSuccess) return;
+    const timer = setTimeout(() => {
+      resetFormToInitialState();
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [showSuccess, resetFormToInitialState]);
+
   const handleAdminLogin = async () => {
     setAdminLoginError('');
     const trimmedUser = adminUsername.trim().toLowerCase();
@@ -1262,80 +1337,7 @@ export default function App() {
     );
   }
 
-  // Reset entire form to initial state with default language 'ta' (Tamil)
-  const resetFormToInitialState = useCallback(() => {
-    setShowSuccess(false);
-    setCurrentStep(0);
-    setLanguage('ta'); // Always default to Tamil for next patient!
-    setPatientInfo({
-      uhid: '',
-      firstName: '',
-      lastName: '',
-      age: '',
-      gender: '',
-      mobile: '',
-      mobileOtpSent: false,
-      mobileOtp: '',
-      mobileVerified: false,
-      email: '',
-      emailOtpSent: false,
-      emailOtp: '',
-      emailVerified: false,
-      city: '',
-      state: 'Tamil Nadu',
-      country: 'India',
-      pincode: '',
-      address: '',
-      visitType: '',
-      opNo: '',
-      opDate: null,
-      ipNo: '',
-      ipDate: null,
-      admissionDate: null,
-      dischargeDate: null,
-    });
-    setWhyChooseUs({
-      selfDecision: false,
-      advertisement: false,
-      friendsRelatives: false,
-      corporate: false,
-      employee: false,
-      referralDoctor: false,
-      others: false,
-    });
-    setRatings({
-      reception: 0,
-      admission: 0,
-      billing: 0,
-      doctor: 0,
-      nursing: 0,
-      pharmacy: 0,
-      lab: 0,
-      insurance: 0,
-      food: 0,
-      physiotherapy: 0,
-      bloodBank: 0,
-      cleanliness: 0,
-      overall: 0,
-    });
-    setDynamicRatings({});
-    const resetYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-    fetchedYesNoQuestions.forEach(yq => { resetYesNo[yq.id] = { answer: null, remarks: '' }; });
-    setDynamicYesNo(resetYesNo);
-    setSuggestions('');
-    setAppreciations([{ id: 1, name: '', department: '', note: '' }]);
-    setFormErrors({});
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [fetchedYesNoQuestions]);
 
-  // Auto-reset timer (7 seconds) on Thank You screen returning to default Tamil form
-  useEffect(() => {
-    if (!showSuccess) return;
-    const timer = setTimeout(() => {
-      resetFormToInitialState();
-    }, 7000);
-    return () => clearTimeout(timer);
-  }, [showSuccess, resetFormToInitialState]);
 
   if (showSuccess) {
     return (
