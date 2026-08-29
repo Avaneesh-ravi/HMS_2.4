@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       formId = formRes.rows[0].feedback_form_id;
     }
 
-    // Update settings on feedback_form
+    // Update settings on feedback_form and department table
     if (settings) {
       const layoutModeVal = settings.layoutMode === '1-column' ? 1 : 2;
       const combinePagesVal = settings.combinePages ? 1 : 0;
@@ -67,6 +67,20 @@ export default async function handler(req, res) {
           formId
         ]
       );
+
+      // Insert any new departments into department table
+      const deptsList = body.departments || settings.departments || [];
+      if (Array.isArray(deptsList) && deptsList.length > 0) {
+        for (const dName of deptsList) {
+          if (dName && String(dName).trim()) {
+            const trimmed = String(dName).trim();
+            const dExists = await query('SELECT department_id FROM department WHERE LOWER(department_name) = LOWER($1) AND (hospital_id = $2 OR hospital_id = 0)', [trimmed, hospitalId]);
+            if (dExists.rows.length === 0) {
+              await query('INSERT INTO department (department_name, department_code, hospital_id, active, status) VALUES ($1, $2, $3, 1, $4)', [trimmed, trimmed.substring(0, 10).toUpperCase(), hospitalId, 'Active']);
+            }
+          }
+        }
+      }
     }
 
     // 2. Save Rating Questions

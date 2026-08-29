@@ -148,11 +148,35 @@ export default async function handler(req, res) {
       const subRes = await client.query(subSql, [patientId, hospitalId, departmentId, formId]);
       const submissionId = subRes.rows[0].submission_id;
 
-      // 3. Insert ratings
+      // 3. Insert ratings (handling both numeric and dynamic new question IDs)
       const insertedQuestions = new Set();
+      const ratingsMeta = Array.isArray(body.ratings_meta) ? body.ratings_meta : [];
+
       for (const [k, v] of Object.entries(body)) {
         if (k.startsWith('rating_q_') && v) {
-          const qId = parseInt(k.replace('rating_q_', ''), 10);
+          const rawQKey = k.replace('rating_q_', '');
+          let qId = parseInt(rawQKey, 10);
+          
+          if (isNaN(qId) || qId <= 0) {
+            const meta = ratingsMeta.find(m => String(m.id) === String(rawQKey)) || {};
+            const qLabel = meta.label || rawQKey;
+            const qTamil = meta.tamilLabel || qLabel;
+            
+            const existingQ = await client.query(
+              'SELECT question_id FROM rating_question WHERE LOWER(question_text_en) = LOWER($1) AND (hospital_id = $2 OR hospital_id IS NULL) LIMIT 1',
+              [qLabel, hospitalId]
+            );
+            if (existingQ.rows.length > 0) {
+              qId = existingQ.rows[0].question_id;
+            } else {
+              const insQ = await client.query(
+                'INSERT INTO rating_question (question_tag, question_text_en, question_text_ta, active, rating_grade, hospital_id, status) VALUES ($1, $2, $3, 1, $4, $5, $6) RETURNING question_id',
+                ['custom', qLabel, qTamil, 'emoji', hospitalId, 'Active']
+              );
+              qId = insQ.rows[0].question_id;
+            }
+          }
+
           if (qId > 0 && !insertedQuestions.has(qId)) {
             insertedQuestions.add(qId);
             await client.query(
@@ -181,15 +205,39 @@ export default async function handler(req, res) {
         }
       }
 
-      // 4. Insert yes/no answers
+      // 4. Insert yes/no answers (handling both numeric and dynamic new question IDs)
       const insertedYesNo = new Set();
+      const yesnoMeta = Array.isArray(body.yesno_meta) ? body.yesno_meta : [];
+
       for (const [k, v] of Object.entries(body)) {
         if (k.startsWith('yesno_q_') && !k.endsWith('_text') && v !== undefined && v !== null) {
-          const yId = parseInt(k.replace('yesno_q_', ''), 10);
+          const rawYKey = k.replace('yesno_q_', '');
+          let yId = parseInt(rawYKey, 10);
+          const rem = body[`yesno_q_${rawYKey}_text`] || body[`yesno_q_${yId}_text`] || null;
+
+          if (isNaN(yId) || yId <= 0) {
+            const meta = yesnoMeta.find(m => String(m.id) === String(rawYKey)) || {};
+            const yLabel = meta.label || rawYKey;
+            const yTamil = meta.tamilLabel || yLabel;
+
+            const existingY = await client.query(
+              'SELECT yesno_question_id FROM yesno_question WHERE LOWER(question_en) = LOWER($1) AND (hospital_id = $2 OR hospital_id IS NULL) LIMIT 1',
+              [yLabel, hospitalId]
+            );
+            if (existingY.rows.length > 0) {
+              yId = existingY.rows[0].yesno_question_id;
+            } else {
+              const insY = await client.query(
+                'INSERT INTO yesno_question (question_en, question_ta, hospital_id, status) VALUES ($1, $2, $3, $4) RETURNING yesno_question_id',
+                [yLabel, yTamil, hospitalId, 'Active']
+              );
+              yId = insY.rows[0].yesno_question_id;
+            }
+          }
+
           if (yId > 0 && !insertedYesNo.has(yId)) {
             insertedYesNo.add(yId);
-            const ans = (v === 'Yes' || v === '1' || v === 1 || v === true) ? 1 : 0;
-            const rem = body[`yesno_q_${yId}_text`] || null;
+            const ans = (v === 'Yes' || v === '1' || v === 1 || v === true || String(v).toLowerCase() === 'ஆம்') ? 1 : 0;
             await client.query(
               'INSERT INTO yesno_answer (yesno_question_id, patient_id, submission_id, feedback_form_id, hospital_id, answer, remarks) VALUES ($1, $2, $3, $4, $5, $6, $7)',
               [yId, patientId, submissionId, formId, hospitalId, ans, rem]

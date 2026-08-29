@@ -2063,6 +2063,7 @@ export function AdminDashboard({
                             if (trimmed && !departments.includes(trimmed)) {
                               const updated = [...departments, trimmed];
                               setDepartments(updated);
+                              onDepartmentsChange?.(updated);
                               setNewDepartment('');
                               localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
                               toast.success('Department added');
@@ -2082,6 +2083,7 @@ export function AdminDashboard({
                               onClick={() => {
                                 const updated = departments.filter((_, i) => i !== index);
                                 setDepartments(updated);
+                                onDepartmentsChange?.(updated);
                                 localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
                                 toast.success('Department removed');
                               }}

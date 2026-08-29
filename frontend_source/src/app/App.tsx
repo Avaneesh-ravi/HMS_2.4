@@ -349,6 +349,19 @@ export default function App() {
     return REAL_DB_DEPARTMENTS;
   });
 
+  // Keep departments in sync if changed by admin
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hms_saved_departments');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setDepartments(parsed);
+        }
+      }
+    } catch (e) {}
+  }, [showAdminDashboard]);
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     let hospitalId = urlParams.get('hospital_id');
@@ -941,6 +954,8 @@ export default function App() {
           hospital_id: selectedHospital?.id || 1,
           feedback_form_id: 1,
           uhid: newSubmissionObj.uhid,
+          ratings_meta: questions.map(q => ({ id: q.id, label: q.label, tamilLabel: q.tamilLabel })),
+          yesno_meta: fetchedYesNoQuestions.map(y => ({ id: y.id, label: y.label, tamilLabel: y.tamilLabel })),
           first_name: patientInfo.firstName || '',
           last_name: patientInfo.lastName || '',
           full_name: newSubmissionObj.patientName,
