@@ -638,25 +638,15 @@ export function AdminDashboard({
           }
           
           const fetchedResponses: FeedbackResponse[] = data.data.map((item: any) => {
-            const parseRatingStr = (r: string) => {
-              if(!r) return 0;
-              let s = String(r).toLowerCase();
-              if(s==='excellent'||s==='5') return 5;
-              if(s==='good'||s==='4') return 4;
-              if(s==='average'||s==='3') return 3;
-              if(s==='bad'||s==='2') return 2;
-              if(s==='poor'||s==='1') return 1;
-              let parsed = parseInt(s);
-              return isNaN(parsed) ? 0 : parsed;
-            };
-            let computedOverall = 0;
-            if (item.rawRatings && item.rawRatings.length > 0) {
-               const sum = item.rawRatings.reduce((acc: number, cur: any) => acc + parseRatingStr(cur.rating), 0);
-               computedOverall = sum / item.rawRatings.length;
-            }
+            const rawRatings = item.rawRatings || [];
+            const rawYesNo = item.rawYesNo || [];
+            
+            let computedConsolidated = getConsolidatedRating(item);
+            let exactOverall = getExactOverallRating(item);
+
             let computedRecommend = item.wouldRecommend !== undefined ? item.wouldRecommend : true;
-            if (item.rawYesNo && item.rawYesNo.length > 0) {
-                const recObj = item.rawYesNo.find((y: any) => {
+            if (rawYesNo.length > 0) {
+                const recObj = rawYesNo.find((y: any) => {
                   const t = String(y.question_text || y.question_en || y.question_text_en || y.question_ta || '').toLowerCase();
                   return t.includes('refer') || t.includes('recommend') || t.includes('family') || t.includes('friends') || t.includes('பரிந்துரை');
                 });
@@ -668,10 +658,10 @@ export function AdminDashboard({
             return {
               ...item,
               departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
-              rawRatings: item.rawRatings || [],
-              rawYesNo: item.rawYesNo || [],
-              overallRating: Math.round(Number(exactOverall || 5)),
-              consolidatedRating: computedConsolidated || item.consolidatedRating || item.overallRating || 5,
+              rawRatings: rawRatings,
+              rawYesNo: rawYesNo,
+              overallRating: exactOverall,
+              consolidatedRating: computedConsolidated,
               wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
               ratings: item.ratings || {},
               yesNoAnswers: item.yesNoAnswers || {},
@@ -2563,7 +2553,7 @@ export function AdminDashboard({
                               <td className="py-4 px-4 text-sm">
                                 <span className="inline-flex items-center gap-1 text-yellow-700 font-bold bg-yellow-50 px-2.5 py-1 rounded-lg border border-yellow-200 shadow-sm" title="Exact Overall Rating">
                                   <Star className="w-3.5 h-3.5 fill-current text-yellow-500" />
-                                  {Math.round(Number(response.overallRating || 5))} / 5
+                                  {getExactOverallRating(response)} / 5
                                 </span>
                               </td>
 
@@ -2571,7 +2561,7 @@ export function AdminDashboard({
                               <td className="py-4 px-4 text-sm">
                                 <span className="inline-flex items-center gap-1 text-teal-700 font-bold bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 shadow-sm" title="Consolidated Average of all Service Questions">
                                   <Star className="w-3.5 h-3.5 fill-current text-teal-500" />
-                                  {(Number(response.consolidatedRating || response.overallRating || 5)).toFixed(1)} / 5.0
+                                  {getConsolidatedRating(response).toFixed(1)} / 5.0
                                 </span>
                               </td>
                               <td className="py-4 px-4 text-sm">
@@ -3694,14 +3684,14 @@ export function AdminDashboard({
                     <p className="text-sm text-gray-600">Overall Rating</p>
                     <p className="font-bold text-amber-700 flex items-center gap-1 text-base">
                       <Star className="w-4 h-4 fill-current text-amber-500" />
-                      {Math.round(Number(selectedResponse.overallRating || 5))}/5
+                      {getExactOverallRating(selectedResponse)} / 5
                     </p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-sm text-gray-600">Consolidated Rating (Average)</p>
                     <p className="font-bold text-teal-700 flex items-center gap-1 text-base">
                       <Star className="w-4 h-4 fill-current text-teal-500" />
-                      {(Number(selectedResponse.consolidatedRating || selectedResponse.overallRating || 5)).toFixed(1)}/5.0
+                      {getConsolidatedRating(selectedResponse).toFixed(1)} / 5.0
                     </p>
                   </div>
                 </div>
