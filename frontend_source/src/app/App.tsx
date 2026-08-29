@@ -2636,83 +2636,108 @@ export default function App() {
               <h4 className="font-semibold text-gray-900 mb-4">
                 {language === 'en' ? 'Summary' : 'சுருக்கம்'}
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-center">
                 {/* Patient - Navigate to Step 0 */}
-                <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Patient' : 'நோயாளி'}</p>
-                  <p className="font-semibold text-gray-900">
-                    {(patientInfo.firstName || patientInfo.lastName) ? (patientInfo.firstName + ' ' + patientInfo.lastName).trim() : (language === 'en' ? 'Not provided' : 'பதில் இல்லை')}
-                  </p>
-                  <button
-                    onClick={() => setCurrentStep(0)}
-                    className="mt-2 text-gray-600 hover:text-teal-600 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 bg-white/80 rounded-xl shadow-xs border border-gray-200/70 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">{language === 'en' ? 'Patient' : 'நோயாளி'}</p>
+                    <p className="font-bold text-gray-900 text-sm break-words">
+                      {(patientInfo.firstName || patientInfo.lastName) ? (patientInfo.firstName + ' ' + patientInfo.lastName).trim() : (language === 'en' ? 'Not provided' : 'பதில் இல்லை')}
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setCurrentStep(0)}
+                      className="mt-2 text-gray-400 hover:text-teal-600 transition-colors inline-block"
+                      title="Edit Patient Details"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Ratings Provided - Navigate to Step 1 */}
-                <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Ratings Provided' : 'மதிப்பீடுகள்'}</p>
-                  <p className="font-semibold text-gray-900">
-                    {Object.values(dynamicRatings).filter(r => r > 0).length} / {questions.length}
-                  </p>
-                  <button
-                    onClick={() => setCurrentStep(1)}
-                    className="mt-2 text-gray-600 hover:text-teal-600 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 bg-white/80 rounded-xl shadow-xs border border-gray-200/70 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">{language === 'en' ? 'Ratings Provided' : 'மதிப்பீடுகள்'}</p>
+                    <p className="font-bold text-gray-900 text-sm">
+                      {Object.values(dynamicRatings).filter(r => r > 0).length} / {questions.length}
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="mt-2 text-gray-400 hover:text-teal-600 transition-colors inline-block"
+                      title="Edit Ratings"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Overall Rating - Exact Rating */}
-                <div className="p-4 bg-white/70 rounded-lg border-2 border-amber-200">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Overall Rating' : 'ஒட்டுமொத்த மதிப்பீடு'}</p>
-                  <p className="font-bold text-amber-800 text-lg">
-                    {ratings.overall > 0 ? `${ratings.overall} / 5` : (language === 'en' ? 'Not rated' : 'மதிப்பிடப்படவில்லை')}
-                  </p>
-                  <button
-                    onClick={() => setCurrentStep(1)}
-                    className="mt-2 text-gray-600 hover:text-teal-600 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 bg-white/80 rounded-xl shadow-xs border border-gray-200/70 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">{language === 'en' ? 'Overall Rating' : 'ஒட்டுமொத்த மதிப்பீடு'}</p>
+                    <p className="font-bold text-gray-900 text-sm break-words">
+                      {ratings.overall > 0 ? `${ratings.overall} / 5` : (language === 'en' ? 'Not rated' : 'மதிப்பீடு இல்லை')}
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="mt-2 text-gray-400 hover:text-teal-600 transition-colors inline-block"
+                      title="Edit Overall Rating"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Consolidated Rating - Calculated Average */}
-                <div className="p-4 bg-white/70 rounded-lg border-2 border-teal-200">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Consolidated Rating' : 'ஒருங்கிணைந்த மதிப்பீடு'}</p>
-                  <p className="font-bold text-teal-800 text-lg">
-                    {(() => {
-                      const answeredRatings = Object.values(dynamicRatings).filter(r => r > 0);
-                      if (answeredRatings.length === 0) return language === 'en' ? 'Not rated' : 'மதிப்பிடப்படவில்லை';
-                      const avg = answeredRatings.reduce((a, b) => a + b, 0) / answeredRatings.length;
-                      return `${avg.toFixed(1)} / 5`;
-                    })()}
-                  </p>
-                  <button
-                    onClick={() => setCurrentStep(1)}
-                    className="mt-2 text-gray-600 hover:text-teal-600 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 bg-white/80 rounded-xl shadow-xs border border-gray-200/70 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">{language === 'en' ? 'Consolidated Rating' : 'ஒருங்கிணைந்த மதிப்பீடு'}</p>
+                    <p className="font-bold text-gray-900 text-sm break-words">
+                      {(() => {
+                        const answeredRatings = Object.values(dynamicRatings).filter(r => r > 0);
+                        if (answeredRatings.length === 0) return language === 'en' ? 'Not rated' : 'மதிப்பீடு இல்லை';
+                        const avg = answeredRatings.reduce((a, b) => a + b, 0) / answeredRatings.length;
+                        return `${avg.toFixed(1)} / 5`;
+                      })()}
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="mt-2 text-gray-400 hover:text-teal-600 transition-colors inline-block"
+                      title="Edit Ratings"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Questionary Page - Navigate to Step 2 */}
-                <div className="p-4 bg-white/70 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Questionary Page' : 'கேள்வி பக்கம்'}</p>
-                  <p className="font-semibold text-gray-900">
-                    {(() => {
-                      const answeredCount = Object.values(dynamicYesNo).filter(q => q.answer !== null).length;
-                      return `${answeredCount} / ${fetchedYesNoQuestions.length}`;
-                    })()}
-                  </p>
-                  <button
-                    onClick={() => setCurrentStep(2)}
-                    className="mt-2 text-gray-600 hover:text-teal-600 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 bg-white/80 rounded-xl shadow-xs border border-gray-200/70 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">{language === 'en' ? 'Questionary Page' : 'கேள்வி பக்கம்'}</p>
+                    <p className="font-bold text-gray-900 text-sm">
+                      {(() => {
+                        const answeredCount = Object.values(dynamicYesNo).filter(q => q.answer !== null).length;
+                        return `${answeredCount} / ${fetchedYesNoQuestions.length}`;
+                      })()}
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      className="mt-2 text-gray-400 hover:text-teal-600 transition-colors inline-block"
+                      title="Edit Yes/No Questions"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
