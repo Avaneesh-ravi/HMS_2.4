@@ -1127,7 +1127,7 @@ export function AdminDashboard({
 
       const totalDeptResponses = deptResponses.length;
 
-      // 1. Rating Questions Map
+      // 1. Rating Questions Map (Active + Historical/Deleted from Form Builder)
       const ratingMap = new Map<string, {
         id: string;
         label: string;
@@ -1139,52 +1139,56 @@ export function AdminDashboard({
         count1: number;
         totalRated: number;
         sumScores: number;
+        isDeleted?: boolean;
       }>();
 
-      // Initialize with configured questions
+      // Initialize with configured active questions
       questions.forEach(q => {
         ratingMap.set(String(q.id), {
           id: String(q.id),
           label: q.label,
           tamilLabel: q.tamilLabel,
           count5: 0, count4: 0, count3: 0, count2: 0, count1: 0,
-          totalRated: 0, sumScores: 0
+          totalRated: 0, sumScores: 0,
+          isDeleted: false
         });
       });
 
-      // Aggregate responses for the hospital's configured rating questions
+      // Aggregate responses and auto-discover historical/deleted questions
       deptResponses.forEach(r => {
         let hasCountedRating = false;
         if (r.rawRatings && r.rawRatings.length > 0) {
           r.rawRatings.forEach(item => {
             const qId = String(item.question_id || '');
-            const qTxt = (item.question_text || (item as any).question_text_en || '').trim().toLowerCase();
+            const qTxt = (item.question_text || (item as any).question_text_en || '').trim();
+            const qTxtLower = qTxt.toLowerCase();
             const score = parseRatingVal(item.rating);
 
             if (score >= 1 && score <= 5) {
               let entry = ratingMap.get(qId);
-              if (!entry && qTxt) {
+              if (!entry && qTxtLower) {
                 for (const val of ratingMap.values()) {
-                  if (val.label.trim().toLowerCase() === qTxt || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === qTxt)) {
+                  if (val.label.trim().toLowerCase() === qTxtLower || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === qTxtLower)) {
                     entry = val;
                     break;
                   }
                 }
               }
-              // Category keyword matching
-              if (!entry && qTxt) {
-                const keywords = ['reception', 'admission', 'billing', 'doctor', 'nurs', 'pharmac', 'clean', 'food', 'wait'];
-                for (const kw of keywords) {
-                  if (qTxt.includes(kw)) {
-                    for (const val of ratingMap.values()) {
-                      if (val.label.toLowerCase().includes(kw)) {
-                        entry = val;
-                        break;
-                      }
-                    }
-                    if (entry) break;
-                  }
-                }
+
+              // If deleted from active form builder, create/preserve historical entry so past data is retained
+              if (!entry && (qId || qTxt)) {
+                const effectiveId = qId || `hist_rq_${qTxt}`;
+                const effectiveLabel = qTxt || `Rating Question ${qId}`;
+                const effectiveTa = (item as any).question_text_ta || (item as any).tamil_text || '';
+                entry = {
+                  id: effectiveId,
+                  label: effectiveLabel,
+                  tamilLabel: effectiveTa,
+                  count5: 0, count4: 0, count3: 0, count2: 0, count1: 0,
+                  totalRated: 0, sumScores: 0,
+                  isDeleted: true
+                };
+                ratingMap.set(effectiveId, entry);
               }
 
               if (entry) {
@@ -1202,7 +1206,7 @@ export function AdminDashboard({
           });
         }
 
-        // If no individual rating questions matched or rawRatings was empty, distribute the response's overallRating
+        // Fallback distribution across active questions if rawRatings empty
         if (!hasCountedRating && (r.overallRating || (r.ratings && Object.keys(r.ratings).length > 0))) {
           const overallScore = Math.min(5, Math.max(1, Math.round(Number(r.overallRating || 5))));
           questions.forEach(q => {
@@ -1221,26 +1225,30 @@ export function AdminDashboard({
         }
       });
 
-      const ratingQuestionsList = Array.from(ratingMap.values()).map(q => {
-        const avg = q.totalRated > 0 ? (q.sumScores / q.totalRated) : 0;
-        const pctPositive = q.totalRated > 0 ? (((q.count5 + q.count4) / q.totalRated) * 100) : 0;
-        return {
-          ...q,
-          averageScore: parseFloat(avg.toFixed(1)),
-          percentagePositive: Math.round(pctPositive),
-          pct5: q.totalRated > 0 ? Math.round((q.count5 / q.totalRated) * 100) : 0,
-          pct4: q.totalRated > 0 ? Math.round((q.count4 / q.totalRated) * 100) : 0,
-          pct3: q.totalRated > 0 ? Math.round((q.count3 / q.totalRated) * 100) : 0,
-          pct2: q.totalRated > 0 ? Math.round((q.count2 / q.totalRated) * 100) : 0,
-          pct1: q.totalRated > 0 ? Math.round((q.count1 / q.totalRated) * 100) : 0,
-        };
-      }).filter(q => {
-        if (!reportSearch) return true;
-        const query = reportSearch.toLowerCase();
-        return q.label.toLowerCase().includes(query) || (q.tamilLabel && q.tamilLabel.toLowerCase().includes(query));
-      });
+      const ratingQuestionsList = Array.from(ratingMap.values())
+        .filter(q => !q.isDeleted || q.totalRated > 0)
+        .map(q => {
+          const avg = q.totalRated > 0 ? (q.sumScores / q.totalRated) : 0;
+          const pctPositive = q.totalRated > 0 ? (((q.count5 + q.count4) / q.totalRated) * 100) : 0;
+          return {
+            ...q,
+            averageScore: parseFloat(avg.toFixed(1)),
+            percentagePositive: Math.round(pctPositive),
+            pct5: q.totalRated > 0 ? Math.round((q.count5 / q.totalRated) * 100) : 0,
+            pct4: q.totalRated > 0 ? Math.round((q.count4 / q.totalRated) * 100) : 0,
+            pct3: q.totalRated > 0 ? Math.round((q.count3 / q.totalRated) * 100) : 0,
+            pct2: q.totalRated > 0 ? Math.round((q.count2 / q.totalRated) * 100) : 0,
+            pct1: q.totalRated > 0 ? Math.round((q.count1 / q.totalRated) * 100) : 0,
+          };
+        })
+        .sort((a, b) => (a.isDeleted ? 1 : 0) - (b.isDeleted ? 1 : 0))
+        .filter(q => {
+          if (!reportSearch) return true;
+          const query = reportSearch.toLowerCase();
+          return q.label.toLowerCase().includes(query) || (q.tamilLabel && q.tamilLabel.toLowerCase().includes(query));
+        });
 
-      // 2. Yes/No Questions Map
+      // 2. Yes/No Questions Map (Active + Historical/Deleted from Form Builder)
       const yesNoMap = new Map<string, {
         id: string;
         label: string;
@@ -1249,6 +1257,7 @@ export function AdminDashboard({
         noCount: number;
         totalAnswered: number;
         remarks: Array<{ patientName: string; uhid: string; date: string; text: string }>;
+        isDeleted?: boolean;
       }>();
 
       yesNoQuestions.forEach(yq => {
@@ -1259,28 +1268,49 @@ export function AdminDashboard({
           yesCount: 0,
           noCount: 0,
           totalAnswered: 0,
-          remarks: []
+          remarks: [],
+          isDeleted: false
         });
       });
 
-      // Aggregate responses for the hospital's configured Yes/No questions
+      // Aggregate responses and preserve deleted/historical Yes/No questions
       deptResponses.forEach(r => {
         let hasCountedYesNo = false;
         if (r.rawYesNo && r.rawYesNo.length > 0) {
           r.rawYesNo.forEach(yn => {
             const yId = String(yn.yesno_question_id || '');
-            const yTxt = (yn.question_en || yn.question_text || yn.question_ta || '').trim().toLowerCase();
+            const yTxt = (yn.question_en || yn.question_text || yn.question_ta || '').trim();
+            const yTxtLower = yTxt.toLowerCase();
             const ans = yn.answer;
 
             let entry = yesNoMap.get(yId);
-            if (!entry && yTxt) {
+            if (!entry && yTxtLower) {
               for (const val of yesNoMap.values()) {
-                if (val.label.trim().toLowerCase() === yTxt || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === yTxt)) {
+                if (val.label.trim().toLowerCase() === yTxtLower || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === yTxtLower)) {
                   entry = val;
                   break;
                 }
               }
             }
+
+            // If deleted from active form builder, create/preserve historical entry so past data is retained
+            if (!entry && (yId || yTxt)) {
+              const effectiveId = yId || `hist_yq_${yTxt}`;
+              const effectiveLabel = yTxt || `Yes/No Question ${yId}`;
+              const effectiveTa = yn.question_ta || '';
+              entry = {
+                id: effectiveId,
+                label: effectiveLabel,
+                tamilLabel: effectiveTa,
+                yesCount: 0,
+                noCount: 0,
+                totalAnswered: 0,
+                remarks: [],
+                isDeleted: true
+              };
+              yesNoMap.set(effectiveId, entry);
+            }
+
             if (entry) {
               if (isYesAnswer(ans)) {
                 entry.yesCount++;
@@ -1316,21 +1346,25 @@ export function AdminDashboard({
         }
       });
 
-      const yesNoQuestionsList = Array.from(yesNoMap.values()).map(yq => {
-        const yesPct = yq.totalAnswered > 0 ? Math.round((yq.yesCount / yq.totalAnswered) * 100) : 0;
-        const noPct = yq.totalAnswered > 0 ? Math.round((yq.noCount / yq.totalAnswered) * 100) : 0;
-        return {
-          ...yq,
-          yesPercent: yesPct,
-          noPercent: noPct,
-        };
-      }).filter(yq => {
-        if (!reportSearch) return true;
-        const query = reportSearch.toLowerCase();
-        return yq.label.toLowerCase().includes(query) || 
-               (yq.tamilLabel && yq.tamilLabel.toLowerCase().includes(query)) ||
-               yq.remarks.some(rem => rem.text.toLowerCase().includes(query) || rem.patientName.toLowerCase().includes(query));
-      });
+      const yesNoQuestionsList = Array.from(yesNoMap.values())
+        .filter(yq => !yq.isDeleted || yq.totalAnswered > 0)
+        .map(yq => {
+          const yesPct = yq.totalAnswered > 0 ? Math.round((yq.yesCount / yq.totalAnswered) * 100) : 0;
+          const noPct = yq.totalAnswered > 0 ? Math.round((yq.noCount / yq.totalAnswered) * 100) : 0;
+          return {
+            ...yq,
+            yesPercent: yesPct,
+            noPercent: noPct,
+          };
+        })
+        .sort((a, b) => (a.isDeleted ? 1 : 0) - (b.isDeleted ? 1 : 0))
+        .filter(yq => {
+          if (!reportSearch) return true;
+          const query = reportSearch.toLowerCase();
+          return yq.label.toLowerCase().includes(query) || 
+                 (yq.tamilLabel && yq.tamilLabel.toLowerCase().includes(query)) ||
+                 yq.remarks.some(rem => rem.text.toLowerCase().includes(query) || rem.patientName.toLowerCase().includes(query));
+        });
 
       // Overall Department Metrics
       let deptSumScores = 0;
@@ -3164,11 +3198,23 @@ export function AdminDashboard({
                                 {dept.ratingQuestions.map((rq, rqIdx) => (
                                   <div
                                     key={rqIdx}
-                                    className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all space-y-3"
+                                    className={`border rounded-xl p-4 transition-all space-y-3 ${
+                                      rq.isDeleted
+                                        ? 'border-amber-300 bg-amber-50/60 hover:bg-amber-50/90 shadow-sm'
+                                        : 'border-gray-200 bg-gray-50/50 hover:bg-white hover:shadow-md'
+                                    }`}
                                   >
                                     <div className="flex items-start justify-between gap-3">
                                       <div>
-                                        <h5 className="text-sm font-bold text-gray-900">{rq.label}</h5>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <h5 className="text-sm font-bold text-gray-900">{rq.label}</h5>
+                                          {rq.isDeleted && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
+                                              <Trash2 className="w-3 h-3 text-amber-700" />
+                                              Deleted from Form (Past Data)
+                                            </span>
+                                          )}
+                                        </div>
                                         {rq.tamilLabel && (
                                           <p className="text-xs text-teal-700 font-medium mt-0.5">{rq.tamilLabel}</p>
                                         )}
@@ -3241,11 +3287,23 @@ export function AdminDashboard({
                                 {dept.yesNoQuestions.map((yq, yqIdx) => (
                                   <div
                                     key={yqIdx}
-                                    className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all space-y-3"
+                                    className={`border rounded-xl p-4 transition-all space-y-3 ${
+                                      yq.isDeleted
+                                        ? 'border-amber-300 bg-amber-50/60 hover:bg-amber-50/90 shadow-sm'
+                                        : 'border-gray-200 bg-gray-50/50 hover:bg-white hover:shadow-md'
+                                    }`}
                                   >
                                     <div className="flex items-start justify-between gap-2">
                                       <div>
-                                        <h5 className="text-sm font-bold text-gray-900">{yq.label}</h5>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <h5 className="text-sm font-bold text-gray-900">{yq.label}</h5>
+                                          {yq.isDeleted && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
+                                              <Trash2 className="w-3 h-3 text-amber-700" />
+                                              Deleted from Form (Past Data)
+                                            </span>
+                                          )}
+                                        </div>
                                         {yq.tamilLabel && (
                                           <p className="text-xs text-teal-700 font-medium mt-0.5">{yq.tamilLabel}</p>
                                         )}
