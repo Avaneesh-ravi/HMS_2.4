@@ -309,6 +309,82 @@ function SortableQuestionCard({
   );
 }
 
+// Helper to safely parse any rating value (string, number, word) to integer 1-5
+export const parseRatingScore = (val: any): number => {
+  if (val === undefined || val === null || val === '') return 0;
+  const s = String(val).toLowerCase().trim();
+  if (s === 'excellent' || s === '5') return 5;
+  if (s === 'good' || s === '4') return 4;
+  if (s === 'average' || s === '3') return 3;
+  if (s === 'bad' || s === '2') return 2;
+  if (s === 'poor' || s === '1') return 1;
+  const parsed = parseFloat(s);
+  return isNaN(parsed) ? 0 : Math.round(parsed);
+};
+
+// Helper to get Exact Overall Rating (1-5)
+export const getExactOverallRating = (r: any): number => {
+  if (!r) return 5;
+  if (r.overallRating !== undefined && !isNaN(Number(r.overallRating))) {
+    return Math.max(1, Math.min(5, Math.round(Number(r.overallRating))));
+  }
+  if (r.rating_overall !== undefined && !isNaN(Number(r.rating_overall))) {
+    return Math.max(1, Math.min(5, Math.round(Number(r.rating_overall))));
+  }
+  if (r.ratings && r.ratings.overall !== undefined && !isNaN(Number(r.ratings.overall))) {
+    return Math.max(1, Math.min(5, Math.round(Number(r.ratings.overall))));
+  }
+  if (Array.isArray(r.rawRatings) && r.rawRatings.length > 0) {
+    const overallObj = r.rawRatings.find((x: any) => String(x.question_text || x.question_text_en || '').toLowerCase().includes('overall'));
+    if (overallObj) {
+      const val = parseRatingScore(overallObj.rating);
+      if (val > 0) return val;
+    }
+    const firstVal = parseRatingScore(r.rawRatings[0].rating);
+    if (firstVal > 0) return firstVal;
+  }
+  return 5;
+};
+
+// Helper to get Consolidated Rating (Average of all service questions)
+export const getConsolidatedRating = (r: any): number => {
+  if (!r) return 5.0;
+
+  // 1. Direct from rawRatings array (most accurate)
+  if (Array.isArray(r.rawRatings) && r.rawRatings.length > 0) {
+    const validScores = r.rawRatings
+      .map((x: any) => parseRatingScore(x.rating))
+      .filter((v: number) => v > 0);
+    if (validScores.length > 0) {
+      const sum = validScores.reduce((a: number, b: number) => a + b, 0);
+      return Math.round((sum / validScores.length) * 10) / 10;
+    }
+  }
+
+  // 2. From ratings object
+  if (r.ratings && typeof r.ratings === 'object') {
+    const validScores = Object.entries(r.ratings)
+      .filter(([k, v]) => k !== 'overall' && typeof v === 'number' && v > 0)
+      .map(([_, v]) => v as number);
+    if (validScores.length > 0) {
+      const sum = validScores.reduce((a, b) => a + b, 0);
+      return Math.round((sum / validScores.length) * 10) / 10;
+    }
+  }
+
+  // 3. Fallback to consolidatedRating property
+  if (r.consolidatedRating !== undefined && !isNaN(Number(r.consolidatedRating))) {
+    return Math.round(Number(r.consolidatedRating) * 10) / 10;
+  }
+
+  // 4. Fallback to overallRating
+  if (r.overallRating !== undefined && !isNaN(Number(r.overallRating))) {
+    return Math.round(Number(r.overallRating) * 10) / 10;
+  }
+
+  return 5.0;
+};
+
 export function AdminDashboard({ 
   onClose, 
   onLogout, 
