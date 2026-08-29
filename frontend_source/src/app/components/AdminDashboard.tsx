@@ -569,6 +569,33 @@ export function AdminDashboard({
     }
   ];
 
+  // Helper to reliably check recommendation status across all question formats and historical data
+  const getIsRecommended = useCallback((r: FeedbackResponse): boolean => {
+    if (r.rawYesNo && r.rawYesNo.length > 0) {
+      const recObj = r.rawYesNo.find((y: any) => {
+        const t = String(y.question_text || y.question_en || y.question_text_en || y.question_ta || '').toLowerCase();
+        return t.includes('refer') || t.includes('recommend') || t.includes('family') || t.includes('friends') || t.includes('பரிந்துரை');
+      });
+      if (recObj) {
+        const a = String(recObj.answer).toLowerCase();
+        return (a === '1' || a === 'yes' || a === 'true' || a === 'ஆம்');
+      }
+    }
+    if (r.yesNoAnswers && Object.keys(r.yesNoAnswers).length > 0) {
+      for (const [k, v] of Object.entries(r.yesNoAnswers)) {
+        const kStr = String(k).toLowerCase();
+        if (kStr.includes('refer') || kStr.includes('recommend') || kStr.includes('family') || kStr.includes('friend') || kStr === '42' || kStr === '3') {
+          if (v !== null && v !== undefined) {
+            const ansObj = v as any;
+            const a = typeof ansObj === 'object' ? String(ansObj.answer).toLowerCase() : String(ansObj).toLowerCase();
+            return (a === '1' || a === 'yes' || a === 'true' || a === 'ஆம்');
+          }
+        }
+      }
+    }
+    return r.wouldRecommend === true || (r.wouldRecommend as any) === 1 || String(r.wouldRecommend).toLowerCase() === 'yes';
+  }, []);
+
   const [responses, setResponses] = useState<FeedbackResponse[]>(() => {
     try {
       const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
@@ -668,8 +695,10 @@ export function AdminDashboard({
             const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
             if (Array.isArray(newSubs) && newSubs.length > 0) {
               const fetchedUhids = new Set(fetchedResponses.map((r: any) => r.uhid));
-              const uniqueNewSubs = newSubs.filter((s: any) => !fetchedUhids.has(s.uhid));
-              finalResponses = [...uniqueNewSubs, ...fetchedResponses];
+              // Update localStorage to remove items that are already in fetchedResponses
+              const remainingNewSubs = newSubs.filter((s: any) => !fetchedUhids.has(s.uhid));
+              localStorage.setItem('hms_new_submissions', JSON.stringify(remainingNewSubs));
+              finalResponses = [...remainingNewSubs, ...fetchedResponses];
             }
           } catch (e) {}
           setResponses(finalResponses);
@@ -997,7 +1026,7 @@ export function AdminDashboard({
   const todayStr = `${d}/${m}/${y}`;
 
   responses.forEach(r => {
-     if (r.wouldRecommend) recommendCount++;
+     if (getIsRecommended(r)) recommendCount++;
      let rVal = Math.round(r.overallRating || 0);
      if (rVal < 1 && (r.overallRating || 0) > 0) rVal = 1;
      if (rVal > 5) rVal = 5;
@@ -1456,8 +1485,8 @@ export function AdminDashboard({
     // Recommend filter
     if (filterRecommend !== 'all') {
       result = result.filter(res => {
-        if (filterRecommend === 'yes') return res.wouldRecommend === true;
-        if (filterRecommend === 'no') return res.wouldRecommend === false;
+        if (filterRecommend === 'yes') return getIsRecommended(res) === true;
+        if (filterRecommend === 'no') return getIsRecommended(res) === false;
         return true;
       });
     }
@@ -2477,7 +2506,7 @@ export function AdminDashboard({
                           const safeId = response.id ? ('sub_' + response.id) : (safeUhid + '_' + idx);
                           const officeUseFilled = !!(officeUseByResponse[safeUhid]?.reviewOfComplaint || officeUseByResponse[safeUhid]?.inchargeName);
                           const ratingNum = Math.round(Number(response.overallRating || 5) * 10) / 10;
-                          const isRec = response.wouldRecommend === true || response.wouldRecommend === 1 || String(response.wouldRecommend).toLowerCase() === 'yes';
+                          const isRec = getIsRecommended(response);
 
                           return (
                             <tr key={safeId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
