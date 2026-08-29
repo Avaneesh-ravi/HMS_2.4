@@ -935,6 +935,7 @@ export function AdminDashboard({
         return `../api/backend/ajax/${endpoint}`;
       };
 
+      const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
       const apiUrl = getApiUrl('save-questions.php');
       
       const response = await fetch(apiUrl, {
@@ -942,6 +943,7 @@ export function AdminDashboard({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify({ 
+          hospital_id: hid,
           questions, 
           yesno_questions: yesNoQuestions,
           settings: {

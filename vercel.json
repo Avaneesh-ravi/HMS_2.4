@@ -78,6 +78,18 @@
       "destination": "/api/get-questions.js"
     },
     {
+      "source": "/api/backend/ajax/save-questions.php",
+      "destination": "/api/save-questions.js"
+    },
+    {
+      "source": "/api/backend/ajax/save-questions",
+      "destination": "/api/save-questions.js"
+    },
+    {
+      "source": "/api/save-questions",
+      "destination": "/api/save-questions.js"
+    },
+    {
       "source": "/((?!api/|assets/|favicon.ico).*)",
       "destination": "/public/index.html"
     }

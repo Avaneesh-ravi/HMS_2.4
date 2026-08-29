@@ -557,7 +557,7 @@ export default function App() {
     if (info.firstName !== '' || strict) {
       if (!info.firstName) {
         newErrors.firstName = language === 'en' ? 'First name is required' : 'முதல் பெயர் தேவை';
-      } else if (!/^[a-zA-Z\s.'-]+$/.test(info.firstName)) {
+      } else if (!/^[\p{L}\s.'-]+$/u.test(info.firstName)) {
         newErrors.firstName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
       } else if (info.firstName.length < 2) {
         newErrors.firstName = language === 'en' ? 'Name must be at least 2 characters' : 'குறைந்தது 2 எழுத்துக்கள் இருக்க வேண்டும்';
@@ -569,7 +569,7 @@ export default function App() {
     if (info.lastName !== '' || strict) {
       if (!info.lastName) {
         newErrors.lastName = language === 'en' ? 'Last name is required' : 'கடைசி பெயர் தேவை';
-      } else if (!/^[a-zA-Z\s.'-]+$/.test(info.lastName)) {
+      } else if (!/^[\p{L}\s.'-]+$/u.test(info.lastName)) {
         newErrors.lastName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
       } else if (info.lastName.length > 100) {
         newErrors.lastName = language === 'en' ? 'Name must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
@@ -773,7 +773,26 @@ export default function App() {
     const errors = validatePatientInfo(patientInfo, true);
     if (Object.keys(errors).length > 0) {
        setFormErrors(errors);
-       toast.error(language === 'en' ? 'Please fix the errors in Patient Information' : 'தயவுசெய்து நோயாளி தகவலில் உள்ள பிழைகளை சரிசெய்யவும்');
+       const isAllEmpty = !patientInfo.uhid && !patientInfo.firstName && !patientInfo.lastName && !patientInfo.age && !patientInfo.mobile;
+       if (isAllEmpty) {
+         toast.error(language === 'en' ? 'Kindly fill the patient details' : 'தயவுசெய்து நோயாளி விவரங்களை உள்ளிடவும்');
+       } else {
+         const missing = [];
+         if (errors.uhid) missing.push('UHID');
+         if (errors.firstName) missing.push('First Name');
+         if (errors.lastName) missing.push('Last Name');
+         if (errors.age) missing.push('Age');
+         if (errors.gender) missing.push('Gender');
+         if (errors.mobile) missing.push('Mobile Number');
+         if (errors.address) missing.push('Address');
+
+         if (missing.length > 0) {
+           toast.error(language === 'en' ? `Kindly fill mandatory patient details (${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '...' : ''})` : 'தயவுசெய்து தேவையான நோயாளி விவரங்களை நிரப்பவும்');
+         } else {
+           toast.error(language === 'en' ? 'Kindly fill the patient details' : 'தயவுசெய்து நோயாளி விவரங்களை உள்ளிடவும்');
+         }
+       }
+       setCurrentStep(0);
        window.scrollTo({ top: 0, behavior: 'smooth' });
        return;
     }
