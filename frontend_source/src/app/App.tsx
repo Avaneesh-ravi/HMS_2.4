@@ -557,7 +557,7 @@ export default function App() {
     if (info.firstName !== '' || strict) {
       if (!info.firstName) {
         newErrors.firstName = language === 'en' ? 'First name is required' : 'முதல் பெயர் தேவை';
-      } else if (!/^[\p{L}\s.'-]+$/u.test(info.firstName)) {
+      } else if (!/^[\p{L}\p{M}\s.'-]+$/u.test(info.firstName)) {
         newErrors.firstName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
       } else if (info.firstName.length < 2) {
         newErrors.firstName = language === 'en' ? 'Name must be at least 2 characters' : 'குறைந்தது 2 எழுத்துக்கள் இருக்க வேண்டும்';
@@ -569,7 +569,7 @@ export default function App() {
     if (info.lastName !== '' || strict) {
       if (!info.lastName) {
         newErrors.lastName = language === 'en' ? 'Last name is required' : 'கடைசி பெயர் தேவை';
-      } else if (!/^[\p{L}\s.'-]+$/u.test(info.lastName)) {
+      } else if (!/^[\p{L}\p{M}\s.'-]+$/u.test(info.lastName)) {
         newErrors.lastName = language === 'en' ? 'Name should only contain letters' : 'பெயரில் எழுத்துக்கள் மட்டுமே இருக்க வேண்டும்';
       } else if (info.lastName.length > 100) {
         newErrors.lastName = language === 'en' ? 'Name must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
