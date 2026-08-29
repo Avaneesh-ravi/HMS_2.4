@@ -1262,6 +1262,81 @@ export default function App() {
     );
   }
 
+  // Reset entire form to initial state with default language 'ta' (Tamil)
+  const resetFormToInitialState = useCallback(() => {
+    setShowSuccess(false);
+    setCurrentStep(0);
+    setLanguage('ta'); // Always default to Tamil for next patient!
+    setPatientInfo({
+      uhid: '',
+      firstName: '',
+      lastName: '',
+      age: '',
+      gender: '',
+      mobile: '',
+      mobileOtpSent: false,
+      mobileOtp: '',
+      mobileVerified: false,
+      email: '',
+      emailOtpSent: false,
+      emailOtp: '',
+      emailVerified: false,
+      city: '',
+      state: 'Tamil Nadu',
+      country: 'India',
+      pincode: '',
+      address: '',
+      visitType: '',
+      opNo: '',
+      opDate: null,
+      ipNo: '',
+      ipDate: null,
+      admissionDate: null,
+      dischargeDate: null,
+    });
+    setWhyChooseUs({
+      selfDecision: false,
+      advertisement: false,
+      friendsRelatives: false,
+      corporate: false,
+      employee: false,
+      referralDoctor: false,
+      others: false,
+    });
+    setRatings({
+      reception: 0,
+      admission: 0,
+      billing: 0,
+      doctor: 0,
+      nursing: 0,
+      pharmacy: 0,
+      lab: 0,
+      insurance: 0,
+      food: 0,
+      physiotherapy: 0,
+      bloodBank: 0,
+      cleanliness: 0,
+      overall: 0,
+    });
+    setDynamicRatings({});
+    const resetYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+    fetchedYesNoQuestions.forEach(yq => { resetYesNo[yq.id] = { answer: null, remarks: '' }; });
+    setDynamicYesNo(resetYesNo);
+    setSuggestions('');
+    setAppreciations([{ id: 1, name: '', department: '', note: '' }]);
+    setFormErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [fetchedYesNoQuestions]);
+
+  // Auto-reset timer (7 seconds) on Thank You screen returning to default Tamil form
+  useEffect(() => {
+    if (!showSuccess) return;
+    const timer = setTimeout(() => {
+      resetFormToInitialState();
+    }, 7000);
+    return () => clearTimeout(timer);
+  }, [showSuccess, resetFormToInitialState]);
+
   if (showSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center p-4">
@@ -1272,75 +1347,22 @@ export default function App() {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             {language === 'en' ? 'Thank You!' : 'நன்றி!'}
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             {language === 'en'
               ? 'Your feedback has been submitted successfully. We appreciate your time and will use your input to improve our services.'
               : 'உங்கள் கருத்து வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது. உங்கள் நேரத்திற்கு நன்றி.'}
           </p>
+          <div className="mb-6 p-3 bg-teal-50 rounded-lg border border-teal-200 text-xs text-teal-800 flex items-center justify-center gap-2">
+            <Sparkles className="w-4 h-4 text-teal-600 animate-spin" />
+            <span>
+              {language === 'en'
+                ? 'Auto-returning to new feedback form in a few seconds...'
+                : 'சில வினாடிகளில் தானாக புதிய படிவத்திற்கு செல்லும்...'}
+            </span>
+          </div>
           <button
-            onClick={() => {
-              setShowSuccess(false);
-              setCurrentStep(0);
-              // Reset form data
-              setPatientInfo({
-                uhid: '',
-                firstName: '',
-                lastName: '',
-                age: '',
-                gender: '',
-                mobile: '',
-                mobileOtpSent: false,
-                mobileOtp: '',
-                mobileVerified: false,
-                email: '',
-                emailOtpSent: false,
-                emailOtp: '',
-                emailVerified: false,
-                city: '',
-                state: 'Tamil Nadu',
-                country: 'India',
-                pincode: '',
-                address: '',
-                visitType: '',
-                opNo: '',
-                opDate: null,
-                ipNo: '',
-                ipDate: null,
-                admissionDate: null,
-                dischargeDate: null,
-              });
-              setWhyChooseUs({
-                selfDecision: false,
-                advertisement: false,
-                friendsRelatives: false,
-                corporate: false,
-                employee: false,
-                referralDoctor: false,
-                others: false,
-              });
-              setRatings({
-                reception: 0,
-                admission: 0,
-                billing: 0,
-                doctor: 0,
-                nursing: 0,
-                pharmacy: 0,
-                lab: 0,
-                insurance: 0,
-                food: 0,
-                physiotherapy: 0,
-                bloodBank: 0,
-                cleanliness: 0,
-                overall: 0,
-              });
-              const resetYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-              fetchedYesNoQuestions.forEach(yq => { resetYesNo[yq.id] = { answer: null, remarks: '' }; });
-              setDynamicYesNo(resetYesNo);
-              setSuggestions('');
-              setAppreciations([{ id: 1, name: '', department: '', note: '' }]);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition-colors"
+            onClick={resetFormToInitialState}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md active:scale-95"
           >
             {language === 'en' ? 'Back to Patient Feedback Form' : 'நோயாளி கருத்து படிவத்திற்கு திரும்பு'}
           </button>
@@ -2614,7 +2636,7 @@ export default function App() {
               <h4 className="font-semibold text-gray-900 mb-4">
                 {language === 'en' ? 'Summary' : 'சுருக்கம்'}
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
                 {/* Patient - Navigate to Step 0 */}
                 <div className="p-4 bg-white/70 rounded-lg">
                   <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Patient' : 'நோயாளி'}</p>
@@ -2643,15 +2665,28 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Overall Rating - Calculated Average */}
-                <div className="p-4 bg-white/70 rounded-lg">
+                {/* Overall Rating - Exact Rating */}
+                <div className="p-4 bg-white/70 rounded-lg border-2 border-amber-200">
                   <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Overall Rating' : 'ஒட்டுமொத்த மதிப்பீடு'}</p>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-bold text-amber-800 text-lg">
+                    {ratings.overall > 0 ? `${ratings.overall} / 5` : (language === 'en' ? 'Not rated' : 'மதிப்பிடப்படவில்லை')}
+                  </p>
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="mt-2 text-gray-600 hover:text-teal-600 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Consolidated Rating - Calculated Average */}
+                <div className="p-4 bg-white/70 rounded-lg border-2 border-teal-200">
+                  <p className="text-sm text-gray-600 mb-1">{language === 'en' ? 'Consolidated Rating' : 'ஒருங்கிணைந்த மதிப்பீடு'}</p>
+                  <p className="font-bold text-teal-800 text-lg">
                     {(() => {
                       const answeredRatings = Object.values(dynamicRatings).filter(r => r > 0);
-                      const totalQuestions = questions.length;
-                      if (answeredRatings.length === 0 || totalQuestions === 0) return language === 'en' ? 'Not rated' : 'மதிப்பிடப்படவில்லை';
-                      const avg = answeredRatings.reduce((a, b) => a + b, 0) / totalQuestions;
+                      if (answeredRatings.length === 0) return language === 'en' ? 'Not rated' : 'மதிப்பிடப்படவில்லை';
+                      const avg = answeredRatings.reduce((a, b) => a + b, 0) / answeredRatings.length;
                       return `${avg.toFixed(1)} / 5`;
                     })()}
                   </p>

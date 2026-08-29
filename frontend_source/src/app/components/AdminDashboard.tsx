@@ -60,6 +60,7 @@ interface FeedbackResponse {
   patientName: string;
   date: string;
   overallRating: number;
+  consolidatedRating?: number;
   wouldRecommend: boolean;
   ratings: Record<string, number>;
   yesNoAnswers: Record<string, boolean | null>;
@@ -669,7 +670,8 @@ export function AdminDashboard({
               departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
               rawRatings: item.rawRatings || [],
               rawYesNo: item.rawYesNo || [],
-              overallRating: computedOverall || item.overallRating || 5,
+              overallRating: Math.round(Number(exactOverall || 5)),
+              consolidatedRating: computedConsolidated || item.consolidatedRating || item.overallRating || 5,
               wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
               ratings: item.ratings || {},
               yesNoAnswers: item.yesNoAnswers || {},
@@ -2508,11 +2510,15 @@ export function AdminDashboard({
                               else { setSortField('overallRating'); setSortDirection('desc'); }
                             }}
                             className="text-left py-4 px-4 font-semibold text-gray-700 cursor-pointer hover:text-teal-600 transition-colors select-none"
+                            title="Exact Overall Rating given by Patient"
                           >
                             <span className="inline-flex items-center gap-1.5">
                               Overall Rating
                               <ArrowUpDown className={`w-3.5 h-3.5 ${sortField === 'overallRating' ? 'text-teal-600 font-bold' : 'text-gray-400'}`} />
                             </span>
+                          </th>
+                          <th className="text-left py-4 px-4 font-semibold text-gray-700" title="Consolidated Average of all Service Questions">
+                            Consolidated Rating
                           </th>
                           <th className="text-left py-4 px-4 font-semibold text-gray-700">Recommendation</th>
                           <th className="text-center py-4 px-4 font-semibold text-gray-700">View</th>
@@ -2522,7 +2528,7 @@ export function AdminDashboard({
                       <tbody>
                         {filteredAndSortedResponses.length === 0 ? (
                           <tr>
-                            <td colSpan={7} className="text-center py-12 text-gray-500">
+                            <td colSpan={8} className="text-center py-12 text-gray-500">
                               <Filter className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                               <p className="font-semibold text-gray-700">No matching responses found</p>
                               <p className="text-xs text-gray-400 mt-1">Try adjusting your search, rating, or date filters</p>
@@ -2553,10 +2559,19 @@ export function AdminDashboard({
                               <td className="py-4 px-4 text-sm font-semibold text-gray-800">
                                 {response.patientName || 'Patient'}
                               </td>
+                              {/* Exact Overall Rating */}
                               <td className="py-4 px-4 text-sm">
-                                <span className="inline-flex items-center gap-1 text-yellow-600 font-bold bg-yellow-50 px-2 py-0.5 rounded-lg border border-yellow-200">
-                                  <Star className="w-3.5 h-3.5 fill-current" />
-                                  {ratingNum}
+                                <span className="inline-flex items-center gap-1 text-yellow-700 font-bold bg-yellow-50 px-2.5 py-1 rounded-lg border border-yellow-200 shadow-sm" title="Exact Overall Rating">
+                                  <Star className="w-3.5 h-3.5 fill-current text-yellow-500" />
+                                  {Math.round(Number(response.overallRating || 5))} / 5
+                                </span>
+                              </td>
+
+                              {/* Consolidated Rating Average */}
+                              <td className="py-4 px-4 text-sm">
+                                <span className="inline-flex items-center gap-1 text-teal-700 font-bold bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 shadow-sm" title="Consolidated Average of all Service Questions">
+                                  <Star className="w-3.5 h-3.5 fill-current text-teal-500" />
+                                  {(Number(response.consolidatedRating || response.overallRating || 5)).toFixed(1)} / 5.0
                                 </span>
                               </td>
                               <td className="py-4 px-4 text-sm">
@@ -3677,9 +3692,16 @@ export function AdminDashboard({
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Overall Rating</p>
-                    <p className="font-semibold text-teal-600 flex items-center gap-1">
-                      <Star className="w-5 h-5 fill-current" />
-                      {typeof selectedResponse.overallRating === 'number' ? selectedResponse.overallRating.toFixed(1) : selectedResponse.overallRating}/5
+                    <p className="font-bold text-amber-700 flex items-center gap-1 text-base">
+                      <Star className="w-4 h-4 fill-current text-amber-500" />
+                      {Math.round(Number(selectedResponse.overallRating || 5))}/5
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-600">Consolidated Rating (Average)</p>
+                    <p className="font-bold text-teal-700 flex items-center gap-1 text-base">
+                      <Star className="w-4 h-4 fill-current text-teal-500" />
+                      {(Number(selectedResponse.consolidatedRating || selectedResponse.overallRating || 5)).toFixed(1)}/5.0
                     </p>
                   </div>
                 </div>
