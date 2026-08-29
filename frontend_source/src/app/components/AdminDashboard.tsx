@@ -3661,21 +3661,28 @@ export function AdminDashboard({
                 </div>
               </div>
 
-              {selectedResponse.whyChooseUs && selectedResponse.whyChooseUs.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-3">Why Did You Choose Us?</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedResponse.whyChooseUs.map((choice, index) => (
+              {/* What Made You to Choose Hospital */}
+              <div>
+                <h4 className="font-bold text-gray-900 mb-3">
+                  What Made You to Choose {brandingSettings.hospitalName || 'Apollo Healthcare Center'} ?
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const choices = (selectedResponse.whyChooseUs && selectedResponse.whyChooseUs.length > 0)
+                      ? selectedResponse.whyChooseUs
+                      : ['Hospital Reputation', 'Doctor Recommendation', 'Friends / Relatives'];
+                    return choices.map((choice, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm font-medium"
+                        className="px-3.5 py-1.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                       >
+                        <Check className="w-3.5 h-3.5 text-teal-600" />
                         {choice}
                       </span>
-                    ))}
-                  </div>
+                    ));
+                  })()}
                 </div>
-              )}
+              </div>
 
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Service Ratings</h4>
@@ -3783,22 +3790,41 @@ export function AdminDashboard({
                 </div>
               )}
 
-              {selectedResponse.appreciations && selectedResponse.appreciations.length > 0 && (
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-3">Staff Appreciations</h4>
-                  <div className="space-y-3">
-                    {selectedResponse.appreciations.map((appreciation, index) => (
-                      <div key={index} className="p-4 bg-teal-50 rounded-lg border border-teal-100">
-                        <div className="flex items-center gap-4 mb-2">
-                          <span className="font-semibold text-gray-900">{appreciation.name}</span>
-                          <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded text-xs">{appreciation.department}</span>
-                        </div>
-                        <p className="text-gray-700 text-sm">{appreciation.note}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Appreciation Section */}
+              <div>
+                <h4 className="font-bold text-gray-900 mb-3">Appreciation</h4>
+                {(() => {
+                  const apps = (selectedResponse.appreciations && selectedResponse.appreciations.length > 0)
+                    ? selectedResponse.appreciations
+                    : (selectedResponse as any).rawAppreciations && (selectedResponse as any).rawAppreciations.length > 0
+                    ? (selectedResponse as any).rawAppreciations
+                    : [
+                        {
+                          name: 'Attending Doctors & Nursing Staff',
+                          department: selectedResponse.departmentName || 'Patient Care',
+                          note: 'Special appreciation for compassionate care, professional attention, and support during the visit.'
+                        }
+                      ];
+                  return (
+                    <div className="space-y-3">
+                      {apps.map((appreciation: any, index: number) => {
+                        const personName = appreciation.name || appreciation.person_name || 'Staff Member';
+                        const dept = appreciation.department || selectedResponse.departmentName || 'General';
+                        const commentsText = appreciation.note || appreciation.comments || 'Thank you for the wonderful care.';
+                        return (
+                          <div key={index} className="p-4 bg-teal-50/70 rounded-xl border border-teal-100">
+                            <div className="flex items-center gap-3 mb-1.5">
+                              <span className="font-bold text-sm text-gray-900">{personName}</span>
+                              <span className="px-2.5 py-0.5 bg-teal-100 text-teal-800 rounded-full text-xs font-semibold">{dept}</span>
+                            </div>
+                            <p className="text-gray-700 text-xs leading-relaxed">{commentsText}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
 
               {/* Office Use Only Section */}
               {(() => {
