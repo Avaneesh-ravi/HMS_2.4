@@ -1215,6 +1215,11 @@ export function AdminDashboard({
 
       const totalDeptResponses = deptResponses.length;
 
+      const normKey = (s: any): string => {
+        if (!s) return '';
+        return String(s).toLowerCase().replace(/[^a-z0-9\u0B80-\u0BFF]/g, '').trim();
+      };
+
       // 1. Rating Questions Map (Active + Historical/Deleted from Form Builder)
       const ratingMap = new Map<string, {
         id: string;
@@ -1249,14 +1254,14 @@ export function AdminDashboard({
           r.rawRatings.forEach(item => {
             const qId = String(item.question_id || '');
             const qTxt = (item.question_text || (item as any).question_text_en || '').trim();
-            const qTxtLower = qTxt.toLowerCase();
             const score = parseRatingVal(item.rating);
 
             if (score >= 1 && score <= 5) {
               let entry = ratingMap.get(qId);
-              if (!entry && qTxtLower) {
+              if (!entry && qTxt) {
+                const targetNorm = normKey(qTxt);
                 for (const val of ratingMap.values()) {
-                  if (val.label.trim().toLowerCase() === qTxtLower || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === qTxtLower)) {
+                  if (normKey(val.label) === targetNorm || (val.tamilLabel && normKey(val.tamilLabel) === targetNorm)) {
                     entry = val;
                     break;
                   }
@@ -1368,13 +1373,19 @@ export function AdminDashboard({
           r.rawYesNo.forEach(yn => {
             const yId = String(yn.yesno_question_id || '');
             const yTxt = (yn.question_en || yn.question_text || yn.question_ta || '').trim();
-            const yTxtLower = yTxt.toLowerCase();
             const ans = yn.answer;
 
             let entry = yesNoMap.get(yId);
-            if (!entry && yTxtLower) {
+            if (!entry && (yn.question_en || yn.question_text || yn.question_ta)) {
+              const targetEnNorm = normKey(yn.question_en || yn.question_text);
+              const targetTaNorm = normKey(yn.question_ta);
               for (const val of yesNoMap.values()) {
-                if (val.label.trim().toLowerCase() === yTxtLower || (val.tamilLabel && val.tamilLabel.trim().toLowerCase() === yTxtLower)) {
+                const valLabelNorm = normKey(val.label);
+                const valTamilNorm = normKey(val.tamilLabel);
+                if ((targetEnNorm && valLabelNorm === targetEnNorm) ||
+                    (targetTaNorm && valTamilNorm && valTamilNorm === targetTaNorm) ||
+                    (targetEnNorm && valTamilNorm && valTamilNorm === targetEnNorm) ||
+                    (targetTaNorm && valLabelNorm === targetTaNorm)) {
                   entry = val;
                   break;
                 }
