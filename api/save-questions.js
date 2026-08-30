@@ -27,6 +27,7 @@ export default async function handler(req, res) {
     const questions = Array.isArray(body.questions) ? body.questions : [];
     const yesnoQuestions = Array.isArray(body.yesno_questions || body.yesno_data) ? (body.yesno_questions || body.yesno_data) : [];
     const settings = body.settings || {};
+    const deptsList = body.departments || settings.departments || [];
 
     client = await pool.connect();
     await client.query('BEGIN');
@@ -53,7 +54,7 @@ export default async function handler(req, res) {
     if (settings) {
       const layoutModeVal = settings.layoutMode === '1-column' ? 1 : 2;
       const combinePagesVal = settings.combinePages ? 1 : 0;
-      const deptsVal = (settings.departments || body.departments) ? JSON.stringify(settings.departments || body.departments) : null;
+      const deptsVal = deptsList.length > 0 ? JSON.stringify(deptsList) : null;
       await client.query(
         `UPDATE feedback_form SET 
           layout_mode = $1, 
@@ -73,24 +74,44 @@ export default async function handler(req, res) {
           formId
         ]
       );
+    }
 
-      // Insert any new departments into department table
-      const deptsList = body.departments || settings.departments || [];
-      if (Array.isArray(deptsList) && deptsList.length > 0) {
-        for (const dName of deptsList) {
-          if (dName && String(dName).trim()) {
-            const trimmed = String(dName).trim();
-            const dExists = await client.query('SELECT department_id FROM department WHERE LOWER(department_name) = LOWER($1) AND (hospital_id = $2 OR hospital_id = 0)', [trimmed, hospitalId]);
-            if (dExists.rows.length === 0) {
-              await client.query('INSERT INTO department (department_name, department_code, hospital_id, is_active) VALUES ($1, $2, $3, true)', [trimmed, trimmed.substring(0, 10).toUpperCase(), hospitalId]);
-            }
+    // 2. Department Synchronization & Active/Inactive Status
+    if (Array.isArray(deptsList) && deptsList.length > 0) {
+      // Mark removed departments as is_active = false
+      const trimmedLowerDepts = deptsList.map(d => String(d).trim().toLowerCase()).filter(Boolean);
+      await client.query(
+        `UPDATE department SET is_active = false WHERE hospital_id = $1 AND LOWER(department_name) != ALL($2::text[])`,
+        [hospitalId, trimmedLowerDepts]
+      );
+
+      // Insert or reactivate departments
+      for (const dName of deptsList) {
+        if (dName && String(dName).trim()) {
+          const trimmed = String(dName).trim();
+          const dExists = await client.query(
+            'SELECT department_id FROM department WHERE LOWER(department_name) = LOWER($1) AND hospital_id = $2',
+            [trimmed, hospitalId]
+          );
+          if (dExists.rows.length === 0) {
+            await client.query(
+              'INSERT INTO department (department_name, department_code, hospital_id, is_active) VALUES ($1, $2, $3, true)',
+              [trimmed, trimmed.substring(0, 10).toUpperCase(), hospitalId]
+            );
+          } else {
+            await client.query(
+              'UPDATE department SET is_active = true WHERE department_id = $1',
+              [dExists.rows[0].department_id]
+            );
           }
         }
       }
     }
 
-    // 2. Save Rating Questions
+    // 3. Save Rating Questions & Manage Active/Inactive Status
     const savedRatingQuestions = [];
+    const activeRatingIds = [];
+
     if (questions.length > 0) {
       // Clear current mappings for this form
       await client.query(`DELETE FROM feedback_form_rating_question WHERE feedback_form_id = $1`, [formId]);
@@ -105,7 +126,6 @@ export default async function handler(req, res) {
 
         const isNew = String(qid).startsWith('new_') || isNaN(parseInt(qid, 10));
         if (isNew) {
-          // Insert new rating question
           const insRes = await client.query(
             `INSERT INTO rating_question (question_tag, question_text_en, question_text_ta, active, rating_grade, hospital_id, status)
              VALUES ($1, $2, $3, 1, $4, $5, 'Active')
@@ -120,20 +140,23 @@ export default async function handler(req, res) {
           );
           qid = insRes.rows[0].question_id;
         } else {
-          // Check if exists
           const numId = parseInt(qid, 10);
-          const chkRes = await client.query(`SELECT hospital_id FROM rating_question WHERE question_id = $1`, [numId]);
+          const chkRes = await client.query(`SELECT question_id FROM rating_question WHERE question_id = $1`, [numId]);
           if (chkRes.rows.length > 0) {
             await client.query(
               `UPDATE rating_question SET 
                 question_text_en = $1, 
                 question_text_ta = $2, 
-                rating_grade = $3
-               WHERE question_id = $4`,
+                rating_grade = $3,
+                active = 1,
+                status = 'Active',
+                hospital_id = $4
+               WHERE question_id = $5`,
               [
                 q.label || '',
                 q.tamilLabel || q.label || '',
                 ratingGrade,
+                hospitalId,
                 numId
               ]
             );
@@ -156,6 +179,8 @@ export default async function handler(req, res) {
           }
         }
 
+        activeRatingIds.push(parseInt(qid, 10));
+
         // Map into feedback_form_rating_question
         await client.query(
           `INSERT INTO feedback_form_rating_question (feedback_form_id, question_id, display_order, status, created_at)
@@ -171,10 +196,20 @@ export default async function handler(req, res) {
           cardColor: q.cardColor || q.backgroundColor
         });
       }
+
+      // Mark removed rating questions as Inactive and active = 0 in database for this hospital
+      if (activeRatingIds.length > 0) {
+        await client.query(
+          `UPDATE rating_question SET active = 0, status = 'Inactive' WHERE hospital_id = $1 AND question_id != ALL($2::int[])`,
+          [hospitalId, activeRatingIds]
+        );
+      }
     }
 
-    // 3. Save Yes/No Questions
+    // 4. Save Yes/No Questions & Manage Active/Inactive Status
     const savedYesNoQuestions = [];
+    const activeYesNoIds = [];
+
     if (yesnoQuestions.length > 0) {
       await client.query(`DELETE FROM feedback_form_yesno_question WHERE feedback_form_id = $1`, [formId]);
 
@@ -193,11 +228,13 @@ export default async function handler(req, res) {
         } else {
           const numYId = parseInt(yid, 10);
           await client.query(
-            `UPDATE yesno_question SET question_en = $1, question_ta = $2 WHERE yesno_question_id = $3`,
-            [y.label || '', y.tamilLabel || y.label || '', numYId]
+            `UPDATE yesno_question SET question_en = $1, question_ta = $2, status = 'Active', hospital_id = $3 WHERE yesno_question_id = $4`,
+            [y.label || '', y.tamilLabel || y.label || '', hospitalId, numYId]
           );
           yid = numYId;
         }
+
+        activeYesNoIds.push(parseInt(yid, 10));
 
         await client.query(
           `INSERT INTO feedback_form_yesno_question (feedback_form_id, yesno_question_id, display_order, status, created_at)
@@ -211,18 +248,24 @@ export default async function handler(req, res) {
           tamilLabel: y.tamilLabel || y.label
         });
       }
+
+      // Mark removed yes/no questions as Inactive in database for this hospital
+      if (activeYesNoIds.length > 0) {
+        await client.query(
+          `UPDATE yesno_question SET status = 'Inactive' WHERE hospital_id = $1 AND yesno_question_id != ALL($2::int[])`,
+          [hospitalId, activeYesNoIds]
+        );
+      }
     }
 
     await client.query('COMMIT');
-
-    const finalDepts = body.departments || settings.departments || ['Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 'General Medicine', 'ENT', 'Emergency Department (ED/Casualty)'];
 
     return res.status(200).json({
       success: true,
       message: 'Form configuration saved successfully to database!',
       data: savedRatingQuestions,
       yesno_data: savedYesNoQuestions,
-      departments: finalDepts
+      departments: deptsList
     });
 
   } catch (err) {

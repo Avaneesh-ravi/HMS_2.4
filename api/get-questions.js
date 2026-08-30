@@ -19,14 +19,14 @@ export default async function handler(req, res) {
     );
     let form = formRes.rows[0];
 
-    // 2. Fetch rating questions linked to this form via feedback_form_rating_question
+    // 2. Fetch rating questions linked to this form via feedback_form_rating_question (and active in rating_question)
     let qRes = null;
     if (form) {
       qRes = await query(
         `SELECT q.question_id as id, q.question_text_en as label, q.question_text_ta as "tamilLabel", q.rating_grade, ffrq.display_order
          FROM feedback_form_rating_question ffrq
          JOIN rating_question q ON q.question_id = ffrq.question_id
-         WHERE ffrq.feedback_form_id = $1 AND ffrq.status = 'Active'
+         WHERE ffrq.feedback_form_id = $1 AND ffrq.status = 'Active' AND (q.status = 'Active' OR q.active = 1)
          ORDER BY ffrq.display_order ASC, ffrq.id ASC`,
         [form.feedback_form_id]
       );
@@ -38,6 +38,7 @@ export default async function handler(req, res) {
         `SELECT question_id as id, question_text_en as label, question_text_ta as "tamilLabel", rating_grade
          FROM rating_question 
          WHERE (hospital_id = $1 OR hospital_id IS NULL OR question_id IN (30,31,32,33,34,35))
+           AND (status = 'Active' OR active = 1)
          ORDER BY question_id ASC`,
         [hospitalId]
       );
@@ -67,7 +68,7 @@ export default async function handler(req, res) {
         `SELECT yq.yesno_question_id as id, yq.question_en as label, yq.question_ta as "tamilLabel", ffyq.display_order
          FROM feedback_form_yesno_question ffyq
          JOIN yesno_question yq ON yq.yesno_question_id = ffyq.yesno_question_id
-         WHERE ffyq.feedback_form_id = $1 AND ffyq.status = 'Active'
+         WHERE ffyq.feedback_form_id = $1 AND ffyq.status = 'Active' AND yq.status = 'Active'
          ORDER BY ffyq.display_order ASC, ffyq.id ASC`,
         [form.feedback_form_id]
       );
@@ -78,6 +79,7 @@ export default async function handler(req, res) {
         `SELECT yesno_question_id as id, question_en as label, question_ta as "tamilLabel" 
          FROM yesno_question 
          WHERE (hospital_id = $1 OR hospital_id IS NULL OR yesno_question_id IN (40,41,42,1,2,3))
+           AND status = 'Active'
          ORDER BY yesno_question_id ASC LIMIT 3`,
         [hospitalId]
       );
@@ -89,14 +91,24 @@ export default async function handler(req, res) {
       tamilLabel: (y.tamilLabel || y.label || '').trim()
     }));
 
-    let departments = ['Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 'General Medicine', 'ENT'];
-    if (form?.departments) {
+    // 4. Fetch Departments from department table where is_active = true
+    let departments = [];
+    const deptRes = await query(
+      `SELECT department_name FROM department WHERE hospital_id = $1 AND is_active = true ORDER BY department_id ASC`,
+      [hospitalId]
+    );
+    if (deptRes.rows.length > 0) {
+      departments = deptRes.rows.map(r => r.department_name);
+    } else if (form?.departments) {
       try {
         const parsed = typeof form.departments === 'string' ? JSON.parse(form.departments) : form.departments;
         if (Array.isArray(parsed) && parsed.length > 0) departments = parsed;
       } catch (e) {
         departments = form.departments.split(',').map(s => s.trim()).filter(Boolean);
       }
+    }
+    if (departments.length === 0) {
+      departments = ['Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 'General Medicine', 'ENT'];
     }
 
     res.status(200).json({

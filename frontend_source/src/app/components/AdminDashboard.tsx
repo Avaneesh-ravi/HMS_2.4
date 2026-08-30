@@ -385,6 +385,18 @@ export const getConsolidatedRating = (r: any): number => {
   return 5.0;
 };
 
+const getEffectiveHospitalId = () => {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const qHid = urlParams.get('hospital_id');
+    if (qHid && !isNaN(parseInt(qHid, 10))) return qHid;
+  } catch (e) {}
+  if ((window as any).ADMIN_HOSPITAL_ID) return String((window as any).ADMIN_HOSPITAL_ID);
+  const saved = localStorage.getItem('selected_hospital_id');
+  if (saved && !isNaN(parseInt(saved, 10))) return saved;
+  return '1';
+};
+
 export function AdminDashboard({ 
   onClose, 
   onLogout, 
@@ -696,7 +708,7 @@ export function AdminDashboard({
       return `/api/backend/ajax/${endpoint}`;
     };
     
-    const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+    const hid = getEffectiveHospitalId();
     fetch(getApiUrl(`get-responses.php?hospital_id=${hid}`), { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
@@ -825,7 +837,7 @@ export function AdminDashboard({
       if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
       return `/api/backend/ajax/${endpoint}`;
     };
-    const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+    const hid = getEffectiveHospitalId();
     fetch(getApiUrl(`get-questions.php?hospital_id=${hid}`), { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
@@ -1035,7 +1047,7 @@ export function AdminDashboard({
         return `/api/backend/ajax/${endpoint}`;
       };
 
-      const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+      const hid = getEffectiveHospitalId();
       const apiUrl = getApiUrl('save-questions.php');
       
       const response = await fetch(apiUrl, {
@@ -1700,7 +1712,7 @@ export function AdminDashboard({
               if (onClose) {
                 onClose();
               } else {
-                const hid = (window as any).ADMIN_HOSPITAL_ID || localStorage.getItem('selected_hospital_id') || '1';
+                const hid = getEffectiveHospitalId();
                 const p = window.location.pathname;
                 let formUrl = `../../frontend/feedback-form.php?hospital_id=${hid}`;
                 if (p.includes('api/frontend')) {
@@ -2106,6 +2118,18 @@ export function AdminDashboard({
                             No departments added yet.
                           </div>
                         )}
+                      </div>
+
+                      <div className="mt-8 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleSaveQuestions}
+                          disabled={isSavingQuestions}
+                          className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          <Save className="w-5 h-5" />
+                          <span>{isSavingQuestions ? 'Saving...' : 'Save Configuration'}</span>
+                        </button>
                       </div>
                     </div>
                   )}
