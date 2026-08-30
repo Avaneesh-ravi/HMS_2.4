@@ -78,19 +78,20 @@ export default async function handler(req, res) {
 
     // 2. Department Synchronization & Active/Inactive Status
     if (Array.isArray(deptsList) && deptsList.length > 0) {
-      // Mark removed departments as is_active = false
       const trimmedLowerDepts = deptsList.map(d => String(d).trim().toLowerCase()).filter(Boolean);
+      
+      // Mark removed departments as is_active = false
       await client.query(
-        `UPDATE department SET is_active = false WHERE hospital_id = $1 AND LOWER(department_name) != ALL($2::text[])`,
+        `UPDATE department SET is_active = false WHERE hospital_id = $1 AND TRIM(LOWER(department_name)) != ALL($2::text[])`,
         [hospitalId, trimmedLowerDepts]
       );
 
-      // Insert or reactivate departments
+      // Insert or reactivate active departments
       for (const dName of deptsList) {
         if (dName && String(dName).trim()) {
           const trimmed = String(dName).trim();
           const dExists = await client.query(
-            'SELECT department_id FROM department WHERE LOWER(department_name) = LOWER($1) AND hospital_id = $2',
+            'SELECT department_id FROM department WHERE TRIM(LOWER(department_name)) = LOWER($1) AND hospital_id = $2',
             [trimmed, hospitalId]
           );
           if (dExists.rows.length === 0) {
@@ -100,8 +101,8 @@ export default async function handler(req, res) {
             );
           } else {
             await client.query(
-              'UPDATE department SET is_active = true WHERE department_id = $1',
-              [dExists.rows[0].department_id]
+              'UPDATE department SET is_active = true, department_name = $1 WHERE department_id = $2',
+              [trimmed, dExists.rows[0].department_id]
             );
           }
         }

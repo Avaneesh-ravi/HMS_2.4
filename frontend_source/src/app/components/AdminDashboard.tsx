@@ -2078,7 +2078,7 @@ export function AdminDashboard({
                           className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                         />
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             const trimmed = newDepartment.trim();
                             if (trimmed && !departments.includes(trimmed)) {
                               const updated = [...departments, trimmed];
@@ -2087,6 +2087,29 @@ export function AdminDashboard({
                               setNewDepartment('');
                               localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
                               toast.success('Department added');
+                              
+                              // Immediately persist to backend for active hospital
+                              try {
+                                const hid = getEffectiveHospitalId();
+                                const getApiUrl = (endpoint: string) => {
+                                  const p = window.location.pathname;
+                                  if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+                                  if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+                                  return `/api/backend/ajax/${endpoint}`;
+                                };
+                                await fetch(getApiUrl('save-questions.php'), {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  credentials: 'same-origin',
+                                  body: JSON.stringify({
+                                    hospital_id: hid,
+                                    questions,
+                                    yesno_questions: yesNoQuestions,
+                                    departments: updated,
+                                    settings: { layoutMode, combinePages, themeColor, fontSize, showPageTitleLabels, departments: updated }
+                                  })
+                                });
+                              } catch (e) {}
                             }
                           }}
                           className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors"
@@ -2100,12 +2123,35 @@ export function AdminDashboard({
                           <div key={index} className="flex justify-between items-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
                             <span className="font-medium text-gray-800">{dept}</span>
                             <button
-                              onClick={() => {
+                              onClick={async () => {
                                 const updated = departments.filter((_, i) => i !== index);
                                 setDepartments(updated);
                                 onDepartmentsChange?.(updated);
                                 localStorage.setItem('hms_saved_departments', JSON.stringify(updated));
                                 toast.success('Department removed');
+
+                                // Immediately persist removal to backend for active hospital
+                                try {
+                                  const hid = getEffectiveHospitalId();
+                                  const getApiUrl = (endpoint: string) => {
+                                    const p = window.location.pathname;
+                                    if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+                                    if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+                                    return `/api/backend/ajax/${endpoint}`;
+                                  };
+                                  await fetch(getApiUrl('save-questions.php'), {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'same-origin',
+                                    body: JSON.stringify({
+                                      hospital_id: hid,
+                                      questions,
+                                      yesno_questions: yesNoQuestions,
+                                      departments: updated,
+                                      settings: { layoutMode, combinePages, themeColor, fontSize, showPageTitleLabels, departments: updated }
+                                    })
+                                  });
+                                } catch (e) {}
                               }}
                               className="text-red-500 hover:text-red-700 transition-colors"
                             >
