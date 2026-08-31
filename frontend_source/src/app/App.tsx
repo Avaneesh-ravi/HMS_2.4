@@ -1093,7 +1093,7 @@ export default function App() {
 
   // Inactivity auto-reset (35 seconds): If patient fills details and leaves idle for 30-40s, auto-reset to empty Tamil form
   useEffect(() => {
-    if (showAdminDashboard || showAdminLoginModal || showHospitalSelectionModal || showSuccess) return;
+    if (showAdminDashboard || showAdminLoginModal || !selectedHospital || showSuccess) return;
 
     const isFormDirty = Boolean(
       currentStep > 0 ||
@@ -1133,7 +1133,7 @@ export default function App() {
   }, [
     showAdminDashboard,
     showAdminLoginModal,
-    showHospitalSelectionModal,
+    selectedHospital,
     showSuccess,
     currentStep,
     patientInfo,
