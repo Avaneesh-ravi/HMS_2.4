@@ -1091,6 +1091,60 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [showSuccess, resetFormToInitialState]);
 
+  // Inactivity auto-reset (35 seconds): If patient fills details and leaves idle for 30-40s, auto-reset to empty Tamil form
+  useEffect(() => {
+    if (showAdminDashboard || showAdminLogin || showHospitalSelectionModal || showSuccess) return;
+
+    const isFormDirty = Boolean(
+      currentStep > 0 ||
+      patientInfo.uhid ||
+      patientInfo.firstName ||
+      patientInfo.lastName ||
+      patientInfo.mobile ||
+      patientInfo.opNo ||
+      patientInfo.ipNo ||
+      suggestions ||
+      (appreciations && appreciations[0] && (appreciations[0].name || appreciations[0].department || appreciations[0].note)) ||
+      Object.values(ratings).some(v => v > 0) ||
+      Object.keys(dynamicRatings).length > 0 ||
+      Object.values(dynamicYesNo).some(v => v.answer !== null || v.remarks)
+    );
+
+    if (!isFormDirty) return;
+
+    let idleTimer: ReturnType<typeof setTimeout>;
+
+    const resetIdleTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        resetFormToInitialState();
+      }, 35000); // 35 seconds inactivity timeout
+    };
+
+    resetIdleTimer();
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'touchmove', 'scroll', 'input', 'change'];
+    activityEvents.forEach(evt => window.addEventListener(evt, resetIdleTimer, { passive: true }));
+
+    return () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      activityEvents.forEach(evt => window.removeEventListener(evt, resetIdleTimer));
+    };
+  }, [
+    showAdminDashboard,
+    showAdminLogin,
+    showHospitalSelectionModal,
+    showSuccess,
+    currentStep,
+    patientInfo,
+    suggestions,
+    appreciations,
+    ratings,
+    dynamicRatings,
+    dynamicYesNo,
+    resetFormToInitialState
+  ]);
+
   const handleAdminLogin = async () => {
     setAdminLoginError('');
     const trimmedUser = adminUsername.trim().toLowerCase();
