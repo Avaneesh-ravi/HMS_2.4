@@ -903,6 +903,9 @@ export default function App() {
         };
       });
 
+      const primaryAppDept = appreciations.find(a => a && a.department && String(a.department).trim())?.department;
+      const effectiveDeptName = primaryAppDept || (patientInfo.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+
       const newSubmissionObj = {
         id: 'sub_' + Date.now(),
         uhid: patientInfo.uhid || ('UHID' + Math.floor(1000 + Math.random() * 9000)),
@@ -910,7 +913,7 @@ export default function App() {
         date: new Date().toLocaleDateString('en-GB'),
         submittedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
         visitType: patientInfo.visitType || 'OP',
-        departmentName: patientInfo.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient',
+        departmentName: effectiveDeptName,
         mobile: patientInfo.mobile || '',
         email: patientInfo.email || '',
         address: patientInfo.address || '',
@@ -955,6 +958,7 @@ export default function App() {
         const postPayload: Record<string, any> = {
           hospital_id: selectedHospital?.id || 1,
           feedback_form_id: 1,
+          department_name: effectiveDeptName,
           uhid: newSubmissionObj.uhid,
           ratings_meta: questions.map(q => ({ id: q.id, label: q.label, tamilLabel: q.tamilLabel })),
           yesno_meta: fetchedYesNoQuestions.map(y => ({ id: y.id, label: y.label, tamilLabel: y.tamilLabel })),

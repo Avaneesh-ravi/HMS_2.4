@@ -103,11 +103,46 @@ export default async function handler(req, res) {
     const dischargeDate = body.discharge_date || body.dischargeDate || null;
     const hospitalId = parseInt(body.hospital_id || '1', 10);
     const formId = parseInt(body.feedback_form_id || '1', 10);
-    const departmentId = parseInt(body.department_id || '1', 10);
+
+    // Extract department name from body or appreciations
+    let targetDeptName = body.department_name || body.department || '';
+    if (!targetDeptName && Array.isArray(body.appreciations)) {
+      const appWithDept = body.appreciations.find(a => a && a.department && String(a.department).trim());
+      if (appWithDept) {
+        targetDeptName = String(appWithDept.department).trim();
+      }
+    }
 
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
+
+      // Resolve department_id dynamically
+      let departmentId = parseInt(body.department_id, 10);
+      if (isNaN(departmentId) || departmentId <= 0) {
+        if (targetDeptName) {
+          const deptChk = await client.query(
+            'SELECT department_id FROM department WHERE (TRIM(LOWER(department_name)) = TRIM(LOWER($1)) OR department_code = $1) AND (hospital_id = $2 OR hospital_id = 0) LIMIT 1',
+            [targetDeptName, hospitalId]
+          );
+          if (deptChk.rows.length > 0) {
+            departmentId = deptChk.rows[0].department_id;
+          } else {
+            const insDept = await client.query(
+              'INSERT INTO department (department_name, department_code, hospital_id, is_active) VALUES ($1, $2, $3, true) RETURNING department_id',
+              [targetDeptName, targetDeptName.substring(0, 10).toUpperCase(), hospitalId]
+            );
+            departmentId = insDept.rows[0].department_id;
+          }
+        } else {
+          // Fallback to first active department or 1
+          const firstDept = await client.query(
+            'SELECT department_id FROM department WHERE hospital_id = $1 AND is_active = true ORDER BY department_id ASC LIMIT 1',
+            [hospitalId]
+          );
+          departmentId = firstDept.rows.length > 0 ? firstDept.rows[0].department_id : 1;
+        }
+      }
 
       // 1. Insert/update patient
       const patSql = `INSERT INTO patient

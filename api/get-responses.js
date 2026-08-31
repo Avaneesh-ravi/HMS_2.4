@@ -147,6 +147,9 @@ export default async function handler(req, res) {
           formattedDate = `${day}/${month}/${year}`;
         }
 
+        const primaryAppDept = rawA.find(a => a && a.department && String(a.department).trim())?.department;
+        const resolvedDeptName = primaryAppDept || r.department_name || (r.ip_no ? 'IPD / Inpatient' : 'General Care');
+
         fullResponses.push({
           id: r.submission_id,
           uhid: r.uhid || ('UHID' + r.submission_id),
@@ -155,7 +158,7 @@ export default async function handler(req, res) {
           submittedAt: r.submitted_at,
           visitType: r.op_no ? 'OP' : (r.ip_no ? 'IP' : 'OP'),
           departmentId: r.department_id,
-          departmentName: r.department_name || (r.ip_no ? 'IPD / Inpatient' : 'Cardiology'),
+          departmentName: resolvedDeptName,
           mobile: r.mobile_number || '',
           email: r.patient_email || '',
           address: r.patient_address || '',
