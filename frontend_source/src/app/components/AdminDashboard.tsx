@@ -1182,6 +1182,7 @@ export function AdminDashboard({
   }, [responses, departments]);
 
   // Department-Wise Feedback Report Data Aggregation
+  // Department-Wise & Hospital Overall Feedback Report Data Aggregation
   const departmentReportData = useMemo(() => {
     let filtered = [...responses];
     const effectiveFrom = reportFromDate || fromDate;
@@ -1199,26 +1200,13 @@ export function AdminDashboard({
       });
     }
 
-    const deptsToProcess = reportDept === 'all' 
-      ? availableDepartments 
-      : availableDepartments.filter(d => d.toLowerCase().trim() === reportDept.toLowerCase().trim());
+    const normKey = (s: any): string => {
+      if (!s) return '';
+      return String(s).toLowerCase().replace(/[^a-z0-9\u0B80-\u0BFF]/g, '').trim();
+    };
 
-    if (reportDept !== 'all' && deptsToProcess.length === 0) {
-      deptsToProcess.push(reportDept);
-    }
-
-    return deptsToProcess.map(deptName => {
-      const deptResponses = filtered.filter(r => {
-        const d = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
-        return d.toLowerCase().trim() === deptName.toLowerCase().trim();
-      });
-
-      const totalDeptResponses = deptResponses.length;
-
-      const normKey = (s: any): string => {
-        if (!s) return '';
-        return String(s).toLowerCase().replace(/[^a-z0-9\u0B80-\u0BFF]/g, '').trim();
-      };
+    const processGroup = (groupTitle: string, groupResponses: typeof responses, isHospitalOverall: boolean = false) => {
+      const totalDeptResponses = groupResponses.length;
 
       // 1. Rating Questions Map (Active + Historical/Deleted from Form Builder)
       const ratingMap = new Map<string, {
@@ -1248,7 +1236,7 @@ export function AdminDashboard({
       });
 
       // Aggregate responses and auto-discover historical/deleted questions
-      deptResponses.forEach(r => {
+      groupResponses.forEach(r => {
         let hasCountedRating = false;
         if (r.rawRatings && r.rawRatings.length > 0) {
           r.rawRatings.forEach(item => {
@@ -1367,7 +1355,7 @@ export function AdminDashboard({
       });
 
       // Aggregate responses and preserve deleted/historical Yes/No questions
-      deptResponses.forEach(r => {
+      groupResponses.forEach(r => {
         let hasCountedYesNo = false;
         if (r.rawYesNo && r.rawYesNo.length > 0) {
           r.rawYesNo.forEach(yn => {
@@ -1480,17 +1468,46 @@ export function AdminDashboard({
         deptTotalYes += yq.yesCount;
         deptTotalYesNoAnswers += yq.totalAnswered;
       });
-      const deptYesPercent = deptTotalYesNoAnswers > 0 ? Math.round((deptTotalYes / deptTotalYesNoAnswers) * 100) : 100;
+      const deptOverallYesPercent = deptTotalYesNoAnswers > 0 
+        ? Math.round((deptTotalYes / deptTotalYesNoAnswers) * 100) 
+        : 100;
 
       return {
-        departmentName: deptName,
+        departmentName: groupTitle,
+        isHospitalOverall,
         totalResponses: totalDeptResponses,
         overallAvgRating: parseFloat(deptOverallAvg),
-        overallYesPercent: deptYesPercent,
+        overallYesPercent: deptOverallYesPercent,
         ratingQuestions: ratingQuestionsList,
-        yesNoQuestions: yesNoQuestionsList
+        yesNoQuestions: yesNoQuestionsList,
       };
-    });
+    };
+
+    const results: ReturnType<typeof processGroup>[] = [];
+
+    if (reportDept === 'all') {
+      // 1. Overall Hospital Summary section (All Departments Consolidated)
+      results.push(processGroup('Hospital Overall Summary (All Departments)', filtered, true));
+
+      // 2. Department Breakdown sections
+      availableDepartments.forEach(deptName => {
+        const deptResponses = filtered.filter(r => {
+          const d = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+          return d.toLowerCase().trim() === deptName.toLowerCase().trim();
+        });
+        if (deptResponses.length > 0) {
+          results.push(processGroup(deptName, deptResponses, false));
+        }
+      });
+    } else {
+      const deptResponses = filtered.filter(r => {
+        const d = r.departmentName || (r.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient');
+        return d.toLowerCase().trim() === reportDept.toLowerCase().trim();
+      });
+      results.push(processGroup(reportDept, deptResponses, false));
+    }
+
+    return results;
   }, [responses, availableDepartments, reportDept, reportFromDate, reportToDate, fromDate, toDate, questions, yesNoQuestions, reportSearch]);
 
   const handleExportCSV = () => {
@@ -3317,16 +3334,29 @@ export function AdminDashboard({
                 ) : (
                   departmentReportData.map((dept, deptIdx) => (
                     <div key={deptIdx} className="bg-white rounded-2xl shadow-md border border-gray-200/80 overflow-hidden">
-                      {/* Department Banner */}
-                      <div className="bg-gradient-to-r from-teal-700 to-teal-800 px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      {/* Department / Overall Banner */}
+                      <div className={`px-6 py-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        dept.isHospitalOverall 
+                          ? 'bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 border-b-2 border-amber-400' 
+                          : 'bg-gradient-to-r from-teal-700 to-teal-800'
+                      }`}>
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white font-bold shadow-inner">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-inner ${
+                            dept.isHospitalOverall ? 'bg-amber-400 text-teal-950 shadow-md' : 'bg-white/10 text-white'
+                          }`}>
                             <Building2 className="w-5 h-5" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold">{dept.departmentName}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-bold">{dept.departmentName}</h3>
+                              {dept.isHospitalOverall && (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-teal-950 tracking-wider uppercase shadow-sm">
+                                  Hospital Consolidated
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-teal-100">
-                              {dept.totalResponses} Total Feedback Submissions Evaluated
+                              {dept.totalResponses} Total Feedback Submissions Evaluated {dept.isHospitalOverall ? 'Across All Departments' : ''}
                             </p>
                           </div>
                         </div>
