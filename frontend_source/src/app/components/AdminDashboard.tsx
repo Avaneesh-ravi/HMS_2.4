@@ -2444,6 +2444,15 @@ export function AdminDashboard({
                         )}
                       </div>
 
+                      <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer"
+                        title="Download Feedback Report"
+                      >
+                        <Download className="w-3.5 h-3.5 text-teal-600" />
+                        <span>Download Report</span>
+                      </button>
+
                       {activeFilterCount > 0 && (
                         <button
                           onClick={handleResetFilters}
@@ -2832,7 +2841,24 @@ export function AdminDashboard({
                     </div>
                   </div>
 
-
+                  <div className="flex items-center gap-3 no-print">
+                    <button
+                      onClick={handleExportCSV}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+                      title="Download Feedback Report as CSV / Excel"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download Report</span>
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
+                      title="Print Feedback Report"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>Print Report</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Filters Strip */}
@@ -3110,7 +3136,14 @@ export function AdminDashboard({
                                       )}
                                       <button
                                         onClick={() => {
-                                          setOfficeUseModalData(officeUseByResponse[p.uhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                          const existingOu = officeUseByResponse[p.uhid] || officeUseByResponse[p.id] || p.officeUse || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' };
+                                          setOfficeUseModalData({
+                                            reviewOfComplaint: existingOu.reviewOfComplaint || '',
+                                            dateOfReview: existingOu.dateOfReview ? String(existingOu.dateOfReview).slice(0, 10) : new Date().toISOString().slice(0, 10),
+                                            correctiveAction: existingOu.correctiveAction || '',
+                                            preventiveAction: existingOu.preventiveAction || '',
+                                            inchargeName: existingOu.inchargeName || ''
+                                          });
                                           setOfficeUseModalResponse(p);
                                         }}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all cursor-pointer flex items-center gap-1 ${
@@ -4102,11 +4135,11 @@ export function AdminDashboard({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.5)',
+            background: 'rgba(0,0,0,0.65)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 99999,
             padding: '16px',
           }}
           onClick={(e) => { if (e.target === e.currentTarget) setOfficeUseModalResponse(null); }}
