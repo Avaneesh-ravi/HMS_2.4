@@ -530,6 +530,13 @@ export function AdminDashboard({
     inchargeName: '',
   });
 
+  const getApiUrl = (endpoint: string) => {
+    const p = window.location.pathname;
+    if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
+    if (p.includes('api/frontend')) return `../backend/ajax/${endpoint}`;
+    return `/api/backend/ajax/${endpoint}`;
+  };
+
   const mockResponses: FeedbackResponse[] = [
     {
       uhid: 'UHID1234',
@@ -2799,168 +2806,7 @@ export function AdminDashboard({
                 </div>
               </div>
 
-              {/* Office Use Modal */}
-              {officeUseModalResponse && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    inset: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000,
-                    padding: '16px',
-                  }}
-                  onClick={(e) => { if (e.target === e.currentTarget) setOfficeUseModalResponse(null); }}
-                >
-                  <div
-                    style={{
-                      background: '#fff',
-                      borderRadius: '16px',
-                      maxWidth: '520px',
-                      width: '90%',
-                      padding: '28px',
-                      boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-                      animation: 'ouModalIn 250ms ease',
-                    }}
-                  >
-                    <style>{`@keyframes ouModalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
 
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <Lock className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">For Office Use Only</h3>
-                          <p className="text-sm text-gray-500 mt-0.5">{officeUseModalResponse.patientName} — {officeUseModalResponse.uhid}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setOfficeUseModalResponse(null)}
-                        className="p-1 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-                      >
-                        <X className="w-5 h-5 text-gray-500" />
-                      </button>
-                    </div>
-
-                    {/* Fields */}
-                    <div className="space-y-5">
-                      {/* Review of Complaint */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Review of the Complaint</label>
-                        <input
-                          type="text"
-                          value={officeUseModalData.reviewOfComplaint}
-                          onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, reviewOfComplaint: e.target.value })}
-                          placeholder="Enter review details..."
-                          style={{ width: '100%', border: 'none', borderBottom: '2px solid #d1d5db', background: 'transparent', padding: '10px 2px', fontSize: '14px', color: '#374151', outline: 'none', transition: 'border-color 200ms' }}
-                          onFocus={(e) => (e.target.style.borderBottomColor = '#0D9488')}
-                          onBlur={(e) => (e.target.style.borderBottomColor = '#d1d5db')}
-                        />
-                      </div>
-
-                      {/* Date of Review */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Date of Review</label>
-                        <input
-                          type="date"
-                          value={officeUseModalData.dateOfReview}
-                          onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, dateOfReview: e.target.value })}
-                          style={{ width: '100%', border: 'none', borderBottom: '2px solid #d1d5db', background: 'transparent', padding: '10px 2px', fontSize: '14px', color: '#374151', outline: 'none', transition: 'border-color 200ms' }}
-                          onFocus={(e) => (e.target.style.borderBottomColor = '#0D9488')}
-                          onBlur={(e) => (e.target.style.borderBottomColor = '#d1d5db')}
-                        />
-                      </div>
-
-                      {/* Corrective Action */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Corrective Action</label>
-                        <textarea
-                          value={officeUseModalData.correctiveAction}
-                          onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, correctiveAction: e.target.value })}
-                          placeholder="Describe corrective action taken..."
-                          rows={2}
-                          style={{ width: '100%', border: 'none', borderBottom: '2px solid #d1d5db', background: 'transparent', padding: '10px 2px', fontSize: '14px', color: '#374151', outline: 'none', resize: 'none', minHeight: '60px', transition: 'border-color 200ms' }}
-                          onFocus={(e) => (e.target.style.borderBottomColor = '#0D9488')}
-                          onBlur={(e) => (e.target.style.borderBottomColor = '#d1d5db')}
-                        />
-                      </div>
-
-                      {/* Preventive Action */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Preventive Action</label>
-                        <textarea
-                          value={officeUseModalData.preventiveAction}
-                          onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, preventiveAction: e.target.value })}
-                          placeholder="Describe preventive action planned..."
-                          rows={2}
-                          style={{ width: '100%', border: 'none', borderBottom: '2px solid #d1d5db', background: 'transparent', padding: '10px 2px', fontSize: '14px', color: '#374151', outline: 'none', resize: 'none', minHeight: '60px', transition: 'border-color 200ms' }}
-                          onFocus={(e) => (e.target.style.borderBottomColor = '#0D9488')}
-                          onBlur={(e) => (e.target.style.borderBottomColor = '#d1d5db')}
-                        />
-                      </div>
-
-                      {/* Incharge Name */}
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Incharge Name / பொறுப்பாளர் பெயர்</label>
-                        <input
-                          type="text"
-                          value={officeUseModalData.inchargeName}
-                          onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, inchargeName: e.target.value })}
-                          placeholder="Enter incharge name"
-                          style={{ width: '100%', border: 'none', borderBottom: '2px solid #d1d5db', background: 'transparent', padding: '10px 2px', fontSize: '14px', color: '#374151', outline: 'none', transition: 'border-color 200ms' }}
-                          onFocus={(e) => (e.target.style.borderBottomColor = '#0D9488')}
-                          onBlur={(e) => (e.target.style.borderBottomColor = '#d1d5db')}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex gap-3 mt-8 justify-end">
-                      <button
-                        onClick={() => setOfficeUseModalResponse(null)}
-                        className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!officeUseModalResponse) return;
-                          const uhid = officeUseModalResponse.uhid;
-                          const respId = officeUseModalResponse.id;
-                          const nextData = { ...officeUseModalData };
-                          
-                          setOfficeUseByResponse(prev => ({ ...prev, [uhid]: nextData }));
-                          setResponses(prev => prev.map(r => (r.uhid === uhid || r.id === respId) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
-                          setOfficeUseModalResponse(null);
-                          toast.success('Office Use record saved! Marked as Resolved ✓');
-
-                          try {
-                            const fd = new FormData();
-                            fd.append('response_id', String(respId || 0));
-                            fd.append('submission_id', String(respId || 0));
-                            fd.append('uhid', uhid);
-                            fd.append('review_comments', nextData.reviewOfComplaint || '');
-                            fd.append('review_date', nextData.dateOfReview || new Date().toISOString().slice(0, 10));
-                            fd.append('corrective_action', nextData.correctiveAction || '');
-                            fd.append('preventive_action', nextData.preventiveAction || '');
-                            fd.append('incharge_name', nextData.inchargeName || '');
-                            await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
-                          } catch (err) {
-                            console.error('Save office use error:', err);
-                          }
-                        }}
-                        style={{ background: '#0D9488' }}
-                        className="px-6 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Save & Mark Resolved</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
               </>
             )}
 
@@ -4214,11 +4060,29 @@ export function AdminDashboard({
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }} className="no-print">
                         <button
                           type="button"
-                          onClick={() => {
-                            setOfficeUseByResponse(prev => ({ ...prev, [key]: ou }));
-                            toast.success('Office Use details saved');
+                          onClick={async () => {
+                            const nextData = { ...ou };
+                            setOfficeUseByResponse(prev => ({ ...prev, [key]: nextData }));
+                            setResponses(prev => prev.map(r => (r.uhid === key || r.id === selectedResponse.id) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
+                            setSelectedResponse(prev => prev ? { ...prev, officeUse: { ...nextData, status: 'Reviewed' } } : null);
+                            toast.success('Office Use details saved successfully! Marked as Resolved ✓');
+
+                            try {
+                              const fd = new FormData();
+                              fd.append('response_id', String(selectedResponse.id || 0));
+                              fd.append('submission_id', String(selectedResponse.id || 0));
+                              fd.append('uhid', key);
+                              fd.append('review_comments', nextData.reviewOfComplaint || '');
+                              fd.append('review_date', nextData.dateOfReview || new Date().toISOString().slice(0, 10));
+                              fd.append('corrective_action', nextData.correctiveAction || '');
+                              fd.append('preventive_action', nextData.preventiveAction || '');
+                              fd.append('incharge_name', nextData.inchargeName || '');
+                              await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                            } catch (err) {
+                              console.error('Save office use error:', err);
+                            }
                           }}
-                          style={{ background: '#0f766e', color: '#fff', padding: '8px 20px', borderRadius: '8px', fontWeight: 600, fontSize: '13px', border: 'none', cursor: 'pointer' }}
+                          style={{ background: '#0f766e', color: '#fff', padding: '10px 24px', borderRadius: '8px', fontWeight: 600, fontSize: '13px', border: 'none', cursor: 'pointer' }}
                         >
                           Save Office Use Details
                         </button>
@@ -4227,6 +4091,180 @@ export function AdminDashboard({
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Office Use Modal (Global - Accessible from both Feedback Responses and Feedback Report) */}
+      {officeUseModalResponse && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setOfficeUseModalResponse(null); }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-base">For Office Use Only</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">{officeUseModalResponse.patientName} — {officeUseModalResponse.uhid}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setOfficeUseModalResponse(null)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Review of the Complaint
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe the complaint / feedback review..."
+                  value={officeUseModalData.reviewOfComplaint}
+                  onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, reviewOfComplaint: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Date of Review
+                </label>
+                <input
+                  type="date"
+                  value={officeUseModalData.dateOfReview}
+                  onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, dateOfReview: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Corrective Action
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Immediate action taken to resolve the issue..."
+                  value={officeUseModalData.correctiveAction}
+                  onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, correctiveAction: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Preventive Action
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Steps to prevent recurrence..."
+                  value={officeUseModalData.preventiveAction}
+                  onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, preventiveAction: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">
+                  Incharge Name / பொறுப்பாளர் பெயர்
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dr. Ramesh Kumar / Quality Manager"
+                  value={officeUseModalData.inchargeName}
+                  onChange={(e) => setOfficeUseModalData({ ...officeUseModalData, inchargeName: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div
+              style={{
+                padding: '12px 20px',
+                background: '#f8fafc',
+                borderTop: '1px solid #f1f5f9',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '8px',
+              }}
+            >
+              <button
+                onClick={() => setOfficeUseModalResponse(null)}
+                className="px-4 py-2 rounded-lg text-gray-600 text-sm font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!officeUseModalResponse) return;
+                  const uhid = officeUseModalResponse.uhid;
+                  const respId = officeUseModalResponse.id;
+                  const nextData = { ...officeUseModalData };
+                  
+                  setOfficeUseByResponse(prev => ({ ...prev, [uhid]: nextData }));
+                  setResponses(prev => prev.map(r => (r.uhid === uhid || r.id === respId) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
+                  setOfficeUseModalResponse(null);
+                  toast.success('Office Use record saved! Marked as Resolved ✓');
+
+                  try {
+                    const fd = new FormData();
+                    fd.append('response_id', String(respId || 0));
+                    fd.append('submission_id', String(respId || 0));
+                    fd.append('uhid', uhid);
+                    fd.append('review_comments', nextData.reviewOfComplaint || '');
+                    fd.append('review_date', nextData.dateOfReview || new Date().toISOString().slice(0, 10));
+                    fd.append('corrective_action', nextData.correctiveAction || '');
+                    fd.append('preventive_action', nextData.preventiveAction || '');
+                    fd.append('incharge_name', nextData.inchargeName || '');
+                    await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                  } catch (err) {
+                    console.error('Save office use error:', err);
+                  }
+                }}
+                style={{ background: '#0D9488' }}
+                className="px-6 py-2 rounded-lg text-white text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Save & Mark Resolved</span>
+              </button>
             </div>
           </div>
         </div>

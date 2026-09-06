@@ -90,6 +90,26 @@
       "destination": "/api/save-questions.js"
     },
     {
+      "source": "/api/backend/ajax/save-office-use.php",
+      "destination": "/api/save-office-use.js"
+    },
+    {
+      "source": "/api/backend/ajax/save-office-use",
+      "destination": "/api/save-office-use.js"
+    },
+    {
+      "source": "/api/save-office-use",
+      "destination": "/api/save-office-use.js"
+    },
+    {
+      "source": "/api/backend/ajax/save-complaint-review.php",
+      "destination": "/api/save-office-use.js"
+    },
+    {
+      "source": "/api/save-complaint-review",
+      "destination": "/api/save-office-use.js"
+    },
+    {
       "source": "/((?!api/|assets/|favicon.ico).*)",
       "destination": "/public/index.html"
     }
