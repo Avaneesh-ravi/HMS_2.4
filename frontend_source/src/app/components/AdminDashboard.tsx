@@ -1518,45 +1518,132 @@ export function AdminDashboard({
   }, [responses, availableDepartments, reportDept, reportFromDate, reportToDate, fromDate, toDate, questions, yesNoQuestions, reportSearch]);
 
   const handleExportCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Department,Question Type,Question (English),Question (Tamil),Total Responses,Average Rating / Yes %,Breakdown (5★/4★/3★/2★/1★ or Yes/No Counts)\n";
+    let rows: string[] = [];
+
+    // Header Summary
+    rows.push(`"PATIENT FEEDBACK REPORT - ${brandingSettings.hospitalName.replace(/"/g, '""')}"`);
+    rows.push(`"Generated On: ${new Date().toLocaleString('en-GB')}"`);
+    rows.push(`"Total Feedback Responses Evaluated: ${responses.length}"`);
+    rows.push('');
+
+    // Table 1: Service Rating Questions Summary
+    rows.push('"=== SECTION 1: DEPARTMENT SERVICE RATING QUESTIONS SUMMARY ==="');
+    rows.push([
+      '"Department"',
+      '"Service / Question (English)"',
+      '"Question (Tamil)"',
+      '"Total Rated"',
+      '"Average Rating (out of 5.0)"',
+      '"Positive Response % (4★ & 5★)"',
+      '"5★ (Excellent)"',
+      '"4★ (Good)"',
+      '"3★ (Average)"',
+      '"2★ (Poor)"',
+      '"1★ (Very Poor)"'
+    ].join(','));
 
     departmentReportData.forEach(dept => {
       dept.ratingQuestions.forEach(rq => {
-        const row = [
-          `"${dept.departmentName}"`,
-          '"Rating Question"',
+        const posCount = (rq.count5 || 0) + (rq.count4 || 0);
+        const posPct = rq.totalRated > 0 ? Math.round((posCount / rq.totalRated) * 100) : 0;
+        rows.push([
+          `"${dept.departmentName.replace(/"/g, '""')}"`,
           `"${rq.label.replace(/"/g, '""')}"`,
           `"${(rq.tamilLabel || '').replace(/"/g, '""')}"`,
           rq.totalRated,
-          `"${rq.averageScore} / 5.0"`,
-          `"5★:${rq.count5} (${rq.pct5}%), 4★:${rq.count4} (${rq.pct4}%), 3★:${rq.count3} (${rq.pct3}%), 2★:${rq.count2} (${rq.pct2}%), 1★:${rq.count1} (${rq.pct1}%)"`
-        ];
-        csvContent += row.join(',') + "\n";
-      });
-
-      dept.yesNoQuestions.forEach(yq => {
-        const row = [
-          `"${dept.departmentName}"`,
-          '"Yes/No Question"',
-          `"${yq.label.replace(/"/g, '""')}"`,
-          `"${(yq.tamilLabel || '').replace(/"/g, '""')}"`,
-          yq.totalAnswered,
-          `"${yq.yesPercent}% Yes"`,
-          `"Yes:${yq.yesCount} (${yq.yesPercent}%), No:${yq.noCount} (${yq.noPercent}%), Remarks:${yq.remarks.length}"`
-        ];
-        csvContent += row.join(',') + "\n";
+          `"${rq.averageScore}"`,
+          `"${posPct}%"`,
+          rq.count5,
+          rq.count4,
+          rq.count3,
+          rq.count2,
+          rq.count1
+        ].join(','));
       });
     });
 
-    const encodedUri = encodeURI(csvContent);
+    rows.push('');
+    rows.push('');
+
+    // Table 2: Yes/No Questions Breakdown
+    rows.push('"=== SECTION 2: YES / NO QUESTIONS BREAKDOWN ==="');
+    rows.push([
+      '"Department"',
+      '"Question (English)"',
+      '"Question (Tamil)"',
+      '"Total Answered"',
+      '"Yes Count"',
+      '"No Count"',
+      '"Yes %"',
+      '"Remarks Count"'
+    ].join(','));
+
+    departmentReportData.forEach(dept => {
+      dept.yesNoQuestions.forEach(yq => {
+        rows.push([
+          `"${dept.departmentName.replace(/"/g, '""')}"`,
+          `"${yq.label.replace(/"/g, '""')}"`,
+          `"${(yq.tamilLabel || '').replace(/"/g, '""')}"`,
+          yq.totalAnswered,
+          yq.yesCount,
+          yq.noCount,
+          `"${yq.yesPercent}%"`,
+          yq.remarks.length
+        ].join(','));
+      });
+    });
+
+    rows.push('');
+    rows.push('');
+
+    // Table 3: Patient Feedback & Action Log
+    rows.push('"=== SECTION 3: PATIENT FEEDBACK RESPONSES & RESOLUTION LOG ==="');
+    rows.push([
+      '"UHID"',
+      '"Patient Name"',
+      '"Visit Type"',
+      '"Date"',
+      '"Department"',
+      '"Overall Rating"',
+      '"Would Recommend"',
+      '"Office Status"',
+      '"Review of Complaint"',
+      '"Corrective Action Taken"',
+      '"Preventive Action"',
+      '"Incharge Name / Date"'
+    ].join(','));
+
+    responses.forEach(r => {
+      const ou = officeUseByResponse[r.uhid] || r.officeUse || {};
+      const isResolved = !!(ou.reviewOfComplaint || ou.inchargeName);
+      rows.push([
+        `"${(r.uhid || '').replace(/"/g, '""')}"`,
+        `"${(r.patientName || '').replace(/"/g, '""')}"`,
+        `"${(r.visitType || 'OP').replace(/"/g, '""')}"`,
+        `"${(r.date || '').replace(/"/g, '""')}"`,
+        `"${(r.departmentName || 'Cardiology').replace(/"/g, '""')}"`,
+        `"${typeof r.overallRating === 'number' ? r.overallRating.toFixed(1) : r.overallRating}"`,
+        `"${r.wouldRecommend ? 'Yes' : 'No'}"`,
+        `"${isResolved ? 'Resolved' : 'Pending Action'}"`,
+        `"${(ou.reviewOfComplaint || '').replace(/"/g, '""')}"`,
+        `"${(ou.correctiveAction || '').replace(/"/g, '""')}"`,
+        `"${(ou.preventiveAction || '').replace(/"/g, '""')}"`,
+        `"${(ou.inchargeName || '') + (ou.dateOfReview ? ` (${ou.dateOfReview})` : '')}"`
+      ].join(','));
+    });
+
+    // Use UTF-8 BOM so Excel opens Tamil and English characters without corruption
+    const csvContent = "\uFEFF" + rows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `Feedback_Report_${brandingSettings.hospitalName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Feedback Report CSV exported successfully!');
+    URL.revokeObjectURL(url);
+    toast.success('Feedback Report exported successfully as clean Excel CSV!');
   };
 
   const activeFilterCount = useMemo(() => {
@@ -2821,7 +2908,7 @@ export function AdminDashboard({
 
             {/* Feedback Report Section */}
             {activeSection === 'feedback-report' && (
-              <div className="pb-24 space-y-8">
+              <div id="printable-feedback-report" className="pb-24 space-y-8">
                 {/* Header Strip with Hospital Branding and Print/Export */}
                 <div className="bg-white rounded-2xl shadow-md p-6 border-l-4 border-teal-600 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
