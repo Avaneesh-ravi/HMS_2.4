@@ -1802,29 +1802,67 @@ export function AdminDashboard({
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .print-layout-root, .print-main-content, main, [class*="overflow-"] {
+          /* COMPLETELY HIDE SIDEBAR, TOP HEADER, AND ALL NO-PRINT ELEMENTS */
+          aside,
+          header,
+          nav,
+          .no-print,
+          .hidden-on-print,
+          .admin-sidebar-nav,
+          .admin-top-header,
+          [class*="admin-sidebar"],
+          [class*="from-teal-700"],
+          [class*="from-teal-900"],
+          .fixed:not(.modal-print-overlay),
+          .sticky:not(#printable-feedback-modal .sticky) {
+            display: none !important;
+            width: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            position: absolute !important;
+            left: -99999px !important;
+            top: -99999px !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            overflow: hidden !important;
+          }
+          aside *,
+          header *,
+          .no-print *,
+          .admin-sidebar-nav *,
+          .admin-top-header * {
+            display: none !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          /* EXPAND MAIN CONTAINER TO 100% FULL WIDTH */
+          #root,
+          .print-layout-root,
+          .print-main-content,
+          .print-scroll-container,
+          .print-inner-padding,
+          main {
+            display: block !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
             position: static !important;
-            display: block !important;
-            width: 100% !important;
-            max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #ffffff !important;
-          }
-          .no-print,
-          button,
-          nav,
-          aside,
-          header,
-          [class*="sidebar"],
-          [class*="Sidebar"],
-          .fixed:not(.modal-print-overlay),
-          .sticky {
-            display: none !important;
+            flex: none !important;
           }
           #printable-feedback-report {
             display: block !important;
@@ -1832,19 +1870,22 @@ export function AdminDashboard({
             max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+            background: #ffffff !important;
           }
+          /* 2-COLUMN GRID FOR REPORT CARDS ACROSS FULL WIDTH */
           .grid {
             display: grid !important;
             gap: 12px !important;
           }
-          .grid-cols-1.md\:grid-cols-2,
-          .grid-cols-1.lg\:grid-cols-2,
-          .md\:grid-cols-2,
-          .lg\:grid-cols-2 {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          .report-cards-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 12px !important;
           }
-          .grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          .report-summary-grid {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 12px !important;
           }
           .break-inside-avoid,
           .rounded-xl,
@@ -1855,18 +1896,17 @@ export function AdminDashboard({
             page-break-inside: avoid !important;
             margin-bottom: 12px !important;
           }
-          /* Ensure backgrounds and progress bars print */
-          .bg-emerald-500 { background-color: #10b981 !important; }
-          .bg-teal-500 { background-color: #14b8a6 !important; }
-          .bg-amber-400 { background-color: #fbbf24 !important; }
-          .bg-orange-400 { background-color: #fb923c !important; }
-          .bg-rose-500 { background-color: #f43f5e !important; }
-          .bg-teal-600 { background-color: #0d9488 !important; }
-          .bg-gradient-to-r.from-teal-800.to-teal-700 { background-color: #115e59 !important; }
+          /* Ensure progress bar and badge colors print cleanly */
+          .bg-emerald-500 { background-color: #10b981 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .bg-teal-500 { background-color: #14b8a6 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .bg-amber-400 { background-color: #fbbf24 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .bg-orange-400 { background-color: #fb923c !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .bg-rose-500 { background-color: #f43f5e !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .bg-teal-600 { background-color: #0d9488 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
       {/* Modern Sidebar with Gradient */}
-      <div className={`no-print bg-gradient-to-b from-teal-700 to-teal-900 shadow-2xl transition-all duration-300 flex-shrink-0 flex flex-col ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}`}>
+      <aside className={`no-print admin-sidebar-nav bg-gradient-to-b from-teal-700 to-teal-900 shadow-2xl transition-all duration-300 flex-shrink-0 flex flex-col ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}`}>
         {/* Logo/Brand Section */}
         <div className="p-6 border-b border-white/20 flex items-center justify-between">
           {!sidebarCollapsed && (
@@ -1958,12 +1998,12 @@ export function AdminDashboard({
             {!sidebarCollapsed && 'Logout'}
           </button>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden print-main-content">
         {/* Top Header Bar */}
-        <div className="no-print bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+        <header className="no-print admin-top-header bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1982,11 +2022,11 @@ export function AdminDashboard({
               <p className="text-xs text-gray-500">Super Admin</p>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="p-8">
+        <div className="flex-1 overflow-y-auto bg-gray-50 print-scroll-container">
+          <div className="p-8 print-inner-padding">
             {/* Overview Section */}
             {activeSection === 'overview' && (
               <div>
@@ -3043,7 +3083,7 @@ export function AdminDashboard({
                   const avgScore = totalEvaluated > 0 ? (responses.reduce((sum, r) => sum + Number(r.overallRating || 5), 0) / totalEvaluated).toFixed(1) : '5.0';
 
                   return (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="report-summary-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 flex-shrink-0">
                           <FileText className="w-6 h-6" />
@@ -3447,7 +3487,7 @@ export function AdminDashboard({
                             {dept.ratingQuestions.length === 0 ? (
                               <p className="text-sm text-gray-400 italic py-2">No rating questions match your search.</p>
                             ) : (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="report-cards-grid grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {dept.ratingQuestions.map((rq, rqIdx) => (
                                   <div
                                     key={rqIdx}
@@ -3536,7 +3576,7 @@ export function AdminDashboard({
                             {dept.yesNoQuestions.length === 0 ? (
                               <p className="text-sm text-gray-400 italic py-2">No Yes/No questions match your search.</p>
                             ) : (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="report-cards-grid grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {dept.yesNoQuestions.map((yq, yqIdx) => (
                                   <div
                                     key={yqIdx}

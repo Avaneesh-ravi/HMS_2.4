@@ -15,7 +15,7 @@
       #root { height: 100%; }
       #vite-error-box { display: none; padding: 20px; background: #fff0f0; border: 1px solid red; color: red; position: fixed; z-index: 9999; top: 0; width: 100%; font-family: monospace; }
       
-      @media print {
+            @media print {
         @page {
           size: A4 portrait;
           margin: 10mm 10mm 12mm 10mm;
@@ -36,29 +36,65 @@
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        #root, .print-layout-root, .print-main-content, main, [class*="overflow-"] {
+        aside,
+        header,
+        nav,
+        .no-print,
+        .hidden-on-print,
+        .admin-sidebar-nav,
+        .admin-top-header,
+        [class*="admin-sidebar"],
+        [class*="from-teal-700"],
+        [class*="from-teal-900"],
+        .fixed:not(.modal-print-overlay),
+        .sticky:not(#printable-feedback-modal .sticky) {
+          display: none !important;
+          width: 0 !important;
+          min-width: 0 !important;
+          max-width: 0 !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          max-height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          background: transparent !important;
+          position: absolute !important;
+          left: -99999px !important;
+          top: -99999px !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          overflow: hidden !important;
+        }
+        aside *,
+        header *,
+        .no-print *,
+        .admin-sidebar-nav *,
+        .admin-top-header * {
+          display: none !important;
+          visibility: hidden !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        #root,
+        .print-layout-root,
+        .print-main-content,
+        .print-scroll-container,
+        .print-inner-padding,
+        main {
+          display: block !important;
+          width: 100% !important;
+          min-width: 100% !important;
+          max-width: 100% !important;
           height: auto !important;
           min-height: 0 !important;
           max-height: none !important;
           overflow: visible !important;
           position: static !important;
-          display: block !important;
-          width: 100% !important;
-          max-width: 100% !important;
           margin: 0 !important;
           padding: 0 !important;
-          background: transparent !important;
-        }
-        .no-print,
-        button,
-        nav,
-        aside,
-        header,
-        [class*="sidebar"],
-        [class*="Sidebar"],
-        .fixed:not(.modal-print-overlay),
-        .sticky {
-          display: none !important;
+          background: #ffffff !important;
+          flex: none !important;
         }
         #printable-feedback-report {
           display: block !important;
@@ -66,19 +102,21 @@
           max-width: 100% !important;
           margin: 0 !important;
           padding: 0 !important;
+          background: #ffffff !important;
         }
         .grid {
           display: grid !important;
           gap: 12px !important;
         }
-        .grid-cols-1.md\:grid-cols-2,
-        .grid-cols-1.lg\:grid-cols-2,
-        .md\:grid-cols-2,
-        .lg\:grid-cols-2 {
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        .report-cards-grid {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 12px !important;
         }
-        .grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        .report-summary-grid {
+          display: grid !important;
+          grid-template-columns: repeat(4, 1fr) !important;
+          gap: 12px !important;
         }
         .break-inside-avoid,
         .rounded-xl,
@@ -122,8 +160,8 @@
         });
       </script>
       
-      <script type="module" crossorigin src="./assets/index-DxER6hbI.js"></script>
-      <link rel="stylesheet" crossorigin href="./assets/index-D9Pr127s.css">
+      <script type="module" crossorigin src="./assets/index-CZ7G2-cS.js"></script>
+      <link rel="stylesheet" crossorigin href="./assets/index-Bs8wuCyX.css">
     </head>
 
     <body>

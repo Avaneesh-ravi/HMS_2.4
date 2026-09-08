@@ -1,3 +1,52 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+@media print {
+  aside,
+  header,
+  nav,
+  .no-print,
+  .hidden-on-print,
+  .admin-sidebar-nav,
+  .admin-top-header,
+  [class*="from-teal-700"] {
+    display: none !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -99999px !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  #root,
+  .print-layout-root,
+  .print-main-content,
+  .print-scroll-container,
+  .print-inner-padding,
+  main {
+    display: block !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    position: static !important;
+    flex: none !important;
+  }
+
+  .report-cards-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  .report-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+  }
+}
