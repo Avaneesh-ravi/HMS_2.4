@@ -1779,9 +1779,94 @@ export function AdminDashboard({
   }, [responses, filterSearch, fromDate, toDate, filterRating, filterRecommend, filterVisitType, filterOfficeUse, filterDepartment, sortField, sortDirection, officeUseByResponse]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex print-layout-root">
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 10mm 10mm 12mm 10mm;
+          }
+          *, *::before, *::after {
+            box-shadow: none !important;
+            text-shadow: none !important;
+          }
+          html, body {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #111827 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .print-layout-root, .print-main-content, main, [class*="overflow-"] {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+          .no-print,
+          button,
+          nav,
+          aside,
+          header,
+          [class*="sidebar"],
+          [class*="Sidebar"],
+          .fixed:not(.modal-print-overlay),
+          .sticky {
+            display: none !important;
+          }
+          #printable-feedback-report {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .grid {
+            display: grid !important;
+            gap: 12px !important;
+          }
+          .grid-cols-1.md\:grid-cols-2,
+          .grid-cols-1.lg\:grid-cols-2,
+          .md\:grid-cols-2,
+          .lg\:grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+          .grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          }
+          .break-inside-avoid,
+          .rounded-xl,
+          .rounded-2xl,
+          .rounded-lg,
+          [class*="rounded"] {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 12px !important;
+          }
+          /* Ensure backgrounds and progress bars print */
+          .bg-emerald-500 { background-color: #10b981 !important; }
+          .bg-teal-500 { background-color: #14b8a6 !important; }
+          .bg-amber-400 { background-color: #fbbf24 !important; }
+          .bg-orange-400 { background-color: #fb923c !important; }
+          .bg-rose-500 { background-color: #f43f5e !important; }
+          .bg-teal-600 { background-color: #0d9488 !important; }
+          .bg-gradient-to-r.from-teal-800.to-teal-700 { background-color: #115e59 !important; }
+        }
+      `}</style>
       {/* Modern Sidebar with Gradient */}
-      <div className={`bg-gradient-to-b from-teal-700 to-teal-900 shadow-2xl transition-all duration-300 flex-shrink-0 flex flex-col ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}`}>
+      <div className={`no-print bg-gradient-to-b from-teal-700 to-teal-900 shadow-2xl transition-all duration-300 flex-shrink-0 flex flex-col ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}`}>
         {/* Logo/Brand Section */}
         <div className="p-6 border-b border-white/20 flex items-center justify-between">
           {!sidebarCollapsed && (
@@ -1876,9 +1961,9 @@ export function AdminDashboard({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden print-main-content">
         {/* Top Header Bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+        <div className="no-print bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -3016,7 +3101,7 @@ export function AdminDashboard({
                   );
                 })()}
 
-                <div className="bg-white rounded-2xl shadow-md p-6 space-y-4">
+                <div className="no-print bg-white rounded-2xl shadow-md p-6 space-y-4">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Search Input */}
                     <div className="relative flex-1 max-w-md">
