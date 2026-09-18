@@ -214,33 +214,59 @@ Dynamic question registry for ratings and binary checks.
 
 ---
 
-## 8. Local Setup & Cloud Deployment Guide
+## 8. Complete Step-by-Step Setup Guide (Beginner Friendly)
 
-### Local Setup (XAMPP / PHP Environment)
-1. Clone the repository into `c:\xampp\htdocs\HMS_V6.6`.
-2. Start **Apache** and **MySQL / PostgreSQL** in XAMPP Control Panel.
-3. Access local feedback form: `http://localhost/HMS_V6.6/frontend/feedback-form.php?hospital_id=apollo-hospital`.
-4. Access local admin panel: `http://localhost/HMS_V6.6/backend/admin/login.php`.
+### A. Prerequisites Installation
+1. Install **Node.js LTS (v18+)** from [nodejs.org](https://nodejs.org/).
+2. Install **Git** from [git-scm.com](https://git-scm.com/).
+3. Install **VS Code** (recommended editor).
 
-### Frontend Development & Build
-```bash
-# Navigate to source directory
-cd frontend_source
+### B. Supabase Cloud Database Setup
+1. Create a free account at [supabase.com](https://supabase.com/).
+2. Create a new project (e.g. `hms-feedback-db`), set a database password, and choose your preferred region.
+3. In Supabase, navigate to **SQL Editor** $\rightarrow$ **New query**.
+4. Open [`database_dump_with_data.sql`](./database_dump_with_data.sql), copy the entire SQL script, paste into SQL Editor, and click **Run**.
+5. Retrieve your database connection settings from **Project Settings** $\rightarrow$ **Database**:
+   - Host, Port (`5432`), Database (`postgres`), User (`postgres.[REF]`), Password.
 
-# Install dependencies
-npm install
+### C. Local Project Setup & Development
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Avaneesh-ravi/HMS_2.4.git
+   cd HMS_2.4
+   ```
+2. Navigate into `frontend_source/` and install dependencies:
+   ```bash
+   cd frontend_source
+   npm install
+   ```
+3. Start the local development server:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173/` in your browser.
+4. Build production bundles:
+   ```bash
+   npm run build
+   ```
+   *(Compiles React components and automatically syncs to `frontend/`, `api/frontend/`, and `public/` via `sync-dist.js`).*
 
-# Start Vite hot-reload development server
-npm run dev
+### D. Vercel Cloud Deployment Setup
+1. Sign in to [vercel.com](https://vercel.com/) with GitHub.
+2. Click **Add New...** $\rightarrow$ **Project** and select `HMS_2.4`.
+3. Configure Environment Variables in Vercel:
+   - `DB_HOST`: Your Supabase Host
+   - `DB_PORT`: `5432`
+   - `DB_NAME`: `postgres`
+   - `DB_USER`: Your Supabase User
+   - `DB_PASS`: Your Supabase Password
+4. Click **Deploy**. Vercel will build and publish your project to a public `*.vercel.app` URL.
 
-# Build production bundles (automatically syncs to dist, frontend/, api/frontend/, and public/)
-npm run build
-```
-
-### Cloud Deployment (Vercel)
-1. Push changes to GitHub repository `main` branch.
-2. Vercel automatically detects commits, builds the frontend, and deploys Serverless Functions in `/api`.
-3. Set environment variable `POSTGRES_URL` in Vercel Project Settings for cloud database connection.
+### E. Local XAMPP Setup (Intranet Mode)
+1. Install XAMPP and place the project folder in `c:\xampp\htdocs\HMS_V6.6`.
+2. Start **Apache** in XAMPP Control Panel.
+3. Access Feedback Form: `http://localhost/HMS_V6.6/frontend/feedback-form.php?hospital_id=apollo-hospital`.
+4. Access Admin Dashboard: `http://localhost/HMS_V6.6/backend/admin/login.php`.
 
 ---
 

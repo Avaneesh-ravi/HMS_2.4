@@ -5,38 +5,30 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-CSS%20v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?logo=postgresql)](https://www.postgresql.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?logo=supabase)](https://supabase.com/)
 
 ---
 
 ## 🏥 Project Overview
 
-The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** is an enterprise-grade feedback collection and clinical quality analytics application. It enables hospitals to capture real-time patient ratings across inpatient (IP) and outpatient (OP) departments, track satisfaction trends, manage complaint investigations with corrective/preventive actions, and generate executive reports.
+The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** is an enterprise-grade web application engineered to capture, aggregate, analyze, and act upon multi-departmental inpatient (IP) and outpatient (OP) patient experiences in real time.
 
-The platform is designed with a **hybrid cloud & on-premise architecture**:
-- **Cloud Mode**: Deployed on **Vercel** with Node.js Serverless Functions and a cloud **PostgreSQL** database.
-- **Local Intranet Mode**: Deployable to on-premise **XAMPP / Apache / PHP / PostgreSQL / MySQL** hospital networks.
+It supports dual deployment modes:
+- **Cloud Mode (Recommended)**: Hosted on **Vercel** with Node.js Serverless Functions and a managed **Supabase PostgreSQL** cloud database.
+- **Local Intranet Mode**: Deployed on hospital on-premise **XAMPP / Apache / PHP / PostgreSQL / MySQL** networks.
 
 ---
 
 ## ✨ Key Features
 
-### 1. Bilingual Patient Feedback Wizard
-- **Instant Language Toggle**: Seamless switching between **English** and **தமிழ் (Tamil)** with real-time UI text translation.
-- **UHID Auto-Lookup**: Patient verification via `/api/get-patient` pre-populating patient identity and department.
-- **Dynamic Department Ratings**: Interactive star scales (1★ to 5★) and animated emoji rating cards.
-- **Yes / No Service Checkpoints**: Binary/trinary service checks for hygiene, billing transparency, and doctor treatment.
-- **Auto-Reset Inactivity Timer**: Automatically returns to the welcome screen after 60 seconds of inactivity.
-
-### 2. Administrative Analytics Dashboard
-- **Executive KPIs**: Total responses, overall average rating, recommendation rate, today's submissions count, and response breakdown.
-- **Feedback Responses Log**: Searchable, filterable table with multi-criteria filters (Date range, Department, Visit Type, Rating, Resolution status).
-- **Office Use & Problem Resolution Workflow**: Modal interface for quality officers to log complaint investigations, corrective actions, preventive policies, and incharge accountability.
-- **Dynamic Question Builder**: Add, edit, reorder (drag-and-drop via `@dnd-kit`), and manage bilingual labels for survey questions.
-- **Structured 3-Section Excel / CSV Export**: Exports clean reports with UTF-8 BOM encoding for Excel compatibility:
-  - *Section 1*: Department Rating Questions Summary (5★ distribution).
-  - *Section 2*: Department Yes/No Questions Breakdown.
-  - *Section 3*: Individual Patient Responses & Office Resolution Log.
-- **100% Full-Width A4 Print Engine**: Clean print layout without sidebar interference and 2-column card grid fitting standard A4 paper.
+- **Bilingual Patient Feedback Wizard**: Real-time switching between **English** and **தமிழ் (Tamil)**.
+- **UHID Auto-Lookup**: Patient identity verification via `/api/get-patient` pre-filling patient records.
+- **Dynamic Department Ratings**: Interactive 5-star scales and animated emoji rating cards.
+- **Yes / No Service Inquiries**: Binary questions for cleanliness, cost transparency, and doctor treatment.
+- **Office Use & Problem Resolution Action Log**: Quality officer workflow to log investigations, corrective actions, preventive policies, and incharge accountability.
+- **Dynamic Survey Question Builder**: Add, edit, reorder (drag-and-drop), and manage bilingual labels for survey questions.
+- **Clean 3-Section Excel / CSV Export**: Structured report containing Department Ratings summary, Yes/No breakdown, and individual patient responses with office action logs.
+- **100% Full-Width A4 Print Engine**: Clean executive print layout without sidebar interference.
 
 ---
 
@@ -44,12 +36,12 @@ The platform is designed with a **hybrid cloud & on-premise architecture**:
 
 | Layer | Technologies |
 |---|---|
-| **Frontend UI** | React 18, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Sonner (Toasts) |
+| **Frontend Framework** | React 18, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Sonner (Toasts) |
 | **Interactivity** | `@dnd-kit/core`, `@dnd-kit/sortable` (Drag and Drop) |
 | **Cloud Backend** | Vercel Serverless Functions (`api/*.js`), Node.js |
-| **Database** | PostgreSQL (Supabase / Neon cloud database with SSL connection pooling) |
+| **Cloud Database** | PostgreSQL (Hosted on Supabase with SSL pooling) |
 | **Local Backend** | PHP 8.x, Apache (XAMPP compatibility proxies in `backend/`) |
-| **Build & Sync** | Vite build runner + `sync-dist.js` (Multi-target asset synchronization) |
+| **Build & Asset Sync** | Vite + `sync-dist.js` (Multi-target asset synchronization) |
 
 ---
 
@@ -77,16 +69,8 @@ HMS_V6.6/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── components/
-│   │   │   │   ├── admin/         # Modular Admin Subcomponents
-│   │   │   │   │   ├── AdminSidebar.tsx
-│   │   │   │   │   ├── AdminHeader.tsx
-│   │   │   │   │   └── OfficeUseModal.tsx
-│   │   │   │   ├── common/        # Shared Reusable UI Controls
-│   │   │   │   │   ├── StarRating.tsx
-│   │   │   │   │   ├── EmojiRating.tsx
-│   │   │   │   │   ├── ToggleSwitch.tsx
-│   │   │   │   │   ├── ThreeStateToggle.tsx
-│   │   │   │   │   └── SelectableCard.tsx
+│   │   │   │   ├── admin/         # Modular Admin Subcomponents (Sidebar, Header, Modal)
+│   │   │   │   ├── common/        # Shared Reusable UI Controls (Stars, Emojis, Toggles)
 │   │   │   │   ├── AdminDashboard.tsx   # Admin Coordinator Component
 │   │   │   │   ├── HospitalSelection.tsx# Hospital Picker Component
 │   │   │   │   └── WelcomePage.tsx      # Welcome Screen Component
@@ -113,74 +97,137 @@ HMS_V6.6/
 
 ---
 
-## 🗄️ Database Backups & Schema Files
+## 🔰 Complete Beginner's Guide: Running on Another Computer
 
-This repository contains ready-to-use database backup files:
+Follow this step-by-step guide to set up, run, and deploy this project from scratch on any new computer.
 
-1. **[`database_schema.sql`](./database_schema.sql)**:
-   - Contains all 18 table structures (`CREATE TABLE`), primary keys, default values, and foreign constraints.
-2. **[`database_dump_with_data.sql`](./database_dump_with_data.sql)**:
-   - Full backup containing both table schemas and all 2,300+ live data records (feedback submissions, complaint reviews, department ratings, and questions).
-
----
-
-## 🚀 Quick Start & Installation Guide
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or pnpm
-- (Optional for local PHP) XAMPP / Apache
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Avaneesh-ravi/HMS_2.4.git
-cd HMS_2.4
-```
-
-### 2. Frontend Source Setup & Development
-```bash
-# Navigate to the frontend source
-cd frontend_source
-
-# Install dependencies
-npm install
-
-# Start Vite hot-reload development server
-npm run dev
-
-# Build production bundles (automatically syncs to dist, frontend/, api/frontend/, and public/)
-npm run build
-```
-
-### 3. Local XAMPP Intranet Setup
-1. Copy the project into your Apache document root: `c:\xampp\htdocs\HMS_V6.6`.
-2. Start **Apache** in XAMPP Control Panel.
-3. Access Feedback Form: `http://localhost/HMS_V6.6/frontend/feedback-form.php?hospital_id=apollo-hospital`.
-4. Access Admin Portal: `http://localhost/HMS_V6.6/backend/admin/login.php`.
-
-### 4. Cloud Deployment (Vercel)
-- Push changes to the `main` branch.
-- Vercel automatically builds the project and deploys the Serverless API functions in `/api`.
-- Live URL: **[https://hms-2-4.vercel.app](https://hms-2-4.vercel.app)**
+### Step 1: Install Required Software on the Computer
+1. **Node.js (LTS Version)**:
+   - Download and install Node.js (v18 or higher) from [nodejs.org](https://nodejs.org/).
+   - Verify in terminal:
+     ```bash
+     node -v
+     npm -v
+     ```
+2. **Git**:
+   - Download and install Git from [git-scm.com](https://git-scm.com/).
+3. **VS Code (Optional)**: Download from [code.visualstudio.com](https://code.visualstudio.com/).
 
 ---
 
-## 📡 RESTful API Endpoints Reference
+### Step 2: Supabase Database Setup (Cloud PostgreSQL)
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/get-hospitals` | `GET` | Fetches hospital profile, branding, and config |
-| `/api/get-patient` | `GET` | Validates UHID and returns patient registration data |
-| `/api/get-questions` | `GET` | Returns list of active and past dynamic feedback questions |
-| `/api/get-responses` | `GET` | Returns feedback submissions merged with complaint review actions |
-| `/api/submit-feedback`| `POST` | Ingests new patient feedback submissions |
-| `/api/save-office-use`| `POST` | Upserts complaint reviews, corrective, and preventive actions |
-| `/api/save-questions` | `POST` | Saves custom questions, bilingual labels, and ordering |
-| `/api/login-ajax` | `POST` | Validates admin credentials and issues session token |
+1. **Create a Supabase Account**:
+   - Go to [supabase.com](https://supabase.com/) and click **Start your project** (Sign up with GitHub or Email).
+2. **Create a New Project**:
+   - Click **New Project**.
+   - **Name**: `hms-database` (or any name).
+   - **Database Password**: Set a strong password and **save it securely**.
+   - **Region**: Select the region closest to you (e.g., `South Asia (Mumbai)` or `Singapore`).
+   - Click **Create new project** and wait ~2 minutes for initialization.
+3. **Import Database Schema & Data**:
+   - In your Supabase project dashboard, click **SQL Editor** from the left menu.
+   - Click **New query**.
+   - Open the file [`database_dump_with_data.sql`](./database_dump_with_data.sql) from this repository, copy all its text, and paste it into the Supabase SQL Editor.
+   - Click **Run** (or press `Ctrl + Enter`).
+   - You will see `Success: No rows returned` — all 18 tables and 2,300+ sample records are now imported!
+4. **Get Database Connection Details**:
+   - In Supabase, go to **Project Settings (gear icon)** $ightarrow$ **Database**.
+   - Under **Connection parameters**, note down:
+     - **Host**: (e.g., `aws-0-ap-northeast-1.pooler.supabase.com`)
+     - **Port**: `5432` (or `6543`)
+     - **Database**: `postgres`
+     - **User**: `postgres.[PROJECT-REF]`
+     - **Password**: Your database password.
 
 ---
 
-## 📖 Knowledge Transfer & Handover Documentation
+### Step 3: Clone and Configure the Project Locally
 
-For complete technical handover, architecture diagrams, data flow lifecycles, and maintenance instructions, please refer to:
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Avaneesh-ravi/HMS_2.4.git
+   cd HMS_2.4
+   ```
+
+2. **Configure Database Connection**:
+   - Open [`api/db.js`](./api/db.js) in your code editor.
+   - Verify or update the connection credentials with your Supabase details:
+     ```javascript
+     host: process.env.DB_HOST || 'YOUR_SUPABASE_HOST',
+     port: parseInt(process.env.DB_PORT || '5432', 10),
+     database: process.env.DB_NAME || 'postgres',
+     user: process.env.DB_USER || 'YOUR_SUPABASE_USER',
+     password: process.env.DB_PASS || 'YOUR_SUPABASE_PASSWORD',
+     ```
+
+3. **Install Frontend Dependencies & Run Locally**:
+   ```bash
+   # Navigate into the frontend_source folder
+   cd frontend_source
+
+   # Install all packages
+   npm install
+
+   # Start the local development server with hot-reload
+   npm run dev
+   ```
+   - Open your browser at `http://localhost:5173/` (or the URL shown in terminal).
+
+4. **Build Production Assets**:
+   ```bash
+   npm run build
+   ```
+   *This automatically bundles the React code and syncs assets to `frontend/`, `api/frontend/`, and `public/`.*
+
+---
+
+### Step 4: Vercel Cloud Deployment Setup
+
+1. **Sign Up on Vercel**:
+   - Go to [vercel.com](https://vercel.com/) and sign in with your GitHub account.
+2. **Import Repository**:
+   - Click **Add New...** $ightarrow$ **Project**.
+   - Select your cloned repository `HMS_2.4`.
+3. **Configure Environment Variables in Vercel**:
+   - Before clicking Deploy, expand the **Environment Variables** section.
+   - Add the following keys with your Supabase credentials:
+     | Name | Value |
+     |---|---|
+     | `DB_HOST` | Your Supabase Host (e.g. `aws-0-ap-northeast-1.pooler.supabase.com`) |
+     | `DB_PORT` | `5432` |
+     | `DB_NAME` | `postgres` |
+     | `DB_USER` | Your Supabase User (e.g. `postgres.oeithmuipahqhaoznznd`) |
+     | `DB_PASS` | Your Supabase Database Password |
+4. **Deploy**:
+   - Click **Deploy**. Vercel will build the project in ~1 minute and provide a live URL (e.g., `https://your-project.vercel.app`).
+
+---
+
+### Step 5: (Optional) Local XAMPP Setup (Intranet / Offline Mode)
+
+1. Download and install **XAMPP** from [apachefriends.org](https://www.apachefriends.org/).
+2. Move the project folder into `c:\xampp\htdocs\HMS_V6.6`.
+3. Open **XAMPP Control Panel** and start **Apache**.
+4. Access:
+   - **Feedback Form**: `http://localhost/HMS_V6.6/frontend/feedback-form.php?hospital_id=apollo-hospital`
+   - **Admin Portal**: `http://localhost/HMS_V6.6/backend/admin/login.php`
+
+---
+
+## ❓ Frequently Asked Questions & Troubleshooting
+
+### 1. "Database connection error / Connection timeout"
+- **Fix**: Ensure your computer has active internet access to reach Supabase. Verify the password in [`api/db.js`](./api/db.js) or Vercel Environment Variables.
+
+### 2. "Port 5173 is already in use"
+- **Fix**: Vite will automatically switch to port 5174 (`http://localhost:5174/`). Or stop existing Node processes in Task Manager.
+
+### 3. "Changes in frontend_source are not reflecting"
+- **Fix**: Run `npm run build` inside `frontend_source/` so `sync-dist.js` updates the static asset directories.
+
+---
+
+## 📖 Handover & Knowledge Transfer (TOI)
+For architecture details, ER diagrams, data flow diagrams, and deep maintenance guides, refer to:
 📄 **[`TOI_DOCUMENT.md`](./TOI_DOCUMENT.md)**
