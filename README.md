@@ -1,88 +1,186 @@
-# Hospital Patient Feedback System V2.2
+# Hospital Management System (HMS) - Patient Feedback & Analytics Platform (V6.6)
 
-## Project Overview
-The Hospital Patient Feedback System is a multi-tenant database-backed web application. It features a patient-facing gateway, a multi-step patient feedback form, and a scoped admin dashboard designed to let hospitals securely collect, review, and add internal "Office Use Only" notes to patient feedback.
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live-brightgreen?logo=vercel)](https://hms-2-4.vercel.app)
+[![React 18](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-CSS%20v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?logo=postgresql)](https://www.postgresql.org/)
 
-## Key Features
-- **Multi-tenant Architecture:** A gateway page (`index.php`) allows patients to select a specific hospital to submit feedback for.
-- **Patient Authentication:** A UI patient login interface (`patient-login.php`) for verified portal access.
-- **Multi-step Feedback Form:** Contains fields for Patient Information, Service Feedback via emoji ratings, Yes/No questions, Suggestions, and Appreciation.
-- **Admin Dashboard:** Features overall statistics (total responses, recommendation percentages, average ratings).
-- **Admin Response Management:** Dedicated tables to view comprehensive details of submissions with the ability to edit an "Office Use Only" review modal (Corrective Actions, Preventive Actions, etc.).
-- **Modern UI Transition:** Includes a React/Vite/Tailwind frontend integration inside `frontend_source/`, injecting polished components into the PHP pages.
+---
 
-## Tech Stack
-- **Languages Used:** PHP, TypeScript, JavaScript, HTML, CSS, SQL.
-- **Frontend Source:** React 18, Vite, Tailwind CSS v4, Radix UI components (shadcn/ui), Framer Motion, and Embla Carousel.
-- **Backend & APIs:** PHP 7.4+ combined with PDO.
-- **Database:** MySQL / MariaDB.
-- **Package Management (Frontend):** pnpm.
+## 🏥 Project Overview
 
-## Folder & File Structure Overview
-The project is divided into dedicated directories separating backend application APIs from frontend UI development blocks:
+The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** is an enterprise-grade feedback collection and clinical quality analytics application. It enables hospitals to capture real-time patient ratings across inpatient (IP) and outpatient (OP) departments, track satisfaction trends, manage complaint investigations with corrective/preventive actions, and generate executive reports.
 
-```text
-HMS_V2.2/
-├── backend/                  # Secure PHP server-side logic
-│   ├── admin/                # Admin portal to review responses (login.php, dashboard.php, etc.)
-│   ├── ajax/                 # API endpoints accessed via AJAX (e.g. for Office Use updates)
-│   ├── config/               # Database connection settings (database.php - Update your DB info here)
-│   ├── database/             # Database backups & migrations (schema.sql)
-│   ├── includes/             # Shared functional includes (core functions)
-│   └── process/              # PHP scripts converting form POST data into DB inserts
-├── frontend/                 # Public-facing PHP pages that receive patient data
-│   ├── assets/               # CSS/JS output from the frontend_source builds
-│   ├── includes/             # Shared layout UI (e.g., patient-facing header.php and footer.php)
-│   ├── index.php             # Directory entrance that redirects patients
-│   ├── feedback-form.php     # Multi-step feedback page (handles patient inputs)
-│   └── patient-login.php     # Portal gateway for patient identity verification
-├── frontend_source/          # Isolated React & Node.js development workspace
-│   ├── src/                  # React source (components, hooks, UI styling)
-│   ├── package.json          # Node.js dependencies (Radix UI, motion, react-hook-form, etc.)
-│   └── vite.config.ts        # Vite configuration that exports compiled bundles directly into /frontend/
-├── includes/                 # Global include utilities (if required)
-├── index.php                 # Global traffic router — redirects users to 'frontend/index.php'
-└── README.md                 # Project documentation (this file)
+The platform is designed with a **hybrid cloud & on-premise architecture**:
+- **Cloud Mode**: Deployed on **Vercel** with Node.js Serverless Functions and a cloud **PostgreSQL** database.
+- **Local Intranet Mode**: Deployable to on-premise **XAMPP / Apache / PHP / PostgreSQL / MySQL** hospital networks.
+
+---
+
+## ✨ Key Features
+
+### 1. Bilingual Patient Feedback Wizard
+- **Instant Language Toggle**: Seamless switching between **English** and **தமிழ் (Tamil)** with real-time UI text translation.
+- **UHID Auto-Lookup**: Patient verification via `/api/get-patient` pre-populating patient identity and department.
+- **Dynamic Department Ratings**: Interactive star scales (1★ to 5★) and animated emoji rating cards.
+- **Yes / No Service Checkpoints**: Binary/trinary service checks for hygiene, billing transparency, and doctor treatment.
+- **Auto-Reset Inactivity Timer**: Automatically returns to the welcome screen after 60 seconds of inactivity.
+
+### 2. Administrative Analytics Dashboard
+- **Executive KPIs**: Total responses, overall average rating, recommendation rate, today's submissions count, and response breakdown.
+- **Feedback Responses Log**: Searchable, filterable table with multi-criteria filters (Date range, Department, Visit Type, Rating, Resolution status).
+- **Office Use & Problem Resolution Workflow**: Modal interface for quality officers to log complaint investigations, corrective actions, preventive policies, and incharge accountability.
+- **Dynamic Question Builder**: Add, edit, reorder (drag-and-drop via `@dnd-kit`), and manage bilingual labels for survey questions.
+- **Structured 3-Section Excel / CSV Export**: Exports clean reports with UTF-8 BOM encoding for Excel compatibility:
+  - *Section 1*: Department Rating Questions Summary (5★ distribution).
+  - *Section 2*: Department Yes/No Questions Breakdown.
+  - *Section 3*: Individual Patient Responses & Office Resolution Log.
+- **100% Full-Width A4 Print Engine**: Clean print layout without sidebar interference and 2-column card grid fitting standard A4 paper.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend UI** | React 18, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Sonner (Toasts) |
+| **Interactivity** | `@dnd-kit/core`, `@dnd-kit/sortable` (Drag and Drop) |
+| **Cloud Backend** | Vercel Serverless Functions (`api/*.js`), Node.js |
+| **Database** | PostgreSQL (Supabase / Neon cloud database with SSL connection pooling) |
+| **Local Backend** | PHP 8.x, Apache (XAMPP compatibility proxies in `backend/`) |
+| **Build & Sync** | Vite build runner + `sync-dist.js` (Multi-target asset synchronization) |
+
+---
+
+## 📂 Project Directory Structure
+
+```plaintext
+HMS_V6.6/
+├── api/                           # Vercel Serverless API Functions (Node.js)
+│   ├── db.js                      # Centralized PostgreSQL Connection Pool
+│   ├── get-hospitals.js           # Hospital Profile & Branding Endpoint
+│   ├── get-patient.js             # Patient Verification & UHID Lookup
+│   ├── get-questions.js           # Dynamic Question Registry API
+│   ├── get-responses.js           # Submissions & Complaint Review Fetch API
+│   ├── login-ajax.js              # Admin Authentication API
+│   ├── save-office-use.js         # Office Complaint Resolution & Actions API
+│   ├── save-questions.js          # Dynamic Question CRUD API
+│   └── submit-feedback.js         # Patient Feedback Submission Ingestion API
+├── archive/                       # Archived Test & Diagnostic Scripts
+│   └── test_scripts/              # Historical test and diagnostic PHP/JS scripts
+├── backend/                       # Local PHP/XAMPP Integration
+│   ├── admin/                     # Dashboard & Login PHP Proxies
+│   └── config/                    # Local Database Config
+├── frontend/                      # Compiled Production Assets (Synced from Vite)
+├── frontend_source/               # React + TypeScript Source Code
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── components/
+│   │   │   │   ├── admin/         # Modular Admin Subcomponents
+│   │   │   │   │   ├── AdminSidebar.tsx
+│   │   │   │   │   ├── AdminHeader.tsx
+│   │   │   │   │   └── OfficeUseModal.tsx
+│   │   │   │   ├── common/        # Shared Reusable UI Controls
+│   │   │   │   │   ├── StarRating.tsx
+│   │   │   │   │   ├── EmojiRating.tsx
+│   │   │   │   │   ├── ToggleSwitch.tsx
+│   │   │   │   │   ├── ThreeStateToggle.tsx
+│   │   │   │   │   └── SelectableCard.tsx
+│   │   │   │   ├── AdminDashboard.tsx   # Admin Coordinator Component
+│   │   │   │   ├── HospitalSelection.tsx# Hospital Picker Component
+│   │   │   │   └── WelcomePage.tsx      # Welcome Screen Component
+│   │   │   ├── App.tsx            # Patient Feedback Wizard Coordinator
+│   │   │   └── real_db_data.ts    # Seed & Fallback Mock Data
+│   │   ├── services/              # API Client & Export Logic
+│   │   │   ├── api.service.ts     # Centralized HTTP Client
+│   │   │   ├── export.service.ts  # Structured CSV/Excel Export Engine
+│   │   │   └── index.ts
+│   │   ├── types/                 # Shared TypeScript Type Definitions
+│   │   │   ├── admin.types.ts
+│   │   │   ├── feedback.types.ts
+│   │   │   ├── office-use.types.ts
+│   │   │   └── index.ts
+│   │   └── styles/                # CSS & Print Style Rules
+├── public/                        # Static Assets & Public Index
+├── database_schema.sql            # Complete PostgreSQL Database Schema Dump
+├── database_dump_with_data.sql    # Complete Database Dump (Schema + Live Data Records)
+├── TOI_DOCUMENT.md                # Official Transfer of Information (TOI) Handover Manual
+├── sync-dist.js                   # Build-time multi-target asset sync script
+├── vercel.json                    # Vercel Routing & Serverless Configuration
+└── README.md                      # Project Documentation (This File)
 ```
 
-## Installation & Setup Instructions
+---
 
-### 1. Project Placement
-Place the `HMS_V2.2` project folder inside your web server's document root:
-- Windows XAMPP: `C:\xampp\htdocs\New\HMS_V2.2`
-- Mac/Linux: `/opt/lampp/htdocs/HMS_V2.2`
+## 🗄️ Database Backups & Schema Files
 
-### 2. Database Setup
-Create a new MySQL database named `hospital_feedback_system`.
-Import the schema located at `backend/database/schema.sql` (e.g., via phpMyAdmin or command line).
+This repository contains ready-to-use database backup files:
 
-### 3. Backend Configuration
-No `.env` file is used. The application configuration is handled via PHP constants. Update the settings inside `backend/config/database.php` to match your local MySQL server:
-- `DB_HOST` (e.g., `'localhost'`)
-- `DB_NAME` (e.g., `'hospital_feedback_system'`)
-- `DB_USER` (e.g., `'root'`)
-- `DB_PASS` (e.g., `''`)
+1. **[`database_schema.sql`](./database_schema.sql)**:
+   - Contains all 18 table structures (`CREATE TABLE`), primary keys, default values, and foreign constraints.
+2. **[`database_dump_with_data.sql`](./database_dump_with_data.sql)**:
+   - Full backup containing both table schemas and all 2,300+ live data records (feedback submissions, complaint reviews, department ratings, and questions).
 
-### 4. Frontend Setup
-Navigate into the `frontend_source/` directory via terminal, install the packages, and build the UI:
+---
+
+## 🚀 Quick Start & Installation Guide
+
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or pnpm
+- (Optional for local PHP) XAMPP / Apache
+
+### 1. Clone the Repository
 ```bash
-cd frontend_source
-pnpm install
-pnpm run build
+git clone https://github.com/Avaneesh-ravi/HMS_2.4.git
+cd HMS_2.4
 ```
-*Note: Building inside `frontend_source` outputs the compiled assets directly into the public `frontend/` directory.*
 
-## Usage Instructions
-- **Start the Application:** Run your Apache server and MySQL database.
-- **Patient Gateway:** Go to `http://localhost/New/HMS_V2.2/` in your browser.
-- **Admin Dashboard:** Access the backend administration area at `http://localhost/New/HMS_V2.2/backend/admin/login.php`.
+### 2. Frontend Source Setup & Development
+```bash
+# Navigate to the frontend source
+cd frontend_source
 
-## Available Scripts
-The following npm scripts can be found in `frontend_source/package.json`:
-- `pnpm run dev` — Starts the Vite development server for building the UI in isolation.
-- `pnpm run build` — Compiles the React/Tailwind frontend into production assets.
+# Install dependencies
+npm install
 
-## Known Limitations & Notes
-- The database connection object relies heavily on a single PDO function definition inside `backend/config/database.php`. Modifying this impacts the whole app.
-- Ensure that the PHP script executing user transactions has standard write/read privileges mapped to `/backend/process/` and `/backend/ajax/`.
-- The UI integrates standard PHP routing mixed with built React CSS/JS fragments — if elements do not update structurally when changing `frontend_source/src/`, make sure caching is disabled and rerun `pnpm run build`.
+# Start Vite hot-reload development server
+npm run dev
+
+# Build production bundles (automatically syncs to dist, frontend/, api/frontend/, and public/)
+npm run build
+```
+
+### 3. Local XAMPP Intranet Setup
+1. Copy the project into your Apache document root: `c:\xampp\htdocs\HMS_V6.6`.
+2. Start **Apache** in XAMPP Control Panel.
+3. Access Feedback Form: `http://localhost/HMS_V6.6/frontend/feedback-form.php?hospital_id=apollo-hospital`.
+4. Access Admin Portal: `http://localhost/HMS_V6.6/backend/admin/login.php`.
+
+### 4. Cloud Deployment (Vercel)
+- Push changes to the `main` branch.
+- Vercel automatically builds the project and deploys the Serverless API functions in `/api`.
+- Live URL: **[https://hms-2-4.vercel.app](https://hms-2-4.vercel.app)**
+
+---
+
+## 📡 RESTful API Endpoints Reference
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/get-hospitals` | `GET` | Fetches hospital profile, branding, and config |
+| `/api/get-patient` | `GET` | Validates UHID and returns patient registration data |
+| `/api/get-questions` | `GET` | Returns list of active and past dynamic feedback questions |
+| `/api/get-responses` | `GET` | Returns feedback submissions merged with complaint review actions |
+| `/api/submit-feedback`| `POST` | Ingests new patient feedback submissions |
+| `/api/save-office-use`| `POST` | Upserts complaint reviews, corrective, and preventive actions |
+| `/api/save-questions` | `POST` | Saves custom questions, bilingual labels, and ordering |
+| `/api/login-ajax` | `POST` | Validates admin credentials and issues session token |
+
+---
+
+## 📖 Knowledge Transfer & Handover Documentation
+
+For complete technical handover, architecture diagrams, data flow lifecycles, and maintenance instructions, please refer to:
+📄 **[`TOI_DOCUMENT.md`](./TOI_DOCUMENT.md)**
