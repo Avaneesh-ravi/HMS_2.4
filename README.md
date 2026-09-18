@@ -240,6 +240,12 @@ ightarrow$ **Project**.
 
 ---
 
+## 🧪 QA Test Reports & Defect Resolution Document
+For a complete matrix of all historical QA defect tickets, repro steps, root cause analyses, and implemented technical fixes, refer to:
+📄 **[`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md)**
+
+---
+
 ## 📖 Handover & Knowledge Transfer (TOI)
 For architecture details, ER diagrams, data flow diagrams, and deep maintenance guides, refer to:
 📄 **[`TOI_DOCUMENT.md`](./TOI_DOCUMENT.md)**

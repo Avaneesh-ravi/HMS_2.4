@@ -278,6 +278,7 @@ Dynamic question registry for ratings and binary checks.
 - [x] **Print Output Verification**: Verified 100% full-width layout without sidebar interference.
 - [x] **CSV/Excel Export Verification**: Verified 3-section layout with UTF-8 BOM encoding.
 - [x] **Complaint Investigation Logging**: Tested "Resolve Problem" and "Edit Office Review" workflows.
+- [x] **QA Defect Log Verification**: All 27 historical test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
 
 ---
 
