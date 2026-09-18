@@ -26,6 +26,7 @@ The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** i
 | **Cloud Database** | PostgreSQL (Neon / @vercel/postgres) | Relational storage for feedback, complaints, questions |
 | **Local Backend** | PHP 8.x (`backend/admin/*.php`) | On-premise XAMPP integration proxy |
 | **Build & Asset Sync** | Node.js `sync-dist.js` | Synchronizes compiled Vite bundles across distributions |
+| **Development Platform** | **Google Antigravity IDE** | Engineered and refactored with Google DeepMind's agentic AI IDE |
 
 ---
 
@@ -277,3 +278,9 @@ Dynamic question registry for ratings and binary checks.
 - [x] **Print Output Verification**: Verified 100% full-width layout without sidebar interference.
 - [x] **CSV/Excel Export Verification**: Verified 3-section layout with UTF-8 BOM encoding.
 - [x] **Complaint Investigation Logging**: Tested "Resolve Problem" and "Edit Office Review" workflows.
+
+---
+
+## 10. Development & Engineering Credit
+
+This project architecture, modular refactoring, bilingual dynamic question engine, reporting system, and documentation were developed and optimized with the assistance of **Google Antigravity IDE** (Google DeepMind Advanced Agentic AI Coding Environment).

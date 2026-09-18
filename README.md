@@ -6,6 +6,16 @@
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-CSS%20v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ecf8e?logo=supabase)](https://supabase.com/)
+[![Built with Google Antigravity IDE](https://img.shields.io/badge/Built%20with-Google%20Antigravity%20IDE-8a2be2?logo=google)](https://deepmind.google)
+
+---
+
+
+---
+
+## 🚀 Built with Google Antigravity IDE
+
+This application was engineered, architected, and refactored with the assistance of **Google Antigravity IDE** — Google DeepMind's advanced agentic AI pair programming environment.
 
 ---
 
@@ -132,7 +142,8 @@ Follow this step-by-step guide to set up, run, and deploy this project from scra
    - Click **Run** (or press `Ctrl + Enter`).
    - You will see `Success: No rows returned` — all 18 tables and 2,300+ sample records are now imported!
 4. **Get Database Connection Details**:
-   - In Supabase, go to **Project Settings (gear icon)** $ightarrow$ **Database**.
+   - In Supabase, go to **Project Settings (gear icon)** $
+ightarrow$ **Database**.
    - Under **Connection parameters**, note down:
      - **Host**: (e.g., `aws-0-ap-northeast-1.pooler.supabase.com`)
      - **Port**: `5432` (or `6543`)
@@ -187,7 +198,8 @@ Follow this step-by-step guide to set up, run, and deploy this project from scra
 1. **Sign Up on Vercel**:
    - Go to [vercel.com](https://vercel.com/) and sign in with your GitHub account.
 2. **Import Repository**:
-   - Click **Add New...** $ightarrow$ **Project**.
+   - Click **Add New...** $
+ightarrow$ **Project**.
    - Select your cloned repository `HMS_2.4`.
 3. **Configure Environment Variables in Vercel**:
    - Before clicking Deploy, expand the **Environment Variables** section.
