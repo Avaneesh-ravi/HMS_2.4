@@ -29,6 +29,19 @@ It supports dual deployment modes:
 
 ---
 
+
+---
+
+## 📋 Standard Hospital Feedback Form Specification
+
+The application digitizes the official 5-page hospital patient feedback & quality audit form:
+1. **Patient Record**: UHID, Name, Age, Gender, Mobile, Email, Address, OP/IP numbers, Admission & Discharge dates.
+2. **Referral Source**: "What made you choose us?" (Self opinion, Ads, Friends/Family, Corporate, Referral Doctor).
+3. **13 Department Rating Questions**: Reception, Admission, Billing, Doctor treatment, Nursing, Pharmacy, X-ray/Scan, Lab, Insurance, Food, Physiotherapy, Blood Bank, and Overall Service.
+4. **Service & Hygiene Checkpoints**: Environmental Cleanliness, Treatment Cost Disclosure at Admission, and Recommendation Intent.
+5. **Suggestions & Appreciation**: Patient remarks, Staff appreciation (Name & Department).
+6. **For Office Use Only**: Complaint review, review date, corrective action, preventive action, and incharge sign-off.
+
 ## ✨ Key Features
 
 - **Bilingual Patient Feedback Wizard**: Real-time switching between **English** and **தமிழ் (Tamil)**.

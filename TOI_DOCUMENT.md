@@ -109,7 +109,93 @@ graph TD
 
 ---
 
-## 5. Administrative Dashboard & Operational Workflows
+
+---
+
+## 5. Original Hospital Feedback Form Specification & Digital Mapping
+
+The web platform is an exact digital transformation of the hospital's standardized 5-page physical feedback and quality audit questionnaire, complete with bilingual English and Tamil localization:
+
+### **Page 1: Patient Record (நோயாளி தகவல்)**
+- **Header**: Hospital Logo, Hospital Name, Address, Contact Number & Email.
+- **Patient Identifiers**:
+  - `UHID` (பதிவு எண்)
+  - `Patient Name` (பெயர்)
+  - `Age` (வயது)
+  - `Gender` (பாலினம்: Male / Female / Other)
+  - `Mobile No` (கைபேசி எண்)
+  - `Email` (மின்னஞ்சல் முகவரி)
+  - `Address & City` (முகவரி & நகரம்)
+- **Visit & Admission Records**:
+  - `OP No & Date` (புறநோயாளி எண் & தேதி)
+  - `IP No & Date` (உள்நோயாளி எண் & தேதி)
+  - `Date of Admission` (அனுமதிக்கப்பட்ட தேதி)
+  - `Date of Discharge` (மருத்துவமனையை விட்டு சென்ற தேதி)
+
+---
+
+### **Page 2: Why Choose Us (நீங்கள் மருத்துவமனையை தேர்ந்தெடுத்தற்கான காரணம் என்ன?)**
+- `Self Opinion` (உங்கள் உள்ளுணர்வு)
+- `Advertisement / News` (விளம்பரம் / செய்தி)
+- `Friends / Relatives` (நண்பர்கள் / உறவினர்கள்)
+- `Corporate` (நிறுவனம்)
+- `Employee` (பணியாட்கள்)
+- `Referral Doctor` (பரிந்துரைக்கப்பட்ட மருத்துவர்)
+- `Others` (மற்றவை)
+
+---
+
+### **Pages 2 & 3: Department Service Ratings (சேவை கருத்துக்கள்)**
+Rated on a 4/5 scale: **Excellent (மிக நன்று)** | **Good (நன்று)** | **Average (சுமார்)** | **Poor (மோசம்)**
+
+1. **Responsiveness at Reception** (வரவேற்பறையில் கவனிப்பு)
+2. **Admission Process** (உள்சேர்க்கை முறை)
+3. **Billing Services** (பில்லிங் சேவைகள்)
+4. **Doctor's Treatment** (மருத்துவரின் கவனிப்பு)
+5. **Nursing Care** (செவிலியர் சேவை)
+6. **Pharmacy Services** (மருந்தக சேவைகள்)
+7. **X-ray and Scan** (எக்ஸ்-ரே மற்றும் ஸ்கேன்)
+8. **Laboratory Services** (ஆய்வக சேவைகள்)
+9. **Insurance Services** (காப்பீட்டு சேவைகள்)
+10. **Food Services** (உணவு சேவைகள்)
+11. **Physiotherapy** (பிசியோதெரபி)
+12. **Blood Bank Services** (இரத்த வங்கி சேவைகள்)
+13. **Overall Service** (ஒட்டுமொத்த சேவைகளின் மதிப்பு)
+
+---
+
+### **Page 3: Service & Hygiene Inquiries (கேள்விகள்)**
+14. **Cleanliness of Hospital Environment (Toilets / Other areas)**:
+    - *Tamil*: மருத்துவமனையின் சுற்றுப்புற தூய்மை (கழிப்பறைகள் / மற்ற இடங்கள்)
+    - *Options*: `Yes / ஆம்` | `No / இல்லை` (with specify location text area).
+15. **Estimated Cost Explained at Admission Counter?**:
+    - *Tamil*: நீங்கள் உள்நோயாளியாக சேரும்போது மதிப்பிட்டு சிகிச்சை கட்டணம் எவ்வளவு ஆகும் என்று கூறப்பட்டதா?
+    - *Options*: `Yes / ஆம்` | `No / இல்லை`.
+16. **Would you refer Hospital to your family / friends?**:
+    - *Tamil*: மருத்துவமனையின் சேவையை உங்கள் குடும்பத்திற்கும், நண்பர்களுக்கும் பரிந்துரைப்பீர்களா?
+    - *Options*: `Yes / ஆம்` | `No / இல்லை`.
+
+---
+
+### **Page 4: Suggestions & Staff Appreciation (மேம்பாடுகள் & பாராட்டுக்கள்)**
+17. **Improvement Suggestions**:
+    - *Prompt*: "Please specify if you have any suggestions for further improving our service" (எங்களின் சேவையை சிறந்த முறையில் முன்னேற்றுவதற்கு உங்களின் கனிவான கருத்துக்களை பகிர்ந்து கொள்ளவும்).
+18. **Staff Appreciation**:
+    - *Prompt*: "Would you like to appreciate an individual or any particular service?" (நீங்கள் தனிப்பட்ட நபரையோ அல்லது குறிப்பிட்ட சேவையையோ பாராட்ட விரும்பினால் துறையை குறிப்பிடவும்).
+    - Fields: `Staff Name` (பெயர்) & `Department` (துறை).
+- **Patient Signature Confirmation** (நோயாளியின் கையொப்பம்).
+
+---
+
+### **Page 5: For Office Use Only (அலுவலக பயன்பாட்டிற்கு மட்டும்)**
+Dedicated quality assurance audit and resolution section for hospital administration:
+- **Review of the Complaint** (புகார் மீதான ஆய்வு): Clinical or service investigation notes.
+- **Date of Review** (ஆய்வு செய்யப்பட்ட தேதி): Official administrative audit timestamp.
+- **Corrective Action** (சரிசெய்யும் நடவடிக்கை): Immediate resolution taken for the patient.
+- **Preventive Action** (தடுப்பு நடவடிக்கை): Systemic/protocol changes to prevent recurrence.
+- **Incharge Name** (பொறுப்பாளர் பெயர்): Designated officer / Medical Superintendent.
+
+## 6. Administrative Dashboard & Operational Workflows
 
 The Admin Dashboard provides 7 core modules:
 
@@ -148,7 +234,7 @@ graph LR
 
 ---
 
-## 6. Database Schema Reference (PostgreSQL)
+## 7. Database Schema Reference (PostgreSQL)
 
 ### 1. `hospitals`
 Stores registered hospital profiles and branding.
@@ -200,7 +286,7 @@ Dynamic question registry for ratings and binary checks.
 
 ---
 
-## 7. API Endpoints Reference
+## 8. API Endpoints Reference
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -215,7 +301,7 @@ Dynamic question registry for ratings and binary checks.
 
 ---
 
-## 8. Complete Step-by-Step Setup Guide (Beginner Friendly)
+## 9. Complete Step-by-Step Setup Guide (Beginner Friendly)
 
 ### A. Prerequisites Installation
 1. Install **Node.js LTS (v18+)** from [nodejs.org](https://nodejs.org/).
@@ -271,7 +357,7 @@ Dynamic question registry for ratings and binary checks.
 
 ---
 
-## 9. Maintenance & Handover Checklist
+## 10. Maintenance & Handover Checklist
 
 - [x] **Zero Code Duplication**: Types extracted to `src/types/`, services extracted to `src/services/`.
 - [x] **Root Cleanliness**: Scratch and test PHP files archived into `archive/test_scripts/`.
@@ -282,6 +368,6 @@ Dynamic question registry for ratings and binary checks.
 
 ---
 
-## 10. Development & Engineering Credit
+## 11. Development & Engineering Credit
 
 This project architecture, modular refactoring, bilingual dynamic question engine, reporting system, and documentation were developed and optimized with the assistance of **Google Antigravity IDE** (Google DeepMind Advanced Agentic AI Coding Environment).
