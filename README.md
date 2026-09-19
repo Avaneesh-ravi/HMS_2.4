@@ -63,7 +63,7 @@ The application digitizes the official 5-page hospital patient feedback & qualit
 | **Interactivity** | `@dnd-kit/core`, `@dnd-kit/sortable` (Drag and Drop) |
 | **Cloud Backend** | Vercel Serverless Functions (`api/*.js`), Node.js |
 | **Cloud Database** | PostgreSQL (Hosted on Supabase with SSL pooling) |
-| **Local Backend** | PHP 8.x, Apache (XAMPP compatibility proxies in `backend/`) |
+| **Local Backend** | PHP 7.4 / 8.x (PHP 7.4+ Compatible), Apache (XAMPP compatibility proxies in `backend/`) |
 | **Build & Asset Sync** | Vite + `sync-dist.js` (Multi-target asset synchronization) |
 
 ---

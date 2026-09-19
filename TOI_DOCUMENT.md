@@ -24,7 +24,7 @@ The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** i
 | **Notifications** | `sonner` (Toast) | Non-blocking user feedback alerts |
 | **Cloud Backend** | Vercel Serverless Node.js Functions (`api/*.js`) | RESTful serverless microservices |
 | **Cloud Database** | PostgreSQL (Neon / @vercel/postgres) | Relational storage for feedback, complaints, questions |
-| **Local Backend** | PHP 8.x (`backend/admin/*.php`) | On-premise XAMPP integration proxy |
+| **Local Backend** | PHP 7.4 / 8.x (`backend/admin/*.php` - PHP 7.4+ Compatible) | On-premise XAMPP integration proxy |
 | **Build & Asset Sync** | Node.js `sync-dist.js` | Synchronizes compiled Vite bundles across distributions |
 | **Development Platform** | **Google Antigravity IDE** | Engineered and refactored with Google DeepMind's agentic AI IDE |
 

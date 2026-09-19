@@ -31,7 +31,7 @@ Here is the complete project context, original specifications, historical QA def
   * Frontend: React 18, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Sonner Toasts, @dnd-kit (drag & drop)
   * Cloud Backend: Node.js Vercel Serverless Functions (/api/*.js)
   * Cloud Database: PostgreSQL (Supabase / Neon with SSL pooling)
-  * Local Backend: PHP 8.x, Apache XAMPP on-premise intranet support
+  * Local Backend: PHP 7.4 / 8.x (PHP 7.4+ Compatible), Apache XAMPP on-premise intranet support
   * Asset Sync: sync-dist.js automated multi-target distribution synchronizer
 
 ==============================================================================
