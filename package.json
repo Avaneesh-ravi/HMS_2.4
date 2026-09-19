@@ -9,5 +9,9 @@
   },
   "dependencies": {
     "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1",
+    "puppeteer-core": "^25.11.0"
   }
 }
