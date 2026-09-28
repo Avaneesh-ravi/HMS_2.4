@@ -3,6 +3,7 @@
 @import './theme.css';
 
 @media print {
+  /* Hide all non-printable chrome and navigation */
   aside,
   header,
   nav,
@@ -13,20 +14,95 @@
   [class*="from-teal-700"] {
     display: none !important;
     width: 0 !important;
-    max-width: 0 !important;
     height: 0 !important;
-    position: absolute !important;
-    left: -99999px !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* When printing Feedback Detail Modal, completely suppress the background dashboard table */
+  body.is-printing-modal .print-main-content,
+  body.is-printing-modal main,
+  body.is-printing-modal > #root > div > div.flex-1 {
+    display: none !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.is-printing-modal .modal-print-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  body.is-printing-modal #printable-feedback-modal {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+    background: #ffffff !important;
+  }
+
+  body.is-printing-modal #printable-feedback-modal .p-6 {
+    padding: 10px 14px !important;
+  }
+
+  body.is-printing-modal #printable-feedback-modal .space-y-6 > * + * {
+    margin-top: 10px !important;
+  }
+
+  body.is-printing-modal #printable-feedback-modal .p-4,
+  body.is-printing-modal #printable-feedback-modal .p-3 {
+    padding: 6px 10px !important;
+  }
+
+  body.is-printing-modal #printable-feedback-modal h4 {
+    margin-bottom: 4px !important;
+    font-size: 13px !important;
+  }
+
+  body.is-printing-modal #printable-feedback-modal textarea {
+    rows: 2 !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
   }
 
   #root,
-  .print-layout-root,
-  .print-main-content,
-  .print-scroll-container,
-  .print-inner-padding,
-  main {
+  .print-layout-root {
+    display: block !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    position: static !important;
+    flex: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:not(.is-printing-modal) .print-main-content,
+  body:not(.is-printing-modal) .print-scroll-container,
+  body:not(.is-printing-modal) .print-inner-padding,
+  body:not(.is-printing-modal) main {
     display: block !important;
     width: 100% !important;
     min-width: 100% !important;
@@ -48,5 +124,15 @@
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 12px !important;
+  }
+
+  .grid, .rounded-xl, .rounded-lg, [class*="rounded"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 8mm;
   }
 }

@@ -932,11 +932,13 @@ export function AdminDashboard({
 
     const originalTitle = document.title;
     document.title = printDocTitle;
+    document.body.classList.add('is-printing-modal');
 
     window.print();
 
     setTimeout(() => {
       document.title = originalTitle;
+      document.body.classList.remove('is-printing-modal');
     }, 1000);
   };
 
