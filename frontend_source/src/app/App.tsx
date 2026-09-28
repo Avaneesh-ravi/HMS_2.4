@@ -507,9 +507,21 @@ export default function App() {
   };
 
   const handleVerifyMobile = () => {
+    const rawMobileDigits = (patientInfo.mobile || '').replace(/\D/g, '');
+    const cleanMobile = rawMobileDigits.startsWith('91') && rawMobileDigits.length > 10 ? rawMobileDigits.slice(2) : rawMobileDigits;
+    if (cleanMobile.length !== 10) {
+      setFormErrors(prev => ({
+        ...prev,
+        mobile: language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்'
+      }));
+      toast.error(language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்');
+      setPatientInfo(prev => ({ ...prev, mobileOtpSent: false, mobileVerified: false, mobileOtp: '' }));
+      return;
+    }
+
     const cleanOtp = (patientInfo.mobileOtp || '').trim();
     if (cleanOtp.length === 6) {
-      setPatientInfo({ ...patientInfo, mobileVerified: true });
+      setPatientInfo(prev => ({ ...prev, mobileVerified: true }));
       toast.success(language === 'en' ? 'Mobile verified!' : 'தொலைபேசி சரிபார்க்கப்பட்டது!');
     } else {
       toast.error(language === 'en' ? 'Please enter a 6-digit OTP' : 'தயவுசெய்து 6 இலக்க OTP ஐ உள்ளிடவும்');
@@ -521,20 +533,32 @@ export default function App() {
     if (!cleanEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail)) {
       setFormErrors(prev => ({
         ...prev,
-        email: language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்'
+        email: language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும் (எ.கா: user@example.com)'
       }));
       toast.error(language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்');
       return;
     }
     // Mock send OTP
-    setPatientInfo({ ...patientInfo, emailOtpSent: true, emailOtp: '111111' });
+    setPatientInfo(prev => ({ ...prev, emailOtpSent: true, emailOtp: '111111' }));
     toast.success(language === 'en' ? 'OTP sent to email!' : 'OTP அனுப்பப்பட்டது!');
   };
 
   const handleVerifyEmail = () => {
+    const cleanEmail = (patientInfo.email || '').trim();
+    const isValidEmail = Boolean(cleanEmail && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail));
+    if (!isValidEmail) {
+      setFormErrors(prev => ({
+        ...prev,
+        email: language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும் (எ.கா: user@example.com)'
+      }));
+      toast.error(language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்');
+      setPatientInfo(prev => ({ ...prev, emailOtpSent: false, emailVerified: false, emailOtp: '' }));
+      return;
+    }
+
     const cleanOtp = (patientInfo.emailOtp || '').trim();
     if (cleanOtp.length === 6) {
-      setPatientInfo({ ...patientInfo, emailVerified: true });
+      setPatientInfo(prev => ({ ...prev, emailVerified: true }));
       toast.success(language === 'en' ? 'Email verified!' : 'மின்னஞ்சல் சரிபார்க்கப்பட்டது!');
     } else {
       toast.error(language === 'en' ? 'Please enter a 6-digit OTP' : 'தயவுசெய்து 6 இலக்க OTP ஐ உள்ளிடவும்');
@@ -1921,7 +1945,6 @@ export default function App() {
               {/* Contact Verification */}
               <div className="space-y-6">
                 {/* Mobile Number Row */}
-                {/* Mobile Number Row */}
                 {(() => {
                   const rawMobileDigits = (patientInfo.mobile || '').replace(/\D/g, '');
                   const cleanMobile = rawMobileDigits.startsWith('91') && rawMobileDigits.length > 10 ? rawMobileDigits.slice(2) : rawMobileDigits;
@@ -1949,11 +1972,18 @@ export default function App() {
                                 mobileVerified: false,
                                 mobileOtp: ''
                               }));
-                              setFormErrors(prev => {
-                                const n = { ...prev };
-                                delete n.mobile;
-                                return n;
-                              });
+                              if (digits.length > 0 && digits.length < 10) {
+                                setFormErrors(prev => ({
+                                  ...prev,
+                                  mobile: language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்'
+                                }));
+                              } else {
+                                setFormErrors(prev => {
+                                  const n = { ...prev };
+                                  delete n.mobile;
+                                  return n;
+                                });
+                              }
                             }}
                             onBlur={() => {
                               const digits = (patientInfo.mobile || '').replace(/\D/g, '');
@@ -2005,7 +2035,7 @@ export default function App() {
                                 type="text"
                                 maxLength={6}
                                 value={patientInfo.mobileOtp}
-                                onChange={(e) => setPatientInfo(prev => ({ ...prev, mobileOtp: e.target.value.replace(/\D/g, '') }))}
+                                onChange={(e) => setPatientInfo(prev => ({ ...prev, mobileOtp: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
                                 className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
                                 placeholder="••••••"
                               />
@@ -2013,7 +2043,12 @@ export default function App() {
                             <button
                               type="button"
                               onClick={handleVerifyMobile}
-                              className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all h-[50px] cursor-pointer"
+                              disabled={!isMobile10Digits || (patientInfo.mobileOtp || '').trim().length !== 6}
+                              className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
+                                isMobile10Digits && (patientInfo.mobileOtp || '').trim().length === 6
+                                  ? 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer shadow-md'
+                                  : 'bg-gray-300 text-gray-400 cursor-not-allowed'
+                              }`}
                             >
                               {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
                             </button>
@@ -2025,85 +2060,107 @@ export default function App() {
                 })()}
 
                 {/* Email Row */}
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="flex flex-col md:flex-row md:items-end gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Mail className="inline w-4 h-4 mr-1" />
-                        {language === 'en' ? 'Email Address' : 'மின்னஞ்சல் முகவரி'}
-                      </label>
-                      <input
-                        type="email"
-                        value={patientInfo.email}
-                        onChange={(e) => {
-                          const val = e.target.value.trim();
-                          setPatientInfo({ ...patientInfo, email: val, emailVerified: false, emailOtpSent: false });
-                          if (val && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
-                            setFormErrors(prev => ({
-                              ...prev,
-                              email: language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சலை உள்ளிடவும்'
-                            }));
-                          } else {
-                            setFormErrors(prev => {
-                              const n = { ...prev };
-                              delete n.email;
-                              return n;
-                            });
-                          }
-                        }}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                        placeholder="email@example.com"
-                        disabled={patientInfo.emailVerified}
-                      />
-                      {formErrors.email && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.email}</p>}
-                    </div>
-                    <button
-                      onClick={handleSendEmailOtp}
-                      disabled={patientInfo.emailVerified || patientInfo.emailOtpSent || !patientInfo.email || Boolean(formErrors.email)}
-                      className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
-                        patientInfo.emailVerified
-                          ? 'bg-green-100 text-green-700 cursor-default'
-                          : 'bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-300'
-                      }`}
-                    >
-                      {patientInfo.emailVerified ? (
-                        <div className="flex items-center gap-2">
-                          <Check className="w-5 h-5" />
-                          <span>{language === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}</span>
-                        </div>
-                      ) : (
-                        language === 'en' ? 'Verify' : 'சரிபார்'
-                      )}
-                    </button>
-                  </div>
+                {(() => {
+                  const cleanEmail = (patientInfo.email || '').trim();
+                  const isValidEmail = Boolean(cleanEmail && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail));
 
-                  {/* OTP Reveal for Email */}
-                  {patientInfo.emailOtpSent && !patientInfo.emailVerified && (
-                    <div className="mt-4 p-4 bg-teal-50 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                  return (
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                       <div className="flex flex-col md:flex-row md:items-end gap-4">
                         <div className="flex-1">
-                          <label className="block text-sm font-medium text-teal-800 mb-2">
-                            {language === 'en' ? 'Enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்'}
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <Mail className="inline w-4 h-4 mr-1" />
+                            {language === 'en' ? 'Email Address' : 'மின்னஞ்சல் முகவரி'}
                           </label>
                           <input
-                            type="text"
-                            maxLength={6}
-                            value={patientInfo.emailOtp}
-                            onChange={(e) => setPatientInfo({ ...patientInfo, emailOtp: e.target.value.replace(/\D/g, '') })}
-                            className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
-                            placeholder="••••••"
+                            type="email"
+                            value={patientInfo.email}
+                            onChange={(e) => {
+                              const val = e.target.value.trim();
+                              setPatientInfo(prev => ({
+                                ...prev,
+                                email: val,
+                                emailVerified: false,
+                                emailOtpSent: false,
+                                emailOtp: ''
+                              }));
+                              if (val && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+                                setFormErrors(prev => ({
+                                  ...prev,
+                                  email: language === 'en' ? 'Please enter a valid email address (e.g: user@example.com)' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும் (எ.கா: user@example.com)'
+                                }));
+                              } else {
+                                setFormErrors(prev => {
+                                  const n = { ...prev };
+                                  delete n.email;
+                                  return n;
+                                });
+                              }
+                            }}
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                            placeholder="email@example.com"
+                            disabled={patientInfo.emailVerified}
                           />
+                          {formErrors.email && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.email}</p>}
                         </div>
                         <button
-                          onClick={handleVerifyEmail}
-                          className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all h-[50px] cursor-pointer"
+                          type="button"
+                          onClick={handleSendEmailOtp}
+                          disabled={patientInfo.emailVerified || patientInfo.emailOtpSent || !isValidEmail}
+                          className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
+                            patientInfo.emailVerified
+                              ? 'bg-green-100 text-green-700 cursor-default'
+                              : isValidEmail && !patientInfo.emailOtpSent
+                                ? 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer shadow-md'
+                                : 'bg-gray-300 text-gray-400 cursor-not-allowed'
+                          }`}
                         >
-                          {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
+                          {patientInfo.emailVerified ? (
+                            <div className="flex items-center gap-2">
+                              <Check className="w-5 h-5" />
+                              <span>{language === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}</span>
+                            </div>
+                          ) : (
+                            language === 'en' ? 'Verify' : 'சரிபார்'
+                          )}
                         </button>
                       </div>
+
+                      {/* OTP Reveal for Email */}
+                      {patientInfo.emailOtpSent && !patientInfo.emailVerified && isValidEmail && (
+                        <div className="mt-4 p-4 bg-teal-50 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex flex-col md:flex-row md:items-end gap-4">
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-teal-800 mb-2">
+                                {language === 'en' ? 'Enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்'}
+                              </label>
+                              <input
+                                type="text"
+                                maxLength={6}
+                                value={patientInfo.emailOtp}
+                                onChange={(e) => setPatientInfo(prev => ({ ...prev, emailOtp: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                                className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
+                                placeholder="••••••"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleVerifyEmail}
+                              disabled={!isValidEmail || (patientInfo.emailOtp || '').trim().length !== 6}
+                              className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
+                                isValidEmail && (patientInfo.emailOtp || '').trim().length === 6
+                                  ? 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer shadow-md'
+                                  : 'bg-gray-300 text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
 
               {/* Visit Details Section */}
