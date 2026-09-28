@@ -364,26 +364,14 @@ export default function App() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const selectParam = urlParams.get('select_hospital') || urlParams.get('select');
-    let hospitalId = urlParams.get('hospital_id');
+    const hospitalId = urlParams.get('hospital_id') || urlParams.get('id');
     
-    // Explicit hospital selection page mode
-    if (selectParam === 'true' || selectParam === '1' || hospitalId === 'select' || hospitalId === '0') {
+    // If no hospital_id parameter in URL, default to Hospital Selection page (e.g. https://hms-2-4.vercel.app/)
+    if (!hospitalId || hospitalId === 'select' || hospitalId === '0') {
       localStorage.removeItem('selected_hospital_id');
       setSelectedHospital(null);
       setIsInitializing(false);
       return;
-    }
-
-    if (!hospitalId) {
-      const savedHospitalId = localStorage.getItem('selected_hospital_id');
-      if (savedHospitalId && savedHospitalId !== 'select' && savedHospitalId !== '0') {
-        hospitalId = savedHospitalId;
-      }
-    }
-    
-    if (!hospitalId) {
-      hospitalId = '1';
     }
 
     localStorage.setItem('selected_hospital_id', String(hospitalId));
@@ -394,14 +382,14 @@ export default function App() {
       id: hIdNum,
       name: defaultHName,
       logo: null,
-      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : 'Tamil Nadu',
-      contactNumber: '+91 44 1234 5678'
+      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : (hIdNum === 2 ? '23 Bengaluru Main Road, Bengaluru, Karnataka' : '155 Coimbatore Main Road, Coimbatore, Tamil Nadu'),
+      contactNumber: hIdNum === 1 ? '+91 44 1234 5678' : (hIdNum === 2 ? '04496001338' : '04408386379')
     });
     setBranding({
       logo: '',
       hospitalName: defaultHName,
-      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : 'Tamil Nadu',
-      contactNumber: '+91 44 1234 5678',
+      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : (hIdNum === 2 ? '23 Bengaluru Main Road, Bengaluru, Karnataka' : '155 Coimbatore Main Road, Coimbatore, Tamil Nadu'),
+      contactNumber: hIdNum === 1 ? '+91 44 1234 5678' : (hIdNum === 2 ? '04496001338' : '04408386379'),
       email: ''
     });
 
@@ -1558,18 +1546,7 @@ export default function App() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  localStorage.removeItem('selected_hospital_id');
-                  window.location.href = '?hospital_id=select';
-                }}
-                className="px-3.5 py-2 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors border border-teal-200 flex items-center gap-1.5 cursor-pointer shadow-sm"
-                title={language === 'en' ? 'Change Hospital' : 'மருத்துவமனையை மாற்றவும்'}
-              >
-                <Building2 className="w-4 h-4 text-teal-600" />
-                <span>{language === 'en' ? 'Change Hospital' : 'மருத்துவமனை மாற்று'}</span>
-              </button>
+            <div className="flex items-center gap-4">
               {isAdminLoggedIn ? (
                 <>
                   <button

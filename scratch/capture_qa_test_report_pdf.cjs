@@ -74,7 +74,7 @@ async function generateQATestReportPDF() {
     // 1. REF 30 & REF 10: Age Validation (Prevent Negative Numbers)
     // -------------------------------------------------------------
     console.log('1. Capturing Ref 30 & Ref 10: Age Validation...');
-    await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(`${BASE_URL}/?hospital_id=1`, { waitUntil: 'networkidle2', timeout: 30000 });
     await sleep(2500);
 
     // Enter negative age to trigger validation error
