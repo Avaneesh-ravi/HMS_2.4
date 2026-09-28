@@ -2097,6 +2097,15 @@ export default function App() {
                                 });
                               }
                             }}
+                            onBlur={() => {
+                              const val = (patientInfo.email || '').trim();
+                              if (val && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+                                setFormErrors(prev => ({
+                                  ...prev,
+                                  email: language === 'en' ? 'Please enter a valid email address (e.g: user@example.com)' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும் (எ.கா: user@example.com)'
+                                }));
+                              }
+                            }}
                             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                             placeholder="email@example.com"
                             disabled={patientInfo.emailVerified}

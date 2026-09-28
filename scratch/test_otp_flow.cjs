@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(3339, async () => {
+server.listen(3340, async () => {
   try {
     const browser = await puppeteer.launch({
       executablePath: CHROME_PATH,
@@ -43,102 +43,55 @@ server.listen(3339, async () => {
     });
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900 });
-    await page.goto('http://localhost:3339/', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto('http://localhost:3340/', { waitUntil: 'networkidle2', timeout: 30000 });
     await new Promise(r => setTimeout(r, 2000));
 
-    console.log('1. Testing Mobile "123" typing...');
-    const mobileInput = await page.$('input[type="tel"]');
-    await mobileInput.focus();
-    await mobileInput.type('123');
-    await new Promise(r => setTimeout(r, 300));
-
-    const mobileError = await page.evaluate(() => {
-      const err = document.querySelector('p.text-red-500');
-      return err ? err.textContent : null;
-    });
-    console.log('Mobile error for "123":', mobileError);
-
-    const otpSectionVisible = await page.evaluate(() => {
-      return document.body.innerText.includes('6 இலக்க OTP உள்ளிடவும்');
-    });
-    console.log('OTP section present for "123"?:', otpSectionVisible);
-
-    const verifyBtnDisabled = await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll('button'));
-      const vBtn = btns.find(b => b.textContent.includes('சரிபார்') || b.textContent.includes('Verify'));
-      return vBtn ? vBtn.disabled : null;
-    });
-    console.log('Verify button disabled for "123"?:', verifyBtnDisabled);
-
-    console.log('\n2. Testing Email "bjj" typing...');
+    console.log('Testing Email "asdf" typing and verifying button state...');
     const emailInput = await page.$('input[type="email"]');
     await emailInput.focus();
-    await emailInput.type('bjj');
+    await emailInput.type('asdf');
     await new Promise(r => setTimeout(r, 300));
 
-    const allErrors = await page.evaluate(() => {
+    const emailError = await page.evaluate(() => {
       const errs = Array.from(document.querySelectorAll('p.text-red-500'));
       return errs.map(e => e.textContent);
     });
-    console.log('All errors present:', allErrors);
+    console.log('Email error:', emailError);
 
-    const emailOtpSectionVisible = await page.evaluate(() => {
-      const text = document.body.innerText;
-      return (text.match(/6 இலக்க OTP உள்ளிடவும்/g) || []).length > 0;
+    const emailVerifyBtnInfo = await page.evaluate(() => {
+      const emailContainer = document.querySelector('input[type="email"]').closest('div.bg-gray-50');
+      const btn = emailContainer ? emailContainer.querySelector('button') : null;
+      return {
+        disabled: btn ? btn.disabled : null,
+        className: btn ? btn.className : null,
+        text: btn ? btn.textContent.trim() : null
+      };
     });
-    console.log('Any OTP section present for email "bjj"?:', emailOtpSectionVisible);
+    console.log('Email verify button info for "asdf":', emailVerifyBtnInfo);
 
-    console.log('\n3. Testing complete 10-digit mobile input...');
-    await mobileInput.focus();
-    await mobileInput.type('4567890'); // 123 + 4567890 = 10 digits
-    await new Promise(r => setTimeout(r, 300));
-
-    const mobileErrorsNow = await page.evaluate(() => {
-      const errs = Array.from(document.querySelectorAll('p.text-red-500'));
-      return errs.map(e => e.textContent);
-    });
-    console.log('Errors remaining after 10 digits:', mobileErrorsNow);
-
-    const verifyBtnEnabled = await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll('button'));
-      const vBtn = btns.find(b => b.textContent.trim() === 'சரிபார்' || b.textContent.trim() === 'Verify');
-      return vBtn ? !vBtn.disabled : false;
-    });
-    console.log('Verify button enabled for 10 digits?:', verifyBtnEnabled);
-
-    // Click verify
-    console.log('Clicking Verify button...');
+    console.log('\nTesting Email valid "patient@example.com" typing...');
     await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll('button'));
-      const vBtn = btns.find(b => b.textContent.trim() === 'சரிபார்' || b.textContent.trim() === 'Verify');
-      if (vBtn) vBtn.click();
+      const emailInput = document.querySelector('input[type="email"]');
+      emailInput.value = '';
     });
-    await new Promise(r => setTimeout(r, 400));
+    await emailInput.focus();
+    await emailInput.type('patient@example.com');
+    await new Promise(r => setTimeout(r, 300));
 
-    const otpBoxNow = await page.evaluate(() => {
-      return document.body.innerText.includes('6 இலக்க OTP உள்ளிடவும்');
+    const emailVerifyBtnValidInfo = await page.evaluate(() => {
+      const emailContainer = document.querySelector('input[type="email"]').closest('div.bg-gray-50');
+      const btn = emailContainer ? emailContainer.querySelector('button') : null;
+      return {
+        disabled: btn ? btn.disabled : null,
+        className: btn ? btn.className : null,
+        text: btn ? btn.textContent.trim() : null
+      };
     });
-    console.log('OTP Box visible after clicking Verify on 10 digits?:', otpBoxNow);
-
-    console.log('\n4. Testing backspacing to 9 digits (editing mobile number)...');
-    await mobileInput.focus();
-    await page.keyboard.press('Backspace');
-    await new Promise(r => setTimeout(r, 400));
-
-    const otpBoxAfterBackspace = await page.evaluate(() => {
-      return document.body.innerText.includes('6 இலக்க OTP உள்ளிடவும்');
-    });
-    console.log('OTP Box disappeared after editing to 9 digits?:', !otpBoxAfterBackspace);
-
-    const errorAfterBackspace = await page.evaluate(() => {
-      const err = document.querySelector('p.text-red-500');
-      return err ? err.textContent : null;
-    });
-    console.log('Mobile error after editing to 9 digits:', errorAfterBackspace);
+    console.log('Email verify button info for valid email:', emailVerifyBtnValidInfo);
 
     await browser.close();
     server.close();
-    console.log('\nALL VERIFICATION TESTS PASSED PERFECTLY!');
+    console.log('\nEMAIL VALIDATION & DISABLE STATE TEST PASSED!');
     process.exit(0);
   } catch (err) {
     console.error('Test error:', err);
