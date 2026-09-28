@@ -697,8 +697,13 @@ export default function App() {
       earliestAllowedDate.setFullYear(today.getFullYear() - 130);
     }
 
-    const validateDateLogics = (date: Date | null, fieldNameEn: string, fieldNameTa: string, key: string) => {
-      if (!date) return; // Not enforcing required here, handled separately if needed
+    const validateDateLogics = (date: Date | null, fieldNameEn: string, fieldNameTa: string, key: string, isRequired: boolean = false) => {
+      if (!date) {
+        if (isRequired && strict) {
+          newErrors[key] = language === 'en' ? `${fieldNameEn} is mandatory` : `${fieldNameTa} கட்டாயமாகும்`;
+        }
+        return;
+      }
       
       if (date > today) {
         newErrors[key] = language === 'en' ? `${fieldNameEn} cannot be in the future` : `${fieldNameTa} எதிர்காலத்தில் இருக்கக்கூடாது`;
@@ -707,12 +712,16 @@ export default function App() {
       }
     };
 
+    if (strict && !info.visitType) {
+      newErrors.visitType = language === 'en' ? 'Please select Visit Type (OP or IP)' : 'வருகை வகையைத் தேர்ந்தெடுக்கவும் (OP / IP)';
+    }
+
     if (info.visitType === 'OP') {
-      validateDateLogics(info.opDate, 'OP Date', 'OP தேதி', 'opDate');
+      validateDateLogics(info.opDate, 'OP Date', 'வெளிநோயாளி தேதி', 'opDate', true);
     } else if (info.visitType === 'IP') {
-      validateDateLogics(info.ipDate, 'IP Date', 'IP தேதி', 'ipDate');
-      validateDateLogics(info.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate');
-      validateDateLogics(info.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate');
+      validateDateLogics(info.ipDate, 'IP Date', 'உள்நோயாளி தேதி', 'ipDate', true);
+      validateDateLogics(info.admissionDate, 'Date of Admission', 'சேர்க்கை தேதி', 'admissionDate', true);
+      validateDateLogics(info.dischargeDate, 'Date of Discharge', 'வெளியேறிய தேதி', 'dischargeDate', true);
       
       if (info.admissionDate && info.dischargeDate && info.dischargeDate < info.admissionDate) {
          newErrors.dischargeDate = language === 'en' ? 'Date of Discharge cannot be earlier than Date of Admission' : 'வெளியேற்ற தேதி சேர்க்கைக்கு முந்தையதாக இருக்க முடியாது';
@@ -741,16 +750,21 @@ export default function App() {
           toast.error(language === 'en' ? 'Kindly enter the patient details' : 'தயவுசெய்து நோயாளி விவரங்களை உள்ளிடவும்');
         } else {
           const missing = [];
-          if (newErrors.uhid) missing.push('UHID');
-          if (newErrors.firstName) missing.push('First Name');
-          if (newErrors.lastName) missing.push('Last Name');
-          if (newErrors.age) missing.push('Age');
-          if (newErrors.gender) missing.push('Gender');
-          if (newErrors.mobile) missing.push('Mobile Number');
-          if (newErrors.address) missing.push('Address');
+          if (newErrors.uhid) missing.push(language === 'en' ? 'UHID' : 'நோயாளி எண்');
+          if (newErrors.firstName) missing.push(language === 'en' ? 'First Name' : 'முதல் பெயர்');
+          if (newErrors.lastName) missing.push(language === 'en' ? 'Last Name' : 'கடைசி பெயர்');
+          if (newErrors.age) missing.push(language === 'en' ? 'Age' : 'வயது');
+          if (newErrors.gender) missing.push(language === 'en' ? 'Gender' : 'பாலினம்');
+          if (newErrors.mobile) missing.push(language === 'en' ? 'Mobile Number' : 'தொலைபேசி எண்');
+          if (newErrors.address) missing.push(language === 'en' ? 'Address' : 'முகவரி');
+          if (newErrors.visitType) missing.push(language === 'en' ? 'Visit Type' : 'வருகை வகை');
+          if (newErrors.opDate) missing.push(language === 'en' ? 'OP Date' : 'வெளிநோயாளி தேதி');
+          if (newErrors.ipDate) missing.push(language === 'en' ? 'IP Date' : 'உள்நோயாளி தேதி');
+          if (newErrors.admissionDate) missing.push(language === 'en' ? 'Admission Date' : 'சேர்க்கை தேதி');
+          if (newErrors.dischargeDate) missing.push(language === 'en' ? 'Discharge Date' : 'வெளியேறிய தேதி');
 
           if (missing.length > 0) {
-            toast.error(language === 'en' ? `Kindly enter mandatory patient details (${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '...' : ''})` : 'தயவுசெய்து தேவையான நோயாளி விவரங்களை உள்ளிடவும்');
+            toast.error(language === 'en' ? `Kindly enter mandatory details (${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '...' : ''})` : `தயவுசெய்து தேவையான விவரங்களை உள்ளிடவும் (${missing.slice(0, 3).join(', ')}${missing.length > 3 ? '...' : ''})`);
           } else {
             toast.error(language === 'en' ? 'Kindly enter the patient details' : 'தயவுசெய்து நோயாளி விவரங்களை உள்ளிடவும்');
           }
@@ -2173,16 +2187,27 @@ export default function App() {
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 mb-4">
                   {language === 'en' ? 'Visit Details' : 'வருகை விவரங்கள்'}
+                  <span className="text-red-500">*</span>
                 </h4>
 
                 {/* Visit Type Selection */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-4 mb-2">
                   <button
                     type="button"
-                    onClick={() => setPatientInfo({ ...patientInfo, visitType: 'OP' })}
-                    className={`p-6 rounded-xl border-2 transition-all ${
+                    onClick={() => {
+                      setPatientInfo(prev => ({ ...prev, visitType: 'OP' }));
+                      setFormErrors(prev => {
+                        const n = { ...prev };
+                        delete n.visitType;
+                        delete n.ipDate;
+                        delete n.admissionDate;
+                        delete n.dischargeDate;
+                        return n;
+                      });
+                    }}
+                    className={`p-6 rounded-xl border-2 transition-all cursor-pointer ${
                       patientInfo.visitType === 'OP'
-                        ? 'border-teal-600 bg-teal-50 shadow-lg'
+                        ? 'border-teal-600 bg-teal-50 shadow-lg ring-2 ring-teal-500/20'
                         : 'border-gray-200 bg-white hover:border-teal-300'
                     }`}
                   >
@@ -2200,10 +2225,18 @@ export default function App() {
 
                   <button
                     type="button"
-                    onClick={() => setPatientInfo({ ...patientInfo, visitType: 'IP' })}
-                    className={`p-6 rounded-xl border-2 transition-all ${
+                    onClick={() => {
+                      setPatientInfo(prev => ({ ...prev, visitType: 'IP' }));
+                      setFormErrors(prev => {
+                        const n = { ...prev };
+                        delete n.visitType;
+                        delete n.opDate;
+                        return n;
+                      });
+                    }}
+                    className={`p-6 rounded-xl border-2 transition-all cursor-pointer ${
                       patientInfo.visitType === 'IP'
-                        ? 'border-teal-600 bg-teal-50 shadow-lg'
+                        ? 'border-teal-600 bg-teal-50 shadow-lg ring-2 ring-teal-500/20'
                         : 'border-gray-200 bg-white hover:border-teal-300'
                     }`}
                   >
@@ -2219,10 +2252,11 @@ export default function App() {
                     </p>
                   </button>
                 </div>
+                {formErrors.visitType && <p className="text-red-500 text-xs mb-4 font-medium">{formErrors.visitType}</p>}
 
                 {/* Conditional OP Fields */}
                 {patientInfo.visitType === 'OP' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {language === 'en' ? 'OP ID' : 'நோயாளி எண்'}
@@ -2230,8 +2264,8 @@ export default function App() {
                       <input
                         type="text"
                         value={patientInfo.opNo}
-                        onChange={(e) => setPatientInfo({ ...patientInfo, opNo: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                        onChange={(e) => setPatientInfo(prev => ({ ...prev, opNo: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white"
                         placeholder={language === 'en' ? 'Enter OP ID' : 'OP ID உள்ளிடவும்'}
                       />
                     </div>
@@ -2240,11 +2274,21 @@ export default function App() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <Calendar className="inline w-4 h-4 mr-1" />
                         {language === 'en' ? 'OP Date' : 'வெளிநோயாளி தேதி'}
+                        <span className="text-red-500">*</span>
                       </label>
                       <DatePicker
                         selected={patientInfo.opDate}
-                        onChange={(date) => setPatientInfo({ ...patientInfo, opDate: date })}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.opDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                        onChange={(date) => {
+                          setPatientInfo(prev => ({ ...prev, opDate: date }));
+                          if (date) {
+                            setFormErrors(prev => {
+                              const n = { ...prev };
+                              delete n.opDate;
+                              return n;
+                            });
+                          }
+                        }}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.opDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                         dateFormat="dd/MM/yyyy"
                         placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
                       />
@@ -2255,7 +2299,7 @@ export default function App() {
 
                 {/* Conditional IP Fields */}
                 {patientInfo.visitType === 'IP' && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="space-y-6 mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2264,8 +2308,8 @@ export default function App() {
                         <input
                           type="text"
                           value={patientInfo.ipNo}
-                          onChange={(e) => setPatientInfo({ ...patientInfo, ipNo: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                          onChange={(e) => setPatientInfo(prev => ({ ...prev, ipNo: e.target.value }))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white"
                           placeholder={language === 'en' ? 'Enter IP ID' : 'IP ID உள்ளிடவும்'}
                         />
                       </div>
@@ -2274,11 +2318,21 @@ export default function App() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Calendar className="inline w-4 h-4 mr-1" />
                           {language === 'en' ? 'IP Date' : 'உள்நோயாளி தேதி'}
+                          <span className="text-red-500">*</span>
                         </label>
                         <DatePicker
                           selected={patientInfo.ipDate}
-                          onChange={(date) => setPatientInfo({ ...patientInfo, ipDate: date })}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.ipDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                          onChange={(date) => {
+                            setPatientInfo(prev => ({ ...prev, ipDate: date }));
+                            if (date) {
+                              setFormErrors(prev => {
+                                const n = { ...prev };
+                                delete n.ipDate;
+                                return n;
+                              });
+                            }
+                          }}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.ipDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                           dateFormat="dd/MM/yyyy"
                           placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
                         />
@@ -2291,11 +2345,21 @@ export default function App() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Calendar className="inline w-4 h-4 mr-1" />
                           {language === 'en' ? 'Date of Admission' : 'சேர்க்கை தேதி'}
+                          <span className="text-red-500">*</span>
                         </label>
                         <DatePicker
                           selected={patientInfo.admissionDate}
-                          onChange={(date) => setPatientInfo({ ...patientInfo, admissionDate: date })}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.admissionDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                          onChange={(date) => {
+                            setPatientInfo(prev => ({ ...prev, admissionDate: date }));
+                            if (date) {
+                              setFormErrors(prev => {
+                                const n = { ...prev };
+                                delete n.admissionDate;
+                                return n;
+                              });
+                            }
+                          }}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.admissionDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                           dateFormat="dd/MM/yyyy"
                           placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
                         />
@@ -2306,11 +2370,21 @@ export default function App() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           <Calendar className="inline w-4 h-4 mr-1" />
                           {language === 'en' ? 'Date of Discharge' : 'வெளியேறிய தேதி'}
+                          <span className="text-red-500">*</span>
                         </label>
                         <DatePicker
                           selected={patientInfo.dischargeDate}
-                          onChange={(date) => setPatientInfo({ ...patientInfo, dischargeDate: date })}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.dischargeDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                          onChange={(date) => {
+                            setPatientInfo(prev => ({ ...prev, dischargeDate: date }));
+                            if (date) {
+                              setFormErrors(prev => {
+                                const n = { ...prev };
+                                delete n.dischargeDate;
+                                return n;
+                              });
+                            }
+                          }}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.dischargeDate ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                           dateFormat="dd/MM/yyyy"
                           placeholderText={language === 'en' ? 'Select date' : 'தேதி தேர்வு'}
                         />
