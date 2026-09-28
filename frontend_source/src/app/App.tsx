@@ -374,8 +374,7 @@ export default function App() {
     }
     
     if (!hospitalId) {
-      setIsInitializing(false);
-      return;
+      hospitalId = '1';
     }
 
     localStorage.setItem('selected_hospital_id', String(hospitalId));
@@ -500,6 +499,15 @@ export default function App() {
   };
 
   const handleSendEmailOtp = () => {
+    const cleanEmail = (patientInfo.email || '').trim();
+    if (!cleanEmail || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(cleanEmail)) {
+      setFormErrors(prev => ({
+        ...prev,
+        email: language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்'
+      }));
+      toast.error(language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்');
+      return;
+    }
     // Mock send OTP
     setPatientInfo({ ...patientInfo, emailOtpSent: true, emailOtp: '111111' });
     toast.success(language === 'en' ? 'OTP sent to email!' : 'OTP அனுப்பப்பட்டது!');
@@ -609,8 +617,8 @@ export default function App() {
 
     if (info.email !== '' || strict) {
       if (info.email) {
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email)) {
-          newErrors.email = language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சலை உள்ளிடவும்';
+        if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(info.email.trim())) {
+          newErrors.email = language === 'en' ? 'Please enter a valid email address (e.g. user@example.com)' : 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும் (எ.கா: user@example.com)';
         } else if (info.email.length > 100) {
           newErrors.email = language === 'en' ? 'Email must not exceed 100 characters' : '100 எழுத்துக்களைத் தாண்டக்கூடாது';
         }
@@ -628,8 +636,9 @@ export default function App() {
     }
 
     if (info.age !== '' || strict) {
-      if (!info.age || parseInt(info.age) <= 0 || parseInt(info.age) > 130) {
-        newErrors.age = language === 'en' ? 'Valid Age is required' : 'சரியான வயது தேவை';
+      const parsedAge = parseInt(info.age, 10);
+      if (!info.age || isNaN(parsedAge) || parsedAge <= 0 || parsedAge > 120 || String(info.age).includes('-')) {
+        newErrors.age = language === 'en' ? 'Valid Age is required (1-120)' : 'சரியான வயது தேவை (1-120)';
       }
     }
 
@@ -1657,8 +1666,28 @@ export default function App() {
                   </label>
                   <input
                     type="number"
+                    min="1"
+                    max="120"
                     value={patientInfo.age}
-                    onChange={(e) => setPatientInfo({ ...patientInfo, age: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e' || e.key === '+' || e.key === '.') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const cleanVal = val.replace(/[^0-9]/g, '');
+                      setPatientInfo({ ...patientInfo, age: cleanVal });
+                      if (cleanVal && (parseInt(cleanVal, 10) <= 0 || parseInt(cleanVal, 10) > 120)) {
+                        setFormErrors(prev => ({ ...prev, age: language === 'en' ? 'Valid Age is required (1-120)' : 'சரியான வயது தேவை (1-120)' }));
+                      } else {
+                        setFormErrors(prev => {
+                          const n = { ...prev };
+                          delete n.age;
+                          return n;
+                        });
+                      }
+                    }}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.age ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                     placeholder={language === 'en' ? 'Enter age' : 'வயதை உள்ளிடவும்'}
                   />
@@ -1951,7 +1980,22 @@ export default function App() {
                       <input
                         type="email"
                         value={patientInfo.email}
-                        onChange={(e) => setPatientInfo({ ...patientInfo, email: e.target.value })}
+                        onChange={(e) => {
+                          const val = e.target.value.trim();
+                          setPatientInfo({ ...patientInfo, email: val, emailVerified: false, emailOtpSent: false });
+                          if (val && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+                            setFormErrors(prev => ({
+                              ...prev,
+                              email: language === 'en' ? 'Please enter a valid email address' : 'சரியான மின்னஞ்சலை உள்ளிடவும்'
+                            }));
+                          } else {
+                            setFormErrors(prev => {
+                              const n = { ...prev };
+                              delete n.email;
+                              return n;
+                            });
+                          }
+                        }}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                         placeholder="email@example.com"
                         disabled={patientInfo.emailVerified}
@@ -1960,7 +2004,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={handleSendEmailOtp}
-                      disabled={patientInfo.emailVerified || patientInfo.emailOtpSent || !patientInfo.email}
+                      disabled={patientInfo.emailVerified || patientInfo.emailOtpSent || !patientInfo.email || Boolean(formErrors.email)}
                       className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
                         patientInfo.emailVerified
                           ? 'bg-green-100 text-green-700 cursor-default'

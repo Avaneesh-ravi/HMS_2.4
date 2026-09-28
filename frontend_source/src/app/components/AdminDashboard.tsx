@@ -431,6 +431,7 @@ export function AdminDashboard({
 
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>(currentBranding);
   const [logoPreview, setLogoPreview] = useState<string>(currentBranding.logo);
+  const [ouSaved, setOuSaved] = useState<boolean>(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [questions, setQuestions] = useState<Question[]>(() => {
@@ -3794,15 +3795,31 @@ export function AdminDashboard({
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 modal-print-overlay">
           <style>{`
             @media print {
+              html, body {
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
               body * { visibility: hidden !important; }
-              #printable-feedback-modal, #printable-feedback-modal * { visibility: visible !important; }
-              html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #ffffff !important; margin: 0 !important; padding: 0 !important; }
+              .modal-print-overlay, #printable-feedback-modal, #printable-feedback-modal * { visibility: visible !important; }
               #root { height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; display: block !important; }
-              .modal-print-overlay { position: static !important; inset: auto !important; background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; display: block !important; overflow: visible !important; }
+              .modal-print-overlay {
+                position: static !important;
+                inset: auto !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                display: block !important;
+                overflow: visible !important;
+              }
               #printable-feedback-modal {
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
+                position: static !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 height: auto !important;
@@ -3812,19 +3829,19 @@ export function AdminDashboard({
                 box-shadow: none !important;
                 border: none !important;
                 border-radius: 0 !important;
-                padding: 0 !important;
-                margin: 0 !important;
+                padding: 12px !important;
+                margin: 0 auto !important;
                 background: #ffffff !important;
                 display: block !important;
               }
               #printable-feedback-modal .sticky,
               #printable-feedback-modal [class*="sticky"] {
-                position: relative !important;
+                position: static !important;
                 top: auto !important;
                 box-shadow: none !important;
                 border-bottom: 2px solid #0d9488 !important;
-                padding-bottom: 12px !important;
-                margin-bottom: 16px !important;
+                padding-bottom: 8px !important;
+                margin-bottom: 12px !important;
               }
               .no-print, button, nav, aside, [class*="sidebar"] {
                 display: none !important;
@@ -3832,6 +3849,10 @@ export function AdminDashboard({
               .grid, .rounded-xl, .rounded-lg, [class*="rounded"] {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
+              }
+              @page {
+                size: auto;
+                margin: 8mm;
               }
             }
           `}</style>
@@ -3901,31 +3922,31 @@ export function AdminDashboard({
                     <>
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">IP Number</p>
-                        <p className="font-semibold text-gray-900">{selectedResponse.ipNumber || 'N/A'}</p>
+                        <p className="font-semibold text-gray-900">{selectedResponse.ipNumber || (selectedResponse as any).ip_no || (selectedResponse as any).ip_number || selectedResponse.uhid || 'N/A'}</p>
                       </div>
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">IP Date</p>
-                        <p className="font-semibold text-gray-900">{selectedResponse.ipDate || 'N/A'}</p>
+                        <p className="font-semibold text-gray-900">{selectedResponse.ipDate || (selectedResponse as any).ip_date || selectedResponse.date || 'N/A'}</p>
                       </div>
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">Admission Date</p>
-                        <p className="font-semibold text-gray-900">{selectedResponse.admissionDate || 'N/A'}</p>
+                        <p className="font-semibold text-gray-900">{selectedResponse.admissionDate || (selectedResponse as any).admission_date || selectedResponse.date || 'N/A'}</p>
                       </div>
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">Discharge Date</p>
-                        <p className="font-semibold text-gray-900">{selectedResponse.dischargeDate || 'N/A'}</p>
+                        <p className="font-semibold text-gray-900">{selectedResponse.dischargeDate || (selectedResponse as any).discharge_date || selectedResponse.date || 'N/A'}</p>
                       </div>
                     </>
                   )}
-                  {selectedResponse.visitType === 'OP' && (
+                  {selectedResponse.visitType !== 'IP' && (
                     <>
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">OP Number</p>
-                        <p className="font-semibold text-gray-900">{selectedResponse.opNumber || 'N/A'}</p>
+                        <p className="font-semibold text-gray-900">{selectedResponse.opNumber || (selectedResponse as any).op_no || (selectedResponse as any).op_number || selectedResponse.uhid || 'N/A'}</p>
                       </div>
                       <div className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-600">OP Date</p>
-                        <p className="font-semibold text-gray-900">{selectedResponse.opDate || 'N/A'}</p>
+                        <p className="font-semibold text-gray-900">{selectedResponse.opDate || (selectedResponse as any).op_date || selectedResponse.date || 'N/A'}</p>
                       </div>
                     </>
                   )}
@@ -4211,15 +4232,26 @@ export function AdminDashboard({
                         />
                       </div>
 
+                      {ouSaved && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', background: '#f0fdfa', border: '1px solid #99f6e4', color: '#115e59', borderRadius: '8px', fontSize: '12px', fontWeight: 600, marginBottom: '16px' }}>
+                          <span>✓ Information Saved: Office review comments, corrective actions, and incharge details recorded successfully! Case marked as Resolved.</span>
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }} className="no-print">
                         <button
                           type="button"
                           onClick={async () => {
                             const nextData = { ...ou };
-                            setOfficeUseByResponse(prev => ({ ...prev, [key]: nextData }));
+                            setOuSaved(true);
+                            setOfficeUseByResponse(prev => {
+                              const updated = { ...prev, [key]: nextData };
+                              try { localStorage.setItem('hms_saved_office_use', JSON.stringify(updated)); } catch (e) {}
+                              return updated;
+                            });
                             setResponses(prev => prev.map(r => (r.uhid === key || r.id === selectedResponse.id) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
                             setSelectedResponse(prev => prev ? { ...prev, officeUse: { ...nextData, status: 'Reviewed' } } : null);
-                            toast.success('Office Use details saved successfully! Marked as Resolved ✓');
+                            toast.success('Information saved successfully! Office Use details updated and marked as Resolved ✓');
 
                             try {
                               const fd = new FormData();
