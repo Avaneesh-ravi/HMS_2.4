@@ -483,8 +483,26 @@ export default function App() {
   const countries = ['India', 'USA', 'UK', 'Canada', 'Australia', 'Singapore', 'UAE'];
 
   const handleSendMobileOtp = () => {
+    const digitsOnly = (patientInfo.mobile || '').replace(/\D/g, '');
+    const cleanMobile = digitsOnly.startsWith('91') && digitsOnly.length > 10 ? digitsOnly.slice(2) : digitsOnly;
+
+    if (cleanMobile.length !== 10) {
+      setFormErrors(prev => ({
+        ...prev,
+        mobile: language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்'
+      }));
+      toast.error(language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்');
+      return;
+    }
+
+    setFormErrors(prev => {
+      const n = { ...prev };
+      delete n.mobile;
+      return n;
+    });
+
     // Mock send OTP
-    setPatientInfo({ ...patientInfo, mobileOtpSent: true, mobileOtp: '111111' });
+    setPatientInfo(prev => ({ ...prev, mobileOtpSent: true, mobileOtp: '111111' }));
     toast.success(language === 'en' ? 'OTP sent to mobile!' : 'OTP அனுப்பப்பட்டது!');
   };
 
@@ -1903,71 +1921,108 @@ export default function App() {
               {/* Contact Verification */}
               <div className="space-y-6">
                 {/* Mobile Number Row */}
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="flex flex-col md:flex-row md:items-end gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Phone className="inline w-4 h-4 mr-1" />
-                        {language === 'en' ? 'Mobile Number' : 'தொலைபேசி எண்'}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        value={patientInfo.mobile}
-                        onChange={(e) => setPatientInfo({ ...patientInfo, mobile: e.target.value })}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.mobile ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                        placeholder="+91 98765 43210"
-                        disabled={patientInfo.mobileVerified}
-                      />
-                      {formErrors.mobile && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.mobile}</p>}
-                    </div>
-                    <button
-                      onClick={handleSendMobileOtp}
-                      disabled={patientInfo.mobileVerified || patientInfo.mobileOtpSent || !patientInfo.mobile}
-                      className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
-                        patientInfo.mobileVerified
-                          ? 'bg-green-100 text-green-700 cursor-default'
-                          : 'bg-teal-600 text-white hover:bg-teal-700 disabled:bg-gray-300'
-                      }`}
-                    >
-                      {patientInfo.mobileVerified ? (
-                        <div className="flex items-center gap-2">
-                          <Check className="w-5 h-5" />
-                          <span>{language === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}</span>
-                        </div>
-                      ) : (
-                        language === 'en' ? 'Verify' : 'சரிபார்'
-                      )}
-                    </button>
-                  </div>
+                {/* Mobile Number Row */}
+                {(() => {
+                  const rawMobileDigits = (patientInfo.mobile || '').replace(/\D/g, '');
+                  const cleanMobile = rawMobileDigits.startsWith('91') && rawMobileDigits.length > 10 ? rawMobileDigits.slice(2) : rawMobileDigits;
+                  const isMobile10Digits = cleanMobile.length === 10;
 
-                  {/* OTP Reveal for Mobile */}
-                  {patientInfo.mobileOtpSent && !patientInfo.mobileVerified && (
-                    <div className="mt-4 p-4 bg-teal-50 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                  return (
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                       <div className="flex flex-col md:flex-row md:items-end gap-4">
                         <div className="flex-1">
-                          <label className="block text-sm font-medium text-teal-800 mb-2">
-                            {language === 'en' ? 'Enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்'}
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <Phone className="inline w-4 h-4 mr-1" />
+                            {language === 'en' ? 'Mobile Number' : 'தொலைபேசி எண்'}
+                            <span className="text-red-500">*</span>
                           </label>
                           <input
-                            type="text"
-                            maxLength={6}
-                            value={patientInfo.mobileOtp}
-                            onChange={(e) => setPatientInfo({ ...patientInfo, mobileOtp: e.target.value.replace(/\D/g, '') })}
-                            className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
-                            placeholder="••••••"
+                            type="tel"
+                            maxLength={10}
+                            value={patientInfo.mobile}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              setPatientInfo(prev => ({
+                                ...prev,
+                                mobile: digits,
+                                mobileOtpSent: false,
+                                mobileVerified: false,
+                                mobileOtp: ''
+                              }));
+                              setFormErrors(prev => {
+                                const n = { ...prev };
+                                delete n.mobile;
+                                return n;
+                              });
+                            }}
+                            onBlur={() => {
+                              const digits = (patientInfo.mobile || '').replace(/\D/g, '');
+                              if (digits.length > 0 && digits.length < 10) {
+                                setFormErrors(prev => ({
+                                  ...prev,
+                                  mobile: language === 'en' ? 'Mobile number must be exactly 10 digits' : 'சரியாக 10 இலக்கங்கள் இருக்க வேண்டும்'
+                                }));
+                              }
+                            }}
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white ${formErrors.mobile ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                            placeholder="9876543210"
+                            disabled={patientInfo.mobileVerified}
                           />
+                          {formErrors.mobile && <p className="text-red-500 text-xs mt-1 font-medium">{formErrors.mobile}</p>}
                         </div>
                         <button
-                          onClick={handleVerifyMobile}
-                          className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all h-[50px] cursor-pointer"
+                          type="button"
+                          onClick={handleSendMobileOtp}
+                          disabled={patientInfo.mobileVerified || patientInfo.mobileOtpSent || !isMobile10Digits}
+                          className={`px-8 py-3 rounded-lg font-bold transition-all h-[50px] ${
+                            patientInfo.mobileVerified
+                              ? 'bg-green-100 text-green-700 cursor-default'
+                              : isMobile10Digits && !patientInfo.mobileOtpSent
+                                ? 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer shadow-md'
+                                : 'bg-gray-300 text-gray-400 cursor-not-allowed'
+                          }`}
                         >
-                          {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
+                          {patientInfo.mobileVerified ? (
+                            <div className="flex items-center gap-2">
+                              <Check className="w-5 h-5" />
+                              <span>{language === 'en' ? 'Verified' : 'சரிபார்க்கப்பட்டது'}</span>
+                            </div>
+                          ) : (
+                            language === 'en' ? 'Verify' : 'சரிபார்'
+                          )}
                         </button>
                       </div>
+
+                      {/* OTP Reveal for Mobile - ONLY OPEN WHEN MOBILE IS EXACTLY 10 DIGITS AND OTP WAS SENT */}
+                      {patientInfo.mobileOtpSent && !patientInfo.mobileVerified && isMobile10Digits && (
+                        <div className="mt-4 p-4 bg-teal-50 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex flex-col md:flex-row md:items-end gap-4">
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-teal-800 mb-2">
+                                {language === 'en' ? 'Enter 6-digit OTP' : '6 இலக்க OTP உள்ளிடவும்'}
+                              </label>
+                              <input
+                                type="text"
+                                maxLength={6}
+                                value={patientInfo.mobileOtp}
+                                onChange={(e) => setPatientInfo(prev => ({ ...prev, mobileOtp: e.target.value.replace(/\D/g, '') }))}
+                                className="w-full px-4 py-3 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all text-center text-lg font-bold tracking-[0.5em] bg-white"
+                                placeholder="••••••"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleVerifyMobile}
+                              className="px-8 py-3 rounded-lg font-bold bg-teal-600 text-white hover:bg-teal-700 transition-all h-[50px] cursor-pointer"
+                            >
+                              {language === 'en' ? 'Verify OTP' : 'OTP சரிபார்'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 {/* Email Row */}
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
