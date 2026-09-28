@@ -364,11 +364,20 @@ export default function App() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    const selectParam = urlParams.get('select_hospital') || urlParams.get('select');
     let hospitalId = urlParams.get('hospital_id');
     
+    // Explicit hospital selection page mode
+    if (selectParam === 'true' || selectParam === '1' || hospitalId === 'select' || hospitalId === '0') {
+      localStorage.removeItem('selected_hospital_id');
+      setSelectedHospital(null);
+      setIsInitializing(false);
+      return;
+    }
+
     if (!hospitalId) {
       const savedHospitalId = localStorage.getItem('selected_hospital_id');
-      if (savedHospitalId) {
+      if (savedHospitalId && savedHospitalId !== 'select' && savedHospitalId !== '0') {
         hospitalId = savedHospitalId;
       }
     }
@@ -1549,18 +1558,29 @@ export default function App() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('selected_hospital_id');
+                  window.location.href = '?hospital_id=select';
+                }}
+                className="px-3.5 py-2 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors border border-teal-200 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title={language === 'en' ? 'Change Hospital' : 'மருத்துவமனையை மாற்றவும்'}
+              >
+                <Building2 className="w-4 h-4 text-teal-600" />
+                <span>{language === 'en' ? 'Change Hospital' : 'மருத்துவமனை மாற்று'}</span>
+              </button>
               {isAdminLoggedIn ? (
                 <>
                   <button
                     onClick={() => setShowAdminDashboard(true)}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium cursor-pointer shadow-sm"
                   >
                     Admin Panel
                   </button>
                   <button
                     onClick={handleAdminLogout}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium flex items-center gap-2"
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -1569,7 +1589,7 @@ export default function App() {
               ) : (
                 <button
                   onClick={() => setShowAdminLoginModal(true)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium cursor-pointer"
                 >
                   Admin
                 </button>
