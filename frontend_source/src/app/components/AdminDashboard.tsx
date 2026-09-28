@@ -1,7 +1,7 @@
 import { REAL_DB_RESPONSES, REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from '../real_db_data';
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { BrandingSettings, Question, FeedbackResponse } from '../../types';
-import { generateFeedbackReportCSV, downloadCSV } from '../../services';
+import { generateFeedbackReportCSV, downloadCSV, printFeedbackDetail, printFeedbackReport } from '../../services';
 import { AdminSidebar } from './admin/AdminSidebar';
 import { AdminHeader } from './admin/AdminHeader';
 import { OfficeUseModal } from './admin/OfficeUseModal';
@@ -900,46 +900,20 @@ export function AdminDashboard({
 
   const handlePrintFeedbackDetail = () => {
     if (!selectedResponse) return;
-
     const uhid = selectedResponse.uhid || 'NO_UHID';
-    
-    // Format Date to YYYY-MM-DD
-    let formattedDate = '';
-    if (selectedResponse.submittedAt) {
-      const dt = new Date(selectedResponse.submittedAt);
-      if (!isNaN(dt.getTime())) {
-        const yyyy = dt.getFullYear();
-        const mm = String(dt.getMonth() + 1).padStart(2, '0');
-        const dd = String(dt.getDate()).padStart(2, '0');
-        formattedDate = `${yyyy}-${mm}-${dd}`;
-      }
-    }
-    if (!formattedDate && selectedResponse.date) {
-      const parts = selectedResponse.date.split('/');
-      if (parts.length === 3) {
-        formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-      } else {
-        formattedDate = selectedResponse.date.replace(/[\/\\]/g, '-');
-      }
-    }
-    if (!formattedDate) {
-      const now = new Date();
-      formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    }
+    const officeUse = officeUseByResponse[uhid] || {};
+    printFeedbackDetail(selectedResponse, officeUse, brandingSettings.hospitalName || 'Apollo Healthcare Center');
+  };
 
-    const visitType = (selectedResponse.visitType === 'IP' || selectedResponse.ipNumber) ? 'IP' : 'OP';
-    const printDocTitle = `${uhid}_${formattedDate}_${visitType}`;
-
-    const originalTitle = document.title;
-    document.title = printDocTitle;
-    document.body.classList.add('is-printing-modal');
-
-    window.print();
-
-    setTimeout(() => {
-      document.title = originalTitle;
-      document.body.classList.remove('is-printing-modal');
-    }, 1000);
+  const handlePrintFeedbackReport = () => {
+    printFeedbackReport({
+      hospitalName: brandingSettings.hospitalName || 'Apollo Healthcare Center',
+      responses,
+      officeUseByResponse,
+      departmentReportData,
+      fromDate: reportFromDate || fromDate,
+      toDate: reportToDate || toDate,
+    });
   };
 
   const handleSaveBranding = async () => {
@@ -2975,7 +2949,7 @@ export function AdminDashboard({
                       <span>Download Report</span>
                     </button>
                     <button
-                      onClick={() => window.print()}
+                      onClick={handlePrintFeedbackReport}
                       className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer"
                       title="Print Feedback Report"
                     >
@@ -3795,69 +3769,6 @@ export function AdminDashboard({
       {/* Response Detail Modal with Print Support */}
       {selectedResponse && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 modal-print-overlay">
-          <style>{`
-            @media print {
-              html, body {
-                height: auto !important;
-                min-height: 0 !important;
-                overflow: visible !important;
-                background: #ffffff !important;
-                margin: 0 !important;
-                padding: 0 !important;
-              }
-              body * { visibility: hidden !important; }
-              .modal-print-overlay, #printable-feedback-modal, #printable-feedback-modal * { visibility: visible !important; }
-              #root { height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; display: block !important; }
-              .modal-print-overlay {
-                position: static !important;
-                inset: auto !important;
-                background: transparent !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                min-height: 0 !important;
-                display: block !important;
-                overflow: visible !important;
-              }
-              #printable-feedback-modal {
-                position: static !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-                min-height: 0 !important;
-                max-height: none !important;
-                overflow: visible !important;
-                box-shadow: none !important;
-                border: none !important;
-                border-radius: 0 !important;
-                padding: 12px !important;
-                margin: 0 auto !important;
-                background: #ffffff !important;
-                display: block !important;
-              }
-              #printable-feedback-modal .sticky,
-              #printable-feedback-modal [class*="sticky"] {
-                position: static !important;
-                top: auto !important;
-                box-shadow: none !important;
-                border-bottom: 2px solid #0d9488 !important;
-                padding-bottom: 8px !important;
-                margin-bottom: 12px !important;
-              }
-              .no-print, button, nav, aside, [class*="sidebar"] {
-                display: none !important;
-              }
-              .grid, .rounded-xl, .rounded-lg, [class*="rounded"] {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-              }
-              @page {
-                size: auto;
-                margin: 8mm;
-              }
-            }
-          `}</style>
           <div id="printable-feedback-modal" className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
               <div>
