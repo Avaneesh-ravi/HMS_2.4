@@ -39,6 +39,23 @@ export default async function handler(req, res) {
     const deptRes = await query('SELECT department_id, department_name, department_code FROM department WHERE hospital_id = $1 OR hospital_id = 0 ORDER BY department_name ASC', [hospitalId]);
     const hospitalDepartments = deptRes.rows;
 
+    // Ensure complaint_review table exists
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS complaint_review (
+          review_id SERIAL PRIMARY KEY,
+          submission_id INTEGER NOT NULL,
+          review_comments TEXT,
+          review_date DATE,
+          corrective_action TEXT,
+          preventive_action TEXT,
+          incharge_name VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    } catch (e) {}
+
     // 3. Fetch Submissions
     const params = [];
     let sql = `SELECT fs.submission_id, fs.submission_date AS submitted_at, fs.status AS office_status, fs.patient_id, fs.hospital_id, fs.department_id, fs.feedback_form_id,

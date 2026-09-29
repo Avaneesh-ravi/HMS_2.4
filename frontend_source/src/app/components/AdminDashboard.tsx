@@ -493,7 +493,19 @@ export function AdminDashboard({
 
   const [selectedResponse, setSelectedResponse] = useState<FeedbackResponse | null>(null);
   const [officeUseEditing, setOfficeUseEditing] = useState(false);
-  const [officeUseByResponse, setOfficeUseByResponse] = useState<Record<string, OfficeUse>>({});
+
+  const getSavedOfficeUse = (): Record<string, OfficeUse> => {
+    try {
+      const saved = localStorage.getItem('hms_saved_office_use');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
+    return {};
+  };
+
+  const [officeUseByResponse, setOfficeUseByResponse] = useState<Record<string, OfficeUse>>(() => getSavedOfficeUse());
   const [officeUseModalResponse, setOfficeUseModalResponse] = useState<FeedbackResponse | null>(null);
   const [officeUseModalData, setOfficeUseModalData] = useState<OfficeUse>({ reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
   const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>(() => {
@@ -700,13 +712,27 @@ export function AdminDashboard({
   }, []);
 
   const [responses, setResponses] = useState<FeedbackResponse[]>(() => {
+    const savedOfficeUse = getSavedOfficeUse();
+    let baseList: FeedbackResponse[] = [];
     try {
       const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
       if (Array.isArray(newSubs) && newSubs.length > 0) {
-        return [...newSubs, ...(REAL_DB_RESPONSES as any[])];
+        baseList = [...newSubs, ...(REAL_DB_RESPONSES as any[])];
+      } else {
+        baseList = REAL_DB_RESPONSES as any[];
       }
-    } catch (e) {}
-    return REAL_DB_RESPONSES as any[];
+    } catch (e) {
+      baseList = REAL_DB_RESPONSES as any[];
+    }
+    return baseList.map(r => {
+      const keyUhid = r.uhid;
+      const keyId = String(r.id);
+      const ou = savedOfficeUse[keyUhid] || savedOfficeUse[keyId] || r.officeUse;
+      if (ou && (ou.reviewOfComplaint || ou.inchargeName || ou.correctiveAction || ou.dateOfReview)) {
+        return { ...r, officeUse: { ...ou, status: ou.status || 'Reviewed' }, isResolved: true };
+      }
+      return r;
+    });
   });
   const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -723,107 +749,143 @@ export function AdminDashboard({
     };
     
     const hid = getEffectiveHospitalId();
-    fetch(getApiUrl(`get-responses.php?hospital_id=${hid}`), { credentials: 'include' })
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
-          setApiError(null);
-          
-          if (data.hospital) {
-            setBrandingSettings({
-              hospitalName: data.hospital.hospitalName || 'Apollo Healthcare Center',
-              address: data.hospital.address || '123 Health Street, Chennai - 600001',
-              contactNumber: data.hospital.contactNumber || '+91 44 1234 5678',
-              email: data.hospital.email || 'contact@apollo.com',
-              logo: data.hospital.logoUrl || ''
-            });
-          }
-          
-          const fetchedResponses: FeedbackResponse[] = data.data.map((item: any) => {
-            const rawRatings = item.rawRatings || [];
-            const rawYesNo = item.rawYesNo || [];
-            
-            let computedConsolidated = getConsolidatedRating(item);
-            let exactOverall = getExactOverallRating(item);
+    const savedOfficeUse = getSavedOfficeUse();
+    const mergedOfficeUse: Record<string, OfficeUse> = { ...savedOfficeUse };
 
-            let computedRecommend = item.wouldRecommend !== undefined ? item.wouldRecommend : true;
-            if (rawYesNo.length > 0) {
-                const recObj = rawYesNo.find((y: any) => {
-                  const t = String(y.question_text || y.question_en || y.question_text_en || y.question_ta || '').toLowerCase();
-                  return t.includes('refer') || t.includes('recommend') || t.includes('family') || t.includes('friends') || t.includes('பரிந்துரை');
-                });
-                if (recObj) {
-                    let ans = String(recObj.answer).toLowerCase();
-                    computedRecommend = (ans === '1' || ans === 'yes' || ans === 'true' || ans === 'ஆம்');
-                }
+    const tryFetch = async () => {
+      let data: any = null;
+      const endpoints = [
+        `/api/get-responses?hospital_id=${hid}`,
+        getApiUrl(`get-responses.php?hospital_id=${hid}`),
+        `api/get-responses.php?hospital_id=${hid}`,
+        `../get-responses.js?hospital_id=${hid}`
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, { credentials: 'include' });
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+              data = json;
+              break;
             }
-            return {
-              ...item,
-              departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
-              rawRatings: rawRatings,
-              rawYesNo: rawYesNo,
-              overallRating: exactOverall,
-              consolidatedRating: computedConsolidated,
-              wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
-              ratings: item.ratings || {},
-              yesNoAnswers: item.yesNoAnswers || {},
-              appreciations: item.rawAppreciations || item.appreciations || [],
-              whyChooseUs: item.whyChooseUs || []
-            };
+          }
+        } catch (e) {}
+      }
+
+      if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
+        setApiError(null);
+        if (data.hospital) {
+          setBrandingSettings({
+            hospitalName: data.hospital.hospitalName || 'Apollo Healthcare Center',
+            address: data.hospital.address || '123 Health Street, Chennai - 600001',
+            contactNumber: data.hospital.contactNumber || '+91 44 1234 5678',
+            email: data.hospital.email || 'contact@apollo.com',
+            logo: data.hospital.logoUrl || ''
           });
-          const initialOfficeUse: Record<string, OfficeUse> = {};
-          data.data.forEach((item: any) => {
-            if (item.officeUse && (item.officeUse.reviewOfComplaint || item.officeUse.dateOfReview || item.officeUse.inchargeName || item.officeUse.correctiveAction)) {
-              initialOfficeUse[item.uhid || item.id] = {
-                reviewOfComplaint: item.officeUse.reviewOfComplaint || '',
-                dateOfReview: item.officeUse.dateOfReview || '',
-                correctiveAction: item.officeUse.correctiveAction || '',
-                preventiveAction: item.officeUse.preventiveAction || '',
-                inchargeName: item.officeUse.inchargeName || ''
-              };
-            }
-          });
-          setOfficeUseByResponse(initialOfficeUse);
-          let finalResponses = fetchedResponses;
-          try {
-            const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
-            if (Array.isArray(newSubs) && newSubs.length > 0) {
-              const fetchedUhids = new Set(fetchedResponses.map((r: any) => r.uhid));
-              // Update localStorage to remove items that are already in fetchedResponses
-              const remainingNewSubs = newSubs.filter((s: any) => !fetchedUhids.has(s.uhid));
-              localStorage.setItem('hms_new_submissions', JSON.stringify(remainingNewSubs));
-              finalResponses = [...remainingNewSubs, ...fetchedResponses];
-            }
-          } catch (e) {}
-          setResponses(finalResponses);
-        } else {
-          // If no data from API, merge localStorage submissions with DB snapshot
-          try {
-            const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
-            if (Array.isArray(newSubs) && newSubs.length > 0) {
-              const snapUhids = new Set((REAL_DB_RESPONSES as any[]).map((r: any) => r.uhid));
-              const uniqueNewSubs = newSubs.filter((s: any) => !snapUhids.has(s.uhid));
-              setResponses([...uniqueNewSubs, ...(REAL_DB_RESPONSES as any[])]);
-            }
-          } catch (e) {}
         }
-        setApiError(null);
-      })
-      .catch(e => {
-        setApiError(null);
+
+        const fetchedResponses: FeedbackResponse[] = data.data.map((item: any) => {
+          const rawRatings = item.rawRatings || [];
+          const rawYesNo = item.rawYesNo || [];
+          let computedConsolidated = getConsolidatedRating(item);
+          let exactOverall = getExactOverallRating(item);
+
+          let computedRecommend = item.wouldRecommend !== undefined ? item.wouldRecommend : true;
+          if (rawYesNo.length > 0) {
+            const recObj = rawYesNo.find((y: any) => {
+              const t = String(y.question_text || y.question_en || y.question_text_en || y.question_ta || '').toLowerCase();
+              return t.includes('refer') || t.includes('recommend') || t.includes('family') || t.includes('friends') || t.includes('பரிந்துரை');
+            });
+            if (recObj) {
+              let ans = String(recObj.answer).toLowerCase();
+              computedRecommend = (ans === '1' || ans === 'yes' || ans === 'true' || ans === 'ஆம்');
+            }
+          }
+
+          const itemUhid = item.uhid;
+          const itemId = String(item.id);
+          const savedOu = mergedOfficeUse[itemUhid] || mergedOfficeUse[itemId];
+          let finalOfficeUse = item.officeUse;
+
+          if (savedOu && (savedOu.reviewOfComplaint || savedOu.inchargeName || savedOu.correctiveAction || savedOu.dateOfReview)) {
+            finalOfficeUse = { ...savedOu, status: 'Reviewed' };
+            if (itemUhid) mergedOfficeUse[itemUhid] = finalOfficeUse;
+            if (itemId) mergedOfficeUse[itemId] = finalOfficeUse;
+          } else if (item.officeUse && (item.officeUse.reviewOfComplaint || item.officeUse.dateOfReview || item.officeUse.inchargeName || item.officeUse.correctiveAction)) {
+            finalOfficeUse = {
+              reviewOfComplaint: item.officeUse.reviewOfComplaint || '',
+              dateOfReview: item.officeUse.dateOfReview || '',
+              correctiveAction: item.officeUse.correctiveAction || '',
+              preventiveAction: item.officeUse.preventiveAction || '',
+              inchargeName: item.officeUse.inchargeName || '',
+              status: item.officeUse.status || 'Reviewed'
+            };
+            if (itemUhid) mergedOfficeUse[itemUhid] = finalOfficeUse;
+            if (itemId) mergedOfficeUse[itemId] = finalOfficeUse;
+          }
+
+          return {
+            ...item,
+            departmentName: item.departmentName || (item.visitType === 'IP' ? 'IPD / Inpatient' : 'OPD / Outpatient'),
+            rawRatings: rawRatings,
+            rawYesNo: rawYesNo,
+            overallRating: exactOverall,
+            consolidatedRating: computedConsolidated,
+            wouldRecommend: computedRecommend !== undefined ? computedRecommend : true,
+            ratings: item.ratings || {},
+            yesNoAnswers: item.yesNoAnswers || {},
+            appreciations: item.rawAppreciations || item.appreciations || [],
+            whyChooseUs: item.whyChooseUs || [],
+            officeUse: finalOfficeUse,
+            isResolved: !!(finalOfficeUse?.reviewOfComplaint || finalOfficeUse?.inchargeName)
+          };
+        });
+
+        setOfficeUseByResponse(mergedOfficeUse);
+        try { localStorage.setItem('hms_saved_office_use', JSON.stringify(mergedOfficeUse)); } catch (e) {}
+
+        let finalResponses = fetchedResponses;
+        try {
+          const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+          if (Array.isArray(newSubs) && newSubs.length > 0) {
+            const fetchedUhids = new Set(fetchedResponses.map((r: any) => r.uhid));
+            const remainingNewSubs = newSubs.filter((s: any) => !fetchedUhids.has(s.uhid)).map((s: any) => {
+              const ou = mergedOfficeUse[s.uhid] || mergedOfficeUse[String(s.id)] || s.officeUse;
+              return ou ? { ...s, officeUse: ou, isResolved: !!(ou.reviewOfComplaint || ou.inchargeName) } : s;
+            });
+            localStorage.setItem('hms_new_submissions', JSON.stringify(remainingNewSubs));
+            finalResponses = [...remainingNewSubs, ...fetchedResponses];
+          }
+        } catch (e) {}
+        setResponses(finalResponses);
+      } else {
+        setOfficeUseByResponse(mergedOfficeUse);
+        let baseList = REAL_DB_RESPONSES as any[];
         try {
           const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
           if (Array.isArray(newSubs) && newSubs.length > 0) {
             const snapUhids = new Set((REAL_DB_RESPONSES as any[]).map((r: any) => r.uhid));
             const uniqueNewSubs = newSubs.filter((s: any) => !snapUhids.has(s.uhid));
-            setResponses([...uniqueNewSubs, ...(REAL_DB_RESPONSES as any[])]);
+            baseList = [...uniqueNewSubs, ...(REAL_DB_RESPONSES as any[])];
           }
-        } catch (err) {}
-      })
-      .finally(() => {
-        setIsLoadingResponses(false);
-        setIsRefreshingResponses(false);
-      });
+        } catch (e) {}
+
+        const withOfficeUse = baseList.map((r: any) => {
+          const ou = mergedOfficeUse[r.uhid] || mergedOfficeUse[String(r.id)] || r.officeUse;
+          if (ou && (ou.reviewOfComplaint || ou.inchargeName || ou.correctiveAction || ou.dateOfReview)) {
+            return { ...r, officeUse: { ...ou, status: ou.status || 'Reviewed' }, isResolved: true };
+          }
+          return r;
+        });
+        setResponses(withOfficeUse);
+      }
+      setIsLoadingResponses(false);
+      setIsRefreshingResponses(false);
+    };
+
+    tryFetch();
   }, []);
 
   useEffect(() => {
@@ -2832,7 +2894,8 @@ export function AdminDashboard({
                         ) : filteredAndSortedResponses.map((response, idx) => {
                           const safeUhid = response.uhid || ('UHID_' + idx);
                           const safeId = response.id ? ('sub_' + response.id) : (safeUhid + '_' + idx);
-                          const officeUseFilled = !!(officeUseByResponse[safeUhid]?.reviewOfComplaint || officeUseByResponse[safeUhid]?.inchargeName);
+                          const rowOu = officeUseByResponse[safeUhid] || officeUseByResponse[String(response.id)] || response.officeUse || {};
+                          const officeUseFilled = !!(rowOu.reviewOfComplaint || rowOu.inchargeName || rowOu.correctiveAction || rowOu.dateOfReview || (rowOu.status && rowOu.status !== 'Pending'));
                           const ratingNum = Math.round(Number(response.overallRating || 5) * 10) / 10;
                           const isRec = getIsRecommended(response);
 
@@ -2882,7 +2945,13 @@ export function AdminDashboard({
                                 {officeUseFilled ? (
                                   <button
                                     onClick={() => {
-                                      setOfficeUseModalData(officeUseByResponse[safeUhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                      setOfficeUseModalData({
+                                        reviewOfComplaint: rowOu.reviewOfComplaint || '',
+                                        dateOfReview: rowOu.dateOfReview ? String(rowOu.dateOfReview).slice(0, 10) : new Date().toISOString().slice(0, 10),
+                                        correctiveAction: rowOu.correctiveAction || '',
+                                        preventiveAction: rowOu.preventiveAction || '',
+                                        inchargeName: rowOu.inchargeName || ''
+                                      });
                                       setOfficeUseModalResponse(response);
                                     }}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -2894,7 +2963,13 @@ export function AdminDashboard({
                                 ) : (
                                   <button
                                     onClick={() => {
-                                      setOfficeUseModalData(officeUseByResponse[safeUhid] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
+                                      setOfficeUseModalData({
+                                        reviewOfComplaint: rowOu.reviewOfComplaint || '',
+                                        dateOfReview: rowOu.dateOfReview ? String(rowOu.dateOfReview).slice(0, 10) : new Date().toISOString().slice(0, 10),
+                                        correctiveAction: rowOu.correctiveAction || '',
+                                        preventiveAction: rowOu.preventiveAction || '',
+                                        inchargeName: rowOu.inchargeName || ''
+                                      });
                                       setOfficeUseModalResponse(response);
                                     }}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
@@ -2962,8 +3037,14 @@ export function AdminDashboard({
                 {/* Filters Strip */}
                 {/* Executive Problem Resolution & Performance Summary */}
                 {(() => {
+                  const isItemResolved = (r: FeedbackResponse) => {
+                    const u = r.uhid || '';
+                    const i = String(r.id || '');
+                    const o = officeUseByResponse[u] || officeUseByResponse[i] || r.officeUse || {};
+                    return !!(o.reviewOfComplaint || o.inchargeName || o.correctiveAction || o.dateOfReview || (o.status && o.status !== 'Pending'));
+                  };
                   const totalEvaluated = responses.length;
-                  const resolvedCount = responses.filter(r => !!(officeUseByResponse[r.uhid]?.reviewOfComplaint || officeUseByResponse[r.uhid]?.inchargeName)).length;
+                  const resolvedCount = responses.filter(r => isItemResolved(r)).length;
                   const unresolvedCount = totalEvaluated - resolvedCount;
                   const resolutionPct = totalEvaluated > 0 ? Math.round((resolvedCount / totalEvaluated) * 100) : 100;
                   const avgScore = totalEvaluated > 0 ? (responses.reduce((sum, r) => sum + Number(r.overallRating || 5), 0) / totalEvaluated).toFixed(1) : '5.0';
@@ -3092,14 +3173,24 @@ export function AdminDashboard({
                           className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${reportViewTab === 'resolved' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'text-emerald-800 hover:bg-emerald-100'}`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          Resolved ({responses.filter(r => !!(officeUseByResponse[r.uhid]?.reviewOfComplaint || officeUseByResponse[r.uhid]?.inchargeName)).length})
+                          Resolved ({responses.filter(r => {
+                            const u = r.uhid || '';
+                            const i = String(r.id || '');
+                            const o = officeUseByResponse[u] || officeUseByResponse[i] || r.officeUse || {};
+                            return !!(o.reviewOfComplaint || o.inchargeName || o.correctiveAction || o.dateOfReview || (o.status && o.status !== 'Pending'));
+                          }).length})
                         </button>
                         <button
                           onClick={() => setReportViewTab('unresolved')}
                           className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 ${reportViewTab === 'unresolved' ? 'bg-amber-500 text-white shadow-sm font-bold' : 'text-amber-800 hover:bg-amber-100'}`}
                         >
                           <HelpCircle className="w-3.5 h-3.5" />
-                          Unresolved ({responses.filter(r => !officeUseByResponse[r.uhid]?.reviewOfComplaint && !officeUseByResponse[r.uhid]?.inchargeName).length})
+                          Unresolved ({responses.filter(r => {
+                            const u = r.uhid || '';
+                            const i = String(r.id || '');
+                            const o = officeUseByResponse[u] || officeUseByResponse[i] || r.officeUse || {};
+                            return !o.reviewOfComplaint && !o.inchargeName && !o.correctiveAction && (!o.status || o.status === 'Pending');
+                          }).length})
                         </button>
                       </div>
                     </div>
@@ -3172,7 +3263,10 @@ export function AdminDashboard({
                     <div className="p-6">
                       {(() => {
                         const filteredProblems = responses.filter(r => {
-                          const isResolved = !!(officeUseByResponse[r.uhid]?.reviewOfComplaint || officeUseByResponse[r.uhid]?.inchargeName);
+                          const u = r.uhid || '';
+                          const i = String(r.id || '');
+                          const o = officeUseByResponse[u] || officeUseByResponse[i] || r.officeUse || {};
+                          const isResolved = !!(o.reviewOfComplaint || o.inchargeName || o.correctiveAction || o.dateOfReview || (o.status && o.status !== 'Pending'));
                           if (reportViewTab === 'resolved') return isResolved;
                           return !isResolved;
                         }).filter(r => {
@@ -3182,10 +3276,13 @@ export function AdminDashboard({
                         }).filter(r => {
                           if (!reportSearch) return true;
                           const q = reportSearch.toLowerCase();
+                          const u = r.uhid || '';
+                          const i = String(r.id || '');
+                          const o = officeUseByResponse[u] || officeUseByResponse[i] || r.officeUse || {};
                           return (r.uhid || '').toLowerCase().includes(q) ||
                                  (r.patientName || '').toLowerCase().includes(q) ||
-                                 (officeUseByResponse[r.uhid]?.reviewOfComplaint || '').toLowerCase().includes(q) ||
-                                 (officeUseByResponse[r.uhid]?.inchargeName || '').toLowerCase().includes(q);
+                                 (o.reviewOfComplaint || '').toLowerCase().includes(q) ||
+                                 (o.inchargeName || '').toLowerCase().includes(q);
                         });
 
                         if (filteredProblems.length === 0) {
@@ -3202,8 +3299,10 @@ export function AdminDashboard({
                         return (
                           <div className="space-y-4">
                             {filteredProblems.map((p, idx) => {
-                              const ou = officeUseByResponse[p.uhid];
-                              const isResolved = !!(ou?.reviewOfComplaint || ou?.inchargeName);
+                              const u = p.uhid || '';
+                              const i = String(p.id || '');
+                              const ou = officeUseByResponse[u] || officeUseByResponse[i] || p.officeUse || {};
+                              const isResolved = !!(ou.reviewOfComplaint || ou.inchargeName || ou.correctiveAction || ou.dateOfReview || (ou.status && ou.status !== 'Pending'));
 
                               return (
                                 <div key={idx} className="border border-gray-200 rounded-xl p-5 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all space-y-4">
@@ -4067,11 +4166,33 @@ export function AdminDashboard({
 
               {/* Office Use Only Section */}
               {(() => {
-                const key = selectedResponse.uhid;
-                const ou = officeUseByResponse[key] || { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' };
-                const isReviewed = !!(ou.reviewOfComplaint || ou.dateOfReview || ou.inchargeName);
-                const setOu = (next) => setOfficeUseByResponse(prev => ({ ...prev, [key]: next }));
-                const formatDate = (d) => {
+                const key = selectedResponse.uhid || String(selectedResponse.id || '');
+                const savedLocal = (() => {
+                  try {
+                    const s = localStorage.getItem('hms_saved_office_use');
+                    if (s) {
+                      const p = JSON.parse(s);
+                      return p[key] || (selectedResponse.uhid && p[selectedResponse.uhid]) || (selectedResponse.id && p[String(selectedResponse.id)]);
+                    }
+                  } catch (e) {}
+                  return null;
+                })();
+
+                const ou = officeUseByResponse[key] ||
+                  (selectedResponse.uhid && officeUseByResponse[selectedResponse.uhid]) ||
+                  (selectedResponse.id && officeUseByResponse[String(selectedResponse.id)]) ||
+                  savedLocal ||
+                  selectedResponse.officeUse ||
+                  { reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' };
+                const setOu = (next: OfficeUse) => {
+                  setOfficeUseByResponse(prev => ({
+                    ...prev,
+                    [key]: next,
+                    ...(selectedResponse.uhid ? { [selectedResponse.uhid]: next } : {}),
+                    ...(selectedResponse.id ? { [String(selectedResponse.id)]: next } : {})
+                  }));
+                };
+                const formatDate = (d: any) => {
                   if (!d) return '—';
                   const dt = new Date(d);
                   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -4093,7 +4214,7 @@ export function AdminDashboard({
                         <div>
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Review of the Complaint</label>
                           <textarea
-                            value={ou.reviewOfComplaint}
+                            value={ou.reviewOfComplaint || ''}
                             onChange={e => setOu({ ...ou, reviewOfComplaint: e.target.value })}
                             rows={3}
                             placeholder="Describe complaint investigation..."
@@ -4103,7 +4224,7 @@ export function AdminDashboard({
                         <div>
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Corrective Action</label>
                           <textarea
-                            value={ou.correctiveAction}
+                            value={ou.correctiveAction || ''}
                             onChange={e => setOu({ ...ou, correctiveAction: e.target.value })}
                             rows={3}
                             placeholder="Immediate corrective steps taken..."
@@ -4117,7 +4238,7 @@ export function AdminDashboard({
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Date of Review</label>
                           <input
                             type="date"
-                            value={ou.dateOfReview}
+                            value={ou.dateOfReview || ''}
                             onChange={e => setOu({ ...ou, dateOfReview: e.target.value })}
                             style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
                           />
@@ -4125,7 +4246,7 @@ export function AdminDashboard({
                         <div>
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Preventive Action</label>
                           <textarea
-                            value={ou.preventiveAction}
+                            value={ou.preventiveAction || ''}
                             onChange={e => setOu({ ...ou, preventiveAction: e.target.value })}
                             rows={2}
                             placeholder="Long-term preventive measure..."
@@ -4138,7 +4259,7 @@ export function AdminDashboard({
                         <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>Incharge Name / பொறுப்பாளர் பெயர்</label>
                         <input
                           type="text"
-                          value={ou.inchargeName}
+                          value={ou.inchargeName || ''}
                           onChange={e => setOu({ ...ou, inchargeName: e.target.value })}
                           placeholder="e.g. Dr. Ramesh Kumar / Quality Manager"
                           style={{ width: '100%', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', color: '#1e293b', boxSizing: 'border-box' }}
@@ -4155,28 +4276,111 @@ export function AdminDashboard({
                         <button
                           type="button"
                           onClick={async () => {
-                            const nextData = { ...ou };
+                            const nextData = {
+                              reviewOfComplaint: ou.reviewOfComplaint || '',
+                              dateOfReview: ou.dateOfReview || new Date().toISOString().slice(0, 10),
+                              correctiveAction: ou.correctiveAction || '',
+                              preventiveAction: ou.preventiveAction || '',
+                              inchargeName: ou.inchargeName || '',
+                              status: 'Reviewed'
+                            };
                             setOuSaved(true);
+
+                            // 1. Update officeUseByResponse state and localStorage
                             setOfficeUseByResponse(prev => {
-                              const updated = { ...prev, [key]: nextData };
+                              const updated = {
+                                ...prev,
+                                [key]: nextData,
+                                ...(selectedResponse.uhid ? { [selectedResponse.uhid]: nextData } : {}),
+                                ...(selectedResponse.id ? { [String(selectedResponse.id)]: nextData } : {})
+                              };
                               try { localStorage.setItem('hms_saved_office_use', JSON.stringify(updated)); } catch (e) {}
                               return updated;
                             });
-                            setResponses(prev => prev.map(r => (r.uhid === key || r.id === selectedResponse.id) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
-                            setSelectedResponse(prev => prev ? { ...prev, officeUse: { ...nextData, status: 'Reviewed' } } : null);
+
+                            // 2. Update responses list
+                            setResponses(prev => prev.map(r => {
+                              const isMatch = (selectedResponse.uhid && r.uhid === selectedResponse.uhid) ||
+                                              (selectedResponse.id && String(r.id) === String(selectedResponse.id)) ||
+                                              (r.uhid === key);
+                              if (isMatch) {
+                                return { ...r, officeUse: nextData, isResolved: true };
+                              }
+                              return r;
+                            }));
+
+                            // 3. Update selectedResponse
+                            setSelectedResponse(prev => prev ? { ...prev, officeUse: nextData, isResolved: true } : null);
+
+                            // 4. Update hms_new_submissions in localStorage
+                            try {
+                              const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+                              if (Array.isArray(newSubs) && newSubs.length > 0) {
+                                const updatedSubs = newSubs.map((s: any) => {
+                                  const isMatch = (selectedResponse.uhid && s.uhid === selectedResponse.uhid) ||
+                                                  (selectedResponse.id && String(s.id) === String(selectedResponse.id)) ||
+                                                  (s.uhid === key);
+                                  if (isMatch) {
+                                    return { ...s, officeUse: nextData, isResolved: true };
+                                  }
+                                  return s;
+                                });
+                                localStorage.setItem('hms_new_submissions', JSON.stringify(updatedSubs));
+                              }
+                            } catch (e) {}
+
                             toast.success('Information saved successfully! Office Use details updated and marked as Resolved ✓');
 
+                            // 5. Send API updates to Node and PHP endpoints
                             try {
-                              const fd = new FormData();
-                              fd.append('response_id', String(selectedResponse.id || 0));
-                              fd.append('submission_id', String(selectedResponse.id || 0));
-                              fd.append('uhid', key);
-                              fd.append('review_comments', nextData.reviewOfComplaint || '');
-                              fd.append('review_date', nextData.dateOfReview || new Date().toISOString().slice(0, 10));
-                              fd.append('corrective_action', nextData.correctiveAction || '');
-                              fd.append('preventive_action', nextData.preventiveAction || '');
-                              fd.append('incharge_name', nextData.inchargeName || '');
-                              await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                              const payload = {
+                                hospital_id: getEffectiveHospitalId(),
+                                submission_id: selectedResponse.id || 0,
+                                response_id: selectedResponse.id || 0,
+                                uhid: selectedResponse.uhid || key,
+                                patientName: selectedResponse.patientName || '',
+                                review_comments: nextData.reviewOfComplaint,
+                                reviewOfComplaint: nextData.reviewOfComplaint,
+                                review_date: nextData.dateOfReview,
+                                dateOfReview: nextData.dateOfReview,
+                                corrective_action: nextData.correctiveAction,
+                                correctiveAction: nextData.correctiveAction,
+                                preventive_action: nextData.preventiveAction,
+                                preventiveAction: nextData.preventiveAction,
+                                incharge_name: nextData.inchargeName,
+                                inchargeName: nextData.inchargeName,
+                                status: 'Reviewed'
+                              };
+
+                              const endpoints = [
+                                '/api/save-office-use',
+                                'api/save-office-use',
+                                getApiUrl('save-office-use.php'),
+                                'save-office-use.php'
+                              ];
+
+                              for (const ep of endpoints) {
+                                try {
+                                  await fetch(ep, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                  });
+                                } catch (e) {}
+                              }
+
+                              try {
+                                const fd = new FormData();
+                                fd.append('response_id', String(selectedResponse.id || 0));
+                                fd.append('submission_id', String(selectedResponse.id || 0));
+                                fd.append('uhid', selectedResponse.uhid || key);
+                                fd.append('review_comments', nextData.reviewOfComplaint);
+                                fd.append('review_date', nextData.dateOfReview);
+                                fd.append('corrective_action', nextData.correctiveAction);
+                                fd.append('preventive_action', nextData.preventiveAction);
+                                fd.append('incharge_name', nextData.inchargeName);
+                                await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                              } catch (e) {}
                             } catch (err) {
                               console.error('Save office use error:', err);
                             }
@@ -4334,26 +4538,113 @@ export function AdminDashboard({
               <button
                 onClick={async () => {
                   if (!officeUseModalResponse) return;
-                  const uhid = officeUseModalResponse.uhid;
-                  const respId = officeUseModalResponse.id;
-                  const nextData = { ...officeUseModalData };
+                  const uhid = officeUseModalResponse.uhid || '';
+                  const respId = officeUseModalResponse.id || '';
+                  const nextData = {
+                    reviewOfComplaint: officeUseModalData.reviewOfComplaint || '',
+                    dateOfReview: officeUseModalData.dateOfReview || new Date().toISOString().slice(0, 10),
+                    correctiveAction: officeUseModalData.correctiveAction || '',
+                    preventiveAction: officeUseModalData.preventiveAction || '',
+                    inchargeName: officeUseModalData.inchargeName || '',
+                    status: 'Reviewed'
+                  };
                   
-                  setOfficeUseByResponse(prev => ({ ...prev, [uhid]: nextData }));
-                  setResponses(prev => prev.map(r => (r.uhid === uhid || r.id === respId) ? { ...r, officeUse: { ...nextData, status: 'Reviewed' } } : r));
+                  // 1. Update officeUseByResponse and localStorage
+                  setOfficeUseByResponse(prev => {
+                    const updated = {
+                      ...prev,
+                      ...(uhid ? { [uhid]: nextData } : {}),
+                      ...(respId ? { [String(respId)]: nextData } : {})
+                    };
+                    try { localStorage.setItem('hms_saved_office_use', JSON.stringify(updated)); } catch (e) {}
+                    return updated;
+                  });
+
+                  // 2. Update responses list
+                  setResponses(prev => prev.map(r => {
+                    const isMatch = (uhid && r.uhid === uhid) || (respId && String(r.id) === String(respId));
+                    if (isMatch) {
+                      return { ...r, officeUse: nextData, isResolved: true };
+                    }
+                    return r;
+                  }));
+
+                  // 3. Update selectedResponse if open
+                  setSelectedResponse(prev => {
+                    if (prev && ((uhid && prev.uhid === uhid) || (respId && String(prev.id) === String(respId)))) {
+                      return { ...prev, officeUse: nextData, isResolved: true };
+                    }
+                    return prev;
+                  });
+
+                  // 4. Update hms_new_submissions in localStorage
+                  try {
+                    const newSubs = JSON.parse(localStorage.getItem('hms_new_submissions') || '[]');
+                    if (Array.isArray(newSubs) && newSubs.length > 0) {
+                      const updatedSubs = newSubs.map((s: any) => {
+                        const isMatch = (uhid && s.uhid === uhid) || (respId && String(s.id) === String(respId));
+                        if (isMatch) {
+                          return { ...s, officeUse: nextData, isResolved: true };
+                        }
+                        return s;
+                      });
+                      localStorage.setItem('hms_new_submissions', JSON.stringify(updatedSubs));
+                    }
+                  } catch (e) {}
+
                   setOfficeUseModalResponse(null);
                   toast.success('Office Use record saved! Marked as Resolved ✓');
 
+                  // 5. Send API updates to Node and PHP endpoints
                   try {
-                    const fd = new FormData();
-                    fd.append('response_id', String(respId || 0));
-                    fd.append('submission_id', String(respId || 0));
-                    fd.append('uhid', uhid);
-                    fd.append('review_comments', nextData.reviewOfComplaint || '');
-                    fd.append('review_date', nextData.dateOfReview || new Date().toISOString().slice(0, 10));
-                    fd.append('corrective_action', nextData.correctiveAction || '');
-                    fd.append('preventive_action', nextData.preventiveAction || '');
-                    fd.append('incharge_name', nextData.inchargeName || '');
-                    await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                    const payload = {
+                      hospital_id: getEffectiveHospitalId(),
+                      submission_id: respId || 0,
+                      response_id: respId || 0,
+                      uhid: uhid,
+                      patientName: officeUseModalResponse.patientName || '',
+                      review_comments: nextData.reviewOfComplaint,
+                      reviewOfComplaint: nextData.reviewOfComplaint,
+                      review_date: nextData.dateOfReview,
+                      dateOfReview: nextData.dateOfReview,
+                      corrective_action: nextData.correctiveAction,
+                      correctiveAction: nextData.correctiveAction,
+                      preventive_action: nextData.preventiveAction,
+                      preventiveAction: nextData.preventiveAction,
+                      incharge_name: nextData.inchargeName,
+                      inchargeName: nextData.inchargeName,
+                      status: 'Reviewed'
+                    };
+
+                    const endpoints = [
+                      '/api/save-office-use',
+                      'api/save-office-use',
+                      getApiUrl('save-office-use.php'),
+                      'save-office-use.php'
+                    ];
+
+                    for (const ep of endpoints) {
+                      try {
+                        await fetch(ep, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(payload)
+                        });
+                      } catch (e) {}
+                    }
+
+                    try {
+                      const fd = new FormData();
+                      fd.append('response_id', String(respId || 0));
+                      fd.append('submission_id', String(respId || 0));
+                      fd.append('uhid', uhid);
+                      fd.append('review_comments', nextData.reviewOfComplaint);
+                      fd.append('review_date', nextData.dateOfReview);
+                      fd.append('corrective_action', nextData.correctiveAction);
+                      fd.append('preventive_action', nextData.preventiveAction);
+                      fd.append('incharge_name', nextData.inchargeName);
+                      await fetch(getApiUrl('save-office-use.php'), { method: 'POST', body: fd, credentials: 'same-origin' });
+                    } catch (e) {}
                   } catch (err) {
                     console.error('Save office use error:', err);
                   }

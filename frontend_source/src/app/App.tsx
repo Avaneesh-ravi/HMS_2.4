@@ -1438,7 +1438,10 @@ export default function App() {
     setTimeout(() => setShowFilledBadge(false), 2000);
   };
 
-  const isDashboardPage = window.location.pathname.includes('dashboard.php');
+  const isDashboardPage = window.location.pathname.includes('dashboard.php') || 
+                          window.location.search.includes('view=admin') || 
+                          window.location.search.includes('admin=true') ||
+                          window.location.hash.includes('admin');
 
   // Show Admin Dashboard if authenticated or if on dashboard page
   if (isDashboardPage || (showAdminDashboard && isAdminLoggedIn)) {

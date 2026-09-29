@@ -113,6 +113,21 @@ export default async function handler(req, res) {
     try {
       await client.query('BEGIN');
 
+      // Ensure table exists
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS complaint_review (
+          review_id SERIAL PRIMARY KEY,
+          submission_id INTEGER NOT NULL,
+          review_comments TEXT,
+          review_date DATE,
+          corrective_action TEXT,
+          preventive_action TEXT,
+          incharge_name VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // Check if complaint_review row already exists
       const existing = await client.query(
         'SELECT review_id FROM complaint_review WHERE submission_id = $1 LIMIT 1',
