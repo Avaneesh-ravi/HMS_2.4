@@ -8,8 +8,10 @@
 The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** is an enterprise-grade web application engineered to capture, aggregate, analyze, and act upon multi-departmental inpatient (IP) and outpatient (OP) patient experiences in real time.
 
 ### Key Objectives
-- **Patient Engagement**: Deliver an intuitive, bilingual (English & Tamil), mobile-responsive feedback collection flow.
+- **Patient Engagement**: Deliver an intuitive, bilingual (English & தமிழ்), mobile-responsive feedback collection flow.
+- **Strict Data Validation & Integrity**: Ensure comprehensive data capture with conditional OP/IP date requirements and OTP/Email verification guards.
 - **Administrative Action & Compliance**: Provide hospital administrators and quality officers with a real-time analytics dashboard, dynamic question management, complaint investigation logging (corrective & preventive actions), Excel/CSV multi-section export, and print-ready A4 executive reports.
+- **Persistence Across Sessions & Refresh**: Guarantee zero data loss across page refreshes by implementing multi-tier storage synchronization (React state, `localStorage`, and cloud PostgreSQL).
 - **Dual-Platform Architecture**: Function as a standalone cloud application on **Vercel** with PostgreSQL database and Node.js Serverless Functions, while remaining fully compatible with local hospital intranet **XAMPP / PHP / MySQL / PostgreSQL** infrastructure.
 
 ---
@@ -23,7 +25,7 @@ The **Hospital Management System (HMS) Patient Feedback & Analytics Platform** i
 | **State & Drag-and-Drop**| `@dnd-kit/core`, `@dnd-kit/sortable` | Dynamic drag-and-drop question ordering |
 | **Notifications** | `sonner` (Toast) | Non-blocking user feedback alerts |
 | **Cloud Backend** | Vercel Serverless Node.js Functions (`api/*.js`) | RESTful serverless microservices |
-| **Cloud Database** | PostgreSQL (Neon / @vercel/postgres) | Relational storage for feedback, complaints, questions |
+| **Cloud Database** | PostgreSQL (Supabase / Neon with SSL pooling) | Relational storage for feedback, complaints, questions |
 | **Local Backend** | PHP 7.4 / 8.x (`backend/admin/*.php` - PHP 7.4+ Compatible) | On-premise XAMPP integration proxy |
 | **Build & Asset Sync** | Node.js `sync-dist.js` | Synchronizes compiled Vite bundles across distributions |
 | **Development Platform** | **Google Antigravity IDE** | Engineered and refactored with Google DeepMind's agentic AI IDE |
@@ -82,39 +84,46 @@ HMS_V6.6/
 ├── public/                        # Static Assets & Public Index
 ├── sync-dist.js                   # Build-time multi-target asset sync script
 ├── vercel.json                    # Vercel Routing & Deployment Configuration
+├── database_schema.sql            # Complete PostgreSQL Database Schema Dump
+├── database_dump_with_data.sql    # Complete Database Dump (Schema + Live Records)
+├── TEST_REPORTS_AND_CORRECTIONS.md# Complete QA Defect Tracking & Resolution Matrix (31/31 Fixed)
 └── TOI_DOCUMENT.md                # This Knowledge Transfer Document
 ```
 
 ---
 
-## 4. Patient Feedback Wizard Flow
+## 4. Patient Feedback Wizard Flow & Validation Rules
 
 ```mermaid
 graph TD
-    A[Patient Lands on Welcome Page] --> B[Step 1: Patient Verification & UHID Lookup]
-    B --> C[Step 2: Department Star/Emoji Ratings]
-    C --> D[Step 3: Department Yes/No Questions]
+    A[Patient Lands on Welcome Page] --> B[Step 1: Patient Record & Identification]
+    B -->|Validate OP/IP Dates & Form Details| C[Step 2: Department Star/Emoji Ratings]
+    C --> D[Step 3: Service & Hygiene Yes/No Questions]
     D --> E[Step 4: Overall Remarks & Recommend Hospital]
     E --> F[API: /api/submit-feedback]
-    F --> G[PostgreSQL Database]
+    F --> G[PostgreSQL Database / Supabase]
     G --> H[Step 5: Thank You Confirmation Screen]
+    H -->|60s Inactivity Timer| A
 ```
 
-### Wizard Lifecycle
+### Wizard Lifecycle & Validation Guardrails:
 1. **Language Selection**: Patients can toggle between **English** and **தமிழ் (Tamil)** at any time. All question labels, hints, and error alerts dynamically update.
 2. **UHID Auto-Lookup**: When a patient enters their UHID, `/api/get-patient` pre-populates patient details (Name, Visit Type, Mobile, Department).
-3. **Department Ratings**: Multi-department rating cards rendered with star scales (1 to 5) or animated emojis.
-4. **Yes/No Checkpoints**: Binary/trinary service inquiries (Cleanliness, Cost transparency, Referral willingness).
-5. **Inactivity Timer**: Automatic timeout after 60 seconds of inactivity on the Thank You screen, returning to the welcome screen for the next patient.
-
----
-
+3. **Strict Conditional OP/IP Validation**:
+   - **Outpatient (OP)**: `OP Number` and `OP Date` are strictly mandatory. Missing fields prevent wizard progression with clear warnings.
+   - **Inpatient (IP)**: `IP Number`, `Date of Admission`, and `Date of Discharge` are strictly mandatory.
+4. **OTP & Email Security**:
+   - Verify OTP button is disabled until a valid 6-digit numeric OTP is entered.
+   - Send OTP / Verify Email actions are blocked until valid RFC format is entered.
+5. **Department Ratings**: Multi-department rating cards rendered with star scales (1 to 5) or animated emojis.
+6. **Yes/No Checkpoints**: Binary/trinary service inquiries (Cleanliness, Cost transparency, Referral willingness).
+7. **Inactivity Lifecycle**: Automatic timeout after 60 seconds of inactivity on the Thank You screen, safely returning to the welcome screen for the next patient.
 
 ---
 
 ## 5. Original Hospital Feedback Form Specification & Digital Mapping
 
-The web platform is an exact digital transformation of the hospital's standardized 5-page physical feedback and quality audit questionnaire, complete with bilingual English and Tamil localization:
+The web platform is an exact digital transformation of the hospital's standardized 5-page physical feedback and quality audit questionnaire:
 
 ### **Page 1: Patient Record (நோயாளி தகவல்)**
 - **Header**: Hospital Logo, Hospital Name, Address, Contact Number & Email.
@@ -127,10 +136,10 @@ The web platform is an exact digital transformation of the hospital's standardiz
   - `Email` (மின்னஞ்சல் முகவரி)
   - `Address & City` (முகவரி & நகரம்)
 - **Visit & Admission Records**:
-  - `OP No & Date` (புறநோயாளி எண் & தேதி)
-  - `IP No & Date` (உள்நோயாளி எண் & தேதி)
-  - `Date of Admission` (அனுமதிக்கப்பட்ட தேதி)
-  - `Date of Discharge` (மருத்துவமனையை விட்டு சென்ற தேதி)
+  - `OP No & Date` (புறநோயாளி எண் & தேதி - Mandatory for OP)
+  - `IP No & Date` (உள்நோயாளி எண் & தேதி - Mandatory for IP)
+  - `Date of Admission` (அனுமதிக்கப்பட்ட தேதி - Mandatory for IP)
+  - `Date of Discharge` (மருத்துவமனையை விட்டு சென்ற தேதி - Mandatory for IP)
 
 ---
 
@@ -195,9 +204,9 @@ Dedicated quality assurance audit and resolution section for hospital administra
 - **Preventive Action** (தடுப்பு நடவடிக்கை): Systemic/protocol changes to prevent recurrence.
 - **Incharge Name** (பொறுப்பாளர் பெயர்): Designated officer / Medical Superintendent.
 
-## 6. Administrative Dashboard & Operational Workflows
+---
 
-The Admin Dashboard provides 7 core modules:
+## 6. Administrative Dashboard & Operational Workflows
 
 ```mermaid
 graph LR
@@ -210,16 +219,15 @@ graph LR
     Admin --> Branding[7. Hospital Profile & Branding]
 ```
 
-### Key Workflows:
-1. **Office Use & Problem Resolution Workflow**:
+### Key Workflows & Persistence Engine:
+1. **Office Use & Problem Resolution Persistence**:
    - For unresolved patient feedback or low ratings, admins click **"Resolve Problem"** or **"Edit Office Review"**.
-   - Opens `OfficeUseModal` to log:
-     - **Review of Complaint**: Detailed explanation of patient issue.
-     - **Date of Review**: Official review timestamp.
-     - **Corrective Action Taken**: Immediate corrective measures.
-     - **Preventive Action**: Long-term policy adjustments.
-     - **Incharge Name**: Officer responsible for resolution.
-   - Saves to `complaint_review` table via `/api/save-office-use`.
+   - Opens `OfficeUseModal` or Feedback Detail Modal to log all 5 fields.
+   - **Multi-Tier Persistence Architecture**:
+     - Synchronized into React state (`officeUseByResponse` keyed by both `uhid` and `id`).
+     - Hydrated and cached into `localStorage.hms_saved_office_use` and `localStorage.hms_new_submissions`.
+     - Saved to PostgreSQL `complaint_review` table via `/api/save-office-use`.
+     - On page reload, `getSavedOfficeUse()` reconciles cached records with API data, keeping all 5 fields populated and table badge set to **`Resolved ✓`**.
 
 2. **Clean 3-Section Excel / CSV Export**:
    - Generates structured CSV with UTF-8 BOM (`\uFEFF`) containing:
@@ -231,6 +239,9 @@ graph LR
    - Zero sidebar / header interference in print preview.
    - Automatically renders cards into a clean **2-column grid** across the full page width.
    - Avoids awkward page breaks inside cards using `break-inside: avoid`.
+
+4. **Direct Admin Route Support**:
+   - Access admin portal directly using URL query parameters: `https://hms-2-4.vercel.app/?view=admin` or `?admin=true`.
 
 ---
 
@@ -262,11 +273,12 @@ Stores individual patient feedback entries.
 
 ### 3. `complaint_review`
 Stores administrative investigations and corrective actions.
-- `id` (SERIAL PRIMARY KEY)
+- `review_id` (SERIAL PRIMARY KEY)
+- `submission_id` (INTEGER)
 - `hospital_id` (VARCHAR)
 - `uhid` (VARCHAR)
-- `review_of_complaint` (TEXT)
-- `date_of_review` (DATE)
+- `review_comments` / `review_of_complaint` (TEXT)
+- `review_date` / `date_of_review` (DATE)
 - `corrective_action` (TEXT)
 - `preventive_action` (TEXT)
 - `incharge_name` (VARCHAR)
@@ -363,8 +375,9 @@ Dynamic question registry for ratings and binary checks.
 - [x] **Root Cleanliness**: Scratch and test PHP files archived into `archive/test_scripts/`.
 - [x] **Print Output Verification**: Verified 100% full-width layout without sidebar interference.
 - [x] **CSV/Excel Export Verification**: Verified 3-section layout with UTF-8 BOM encoding.
-- [x] **Complaint Investigation Logging**: Tested "Resolve Problem" and "Edit Office Review" workflows.
-- [x] **QA Defect Log Verification**: All 27 historical test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
+- [x] **Complaint Investigation Logging & Refresh Persistence**: Tested "Resolve Problem" and "Edit Office Review" workflows; verified persistence after browser refresh.
+- [x] **Validation Integrity**: Verified OP/IP date requirements and OTP/Email validation rules.
+- [x] **QA Defect Log Verification**: All 31 historical test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
 
 ---
 

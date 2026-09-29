@@ -10,9 +10,6 @@
 
 ---
 
-
----
-
 ## 🚀 Built with Google Antigravity IDE
 
 This application was engineered, architected, and refactored with the assistance of **Google Antigravity IDE** — Google DeepMind's advanced agentic AI pair programming environment.
@@ -29,29 +26,34 @@ It supports dual deployment modes:
 
 ---
 
-
----
-
 ## 📋 Standard Hospital Feedback Form Specification
 
 The application digitizes the official 5-page hospital patient feedback & quality audit form:
-1. **Patient Record**: UHID, Name, Age, Gender, Mobile, Email, Address, OP/IP numbers, Admission & Discharge dates.
+1. **Patient Record**: UHID, Name, Age, Gender, Mobile, Email, Address, OP/IP numbers, OP/IP Dates, Admission & Discharge dates (conditional validation for OP and IP modes).
 2. **Referral Source**: "What made you choose us?" (Self opinion, Ads, Friends/Family, Corporate, Referral Doctor).
 3. **13 Department Rating Questions**: Reception, Admission, Billing, Doctor treatment, Nursing, Pharmacy, X-ray/Scan, Lab, Insurance, Food, Physiotherapy, Blood Bank, and Overall Service.
 4. **Service & Hygiene Checkpoints**: Environmental Cleanliness, Treatment Cost Disclosure at Admission, and Recommendation Intent.
 5. **Suggestions & Appreciation**: Patient remarks, Staff appreciation (Name & Department).
-6. **For Office Use Only**: Complaint review, review date, corrective action, preventive action, and incharge sign-off.
+6. **For Office Use Only**: Complaint review, review date, corrective action, preventive action, and incharge sign-off (persisted with multi-tier storage across reloads).
 
-## ✨ Key Features
+---
+
+## ✨ Key Features & Recent Enhancements
 
 - **Bilingual Patient Feedback Wizard**: Real-time switching between **English** and **தமிழ் (Tamil)**.
+- **Strict Conditional Validation**:
+  - **OP Patients**: OP Number and OP Visit Date are mandatory before proceeding.
+  - **IP Patients**: IP Number, Admission Date, and Discharge Date are mandatory before proceeding.
+  - **OTP & Email Security**: Verify OTP button is disabled until a valid 6-digit numeric OTP is entered; Email verification and sending actions are blocked until standard RFC email syntax is satisfied.
 - **UHID Auto-Lookup**: Patient identity verification via `/api/get-patient` pre-filling patient records.
+- **Office Use Persistence Across Refresh**: Complete multi-layer persistence (`React state` + `localStorage.hms_saved_office_use` + `localStorage.hms_new_submissions` + PostgreSQL `complaint_review` table) ensuring all 5 audit fields and `Resolved ✓` badges remain populated across page refreshes.
 - **Dynamic Department Ratings**: Interactive 5-star scales and animated emoji rating cards.
 - **Yes / No Service Inquiries**: Binary questions for cleanliness, cost transparency, and doctor treatment.
 - **Office Use & Problem Resolution Action Log**: Quality officer workflow to log investigations, corrective actions, preventive policies, and incharge accountability.
 - **Dynamic Survey Question Builder**: Add, edit, reorder (drag-and-drop), and manage bilingual labels for survey questions.
 - **Clean 3-Section Excel / CSV Export**: Structured report containing Department Ratings summary, Yes/No breakdown, and individual patient responses with office action logs.
 - **100% Full-Width A4 Print Engine**: Clean executive print layout without sidebar interference.
+- **Direct Admin Routing**: Direct access to the admin dashboard via `?view=admin` or `?admin=true`.
 
 ---
 
@@ -113,6 +115,7 @@ HMS_V6.6/
 ├── database_schema.sql            # Complete PostgreSQL Database Schema Dump
 ├── database_dump_with_data.sql    # Complete Database Dump (Schema + Live Data Records)
 ├── TOI_DOCUMENT.md                # Official Transfer of Information (TOI) Handover Manual
+├── TEST_REPORTS_AND_CORRECTIONS.md# Complete QA Defect Tracking & Resolution Matrix (31/31 Fixed)
 ├── sync-dist.js                   # Build-time multi-target asset sync script
 ├── vercel.json                    # Vercel Routing & Serverless Configuration
 └── README.md                      # Project Documentation (This File)
@@ -155,8 +158,7 @@ Follow this step-by-step guide to set up, run, and deploy this project from scra
    - Click **Run** (or press `Ctrl + Enter`).
    - You will see `Success: No rows returned` — all 18 tables and 2,300+ sample records are now imported!
 4. **Get Database Connection Details**:
-   - In Supabase, go to **Project Settings (gear icon)** $
-ightarrow$ **Database**.
+   - In Supabase, go to **Project Settings (gear icon)** $\rightarrow$ **Database**.
    - Under **Connection parameters**, note down:
      - **Host**: (e.g., `aws-0-ap-northeast-1.pooler.supabase.com`)
      - **Port**: `5432` (or `6543`)
@@ -211,8 +213,7 @@ ightarrow$ **Database**.
 1. **Sign Up on Vercel**:
    - Go to [vercel.com](https://vercel.com/) and sign in with your GitHub account.
 2. **Import Repository**:
-   - Click **Add New...** $
-ightarrow$ **Project**.
+   - Click **Add New...** $\rightarrow$ **Project**.
    - Select your cloned repository `HMS_2.4`.
 3. **Configure Environment Variables in Vercel**:
    - Before clicking Deploy, expand the **Environment Variables** section.
@@ -225,7 +226,7 @@ ightarrow$ **Project**.
      | `DB_USER` | Your Supabase User (e.g. `postgres.oeithmuipahqhaoznznd`) |
      | `DB_PASS` | Your Supabase Database Password |
 4. **Deploy**:
-   - Click **Deploy**. Vercel will build the project in ~1 minute and provide a live URL (e.g., `https://your-project.vercel.app`).
+   - Click **Deploy**. Vercel will build the project in ~1 minute and provide a live URL (e.g., `https://hms-2-4.vercel.app`).
 
 ---
 
@@ -242,19 +243,22 @@ ightarrow$ **Project**.
 
 ## ❓ Frequently Asked Questions & Troubleshooting
 
-### 1. "Database connection error / Connection timeout"
+### 1. "Office Use details disappearing after refresh"
+- **Status**: **Fixed in V6.6**. The application now uses synchronized multi-tier persistence across React memory, `localStorage.hms_saved_office_use`, `localStorage.hms_new_submissions`, and Supabase `complaint_review` table with automatic database migration.
+
+### 2. "Database connection error / Connection timeout"
 - **Fix**: Ensure your computer has active internet access to reach Supabase. Verify the password in [`api/db.js`](./api/db.js) or Vercel Environment Variables.
 
-### 2. "Port 5173 is already in use"
+### 3. "Port 5173 is already in use"
 - **Fix**: Vite will automatically switch to port 5174 (`http://localhost:5174/`). Or stop existing Node processes in Task Manager.
 
-### 3. "Changes in frontend_source are not reflecting"
+### 4. "Changes in frontend_source are not reflecting"
 - **Fix**: Run `npm run build` inside `frontend_source/` so `sync-dist.js` updates the static asset directories.
 
 ---
 
 ## 🧪 QA Test Reports & Defect Resolution Document
-For a complete matrix of all historical QA defect tickets, repro steps, root cause analyses, and implemented technical fixes, refer to:
+For a complete matrix of all 31 QA defect tickets, repro steps, root cause analyses, and implemented technical fixes, refer to:
 📄 **[`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md)**
 
 ---

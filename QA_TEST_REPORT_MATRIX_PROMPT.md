@@ -2,7 +2,7 @@
 
 This document provides:
 1. **The Master Prompt for ChatGPT / Claude** to generate professional QA Test Report tables matching your company's QA spreadsheet format.
-2. **The Complete Pre-Filled QA Defect Resolution Table** (All 27 Test Scenarios with exact QA columns, Priority, Status, and Technical Corrections).
+2. **The Complete Pre-Filled QA Defect Resolution Table** (All 31 Test Scenarios with exact QA columns, Priority, Status, and Technical Corrections).
 
 ---
 
@@ -57,6 +57,10 @@ Here is the data of all logged defects and corrections to include:
 - Ticket 25: Resolve Problem button in unresolved report view inactive. Bound button in FeedbackReportSection to open OfficeUseModal with pre-filled patient info. Priority: 1. Fixed in V6.6. Status: Verified & Approved.
 - Ticket 26: Edit Office Review button in resolved report view inactive. Bound button to open OfficeUseModal with existing complaint investigation logs for editing. Priority: 1. Fixed in V6.6. Status: Verified & Approved.
 - Ticket 27: Print Feedback Report displaying blank page and left green sidebar taking up 30% of page. Set aside/header to display:none !important; width:0; position:absolute; left:-99999px; expanded report to 100% full width with 2-column card grid. Priority: 1. Fixed in V6.6. Status: Verified & Approved.
+- Ticket 28: OTP verify button and email sending action clickable when incomplete/invalid. Disabled verify button until 6-digit numeric OTP is entered; blocked email actions until valid RFC email syntax is satisfied. Priority: 2. Fixed in V6.6. Status: Verified & Approved.
+- Ticket 29: Mandatory OP and IP date fields missing validation. Enforced OP Number & OP Date mandatory for OP; IP Number, Admission Date & Discharge Date mandatory for IP with localized warning alerts. Priority: 1. Fixed in V6.6. Status: Verified & Approved.
+- Ticket 30: Confusing 'Change Hospital' button when URL specifies hospital. Removed redundant Change Hospital button from header and established clean URL parameter routing. Priority: 3. Fixed in V6.6. Status: Verified & Approved.
+- Ticket 31: Office Use details saved in Admin Feedback Detail modal disappearing after page refresh. Added getSavedOfficeUse hydration helper reading localStorage.hms_saved_office_use, auto-created PostgreSQL complaint_review table, implemented multi-key indexing (uhid and id), and reconciled remote API responses. Priority: 1. Fixed in V6.6. Status: Verified & Approved.
 
 Please render the complete, detailed table with professional corporate styling.
 ```

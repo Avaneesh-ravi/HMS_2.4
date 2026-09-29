@@ -8,12 +8,12 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 
 | Category | Total Logged | Resolved | Status |
 |---|---|---|---|
-| **Office Use & Problem Resolution** | 5 | 5 | ✅ 100% Fixed |
+| **Office Use & Problem Resolution** | 6 | 6 | ✅ 100% Fixed |
 | **Bilingual & Tamil Font Encoding** | 5 | 5 | ✅ 100% Fixed |
-| **Form Validation & Navigation** | 8 | 8 | ✅ 100% Fixed |
+| **Form Validation, OTP & Navigation** | 11 | 11 | ✅ 100% Fixed |
 | **Reporting, Export & Print Layout** | 6 | 6 | ✅ 100% Fixed |
 | **Admin Configuration & Dynamic Questions** | 3 | 3 | ✅ 100% Fixed |
-| **Total Test Scenarios** | **27** | **27** | ✅ **All Verified & Live** |
+| **Total Test Scenarios** | **31** | **31** | ✅ **All Verified & Live** |
 
 ---
 
@@ -44,11 +44,30 @@ This document provides a comprehensive log of all historical QA test scenarios, 
   1. Synchronized state in `useAdminData` / `AdminDashboard.tsx` to immediately update `officeUseByResponse` state.
   2. Updated SQL join in `/api/get-responses` to merge `complaint_review` records on `uhid` / `submission_id`.
 
-#### Action Buttons: "Resolve Problem" & "Edit Office Review" in Feedback Report
+#### Ticket #25: Action Buttons: "Resolve Problem" & "Edit Office Review" in Feedback Report
 - **Reported Defect**: Buttons inside the Dedicated Problem Resolution View tabs were inactive.
 - **Correction Made**:
   - Bound **Resolve Problem** button on unresolved items to open `OfficeUseModal` with pre-filled patient info.
   - Bound **Edit Office Review** button on resolved items to allow modifying previously logged corrective/preventive actions.
+
+#### Ticket #26: Edit Office Review Button in Resolved Report View Inactive
+- **Reported Defect**: Clicking Edit Office Review inside the Resolved Cards view did not open the edit dialog.
+- **Correction Made**:
+  - Bound the button to trigger `OfficeUseModal` populated with previous investigation notes, enabling real-time updates to `complaint_review`.
+
+#### Ticket #31: Office Use Saved Details Not Displaying After Browser Refresh
+- **Repro Steps**: Fill Office Use fields in Feedback Detail Modal $\rightarrow$ Click Save Office Details (success toast appears) $\rightarrow$ Refresh the browser page (`F5` / `Ctrl+R`) $\rightarrow$ Re-open the feedback detail modal.
+- **Reported Defect**: Office Use fields appeared empty after page reload; table row lost `Resolved ✓` indicator if API latency occurred.
+- **Root Cause**:
+  1. Initial React state `officeUseByResponse` was initialized as empty object `{}` instead of hydrating from `localStorage`.
+  2. Incoming API response fetch wiped local in-memory state if server records were slightly delayed.
+  3. Single-key indexing mismatch between `uhid` and submission `id`.
+- **Correction Made**:
+  1. Added `getSavedOfficeUse()` hydration helper in `AdminDashboard.tsx` reading and sanitizing `localStorage.getItem('hms_saved_office_use')`.
+  2. Initialized `officeUseByResponse` and initial `responses` by merging cached Office Use entries.
+  3. Multi-key indexing (`uhid` and `id`) in `hms_saved_office_use` and `hms_new_submissions`.
+  4. Added `CREATE TABLE IF NOT EXISTS complaint_review` in Node and PHP APIs with dual camelCase/snake_case payload normalization.
+  5. Verified with automated end-to-end browser reload testing.
 
 ---
 
@@ -77,6 +96,9 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 - **Correction Made**:
   - Fixed database collation and JSONB serialization in `/api/submit-feedback` and `/api/get-responses` so UTF-8 Tamil text is stored and returned with zero loss.
 
+#### Ticket #4 (Ref 4): Default Language Preference Not Retained
+- **Correction Made**: Persisted chosen language in active session state and local storage so navigation retains the user's preferred language.
+
 ---
 
 ### 3. Reporting, Export & Print Layout
@@ -90,17 +112,23 @@ This document provides a comprehensive log of all historical QA test scenarios, 
      - *Section 2*: Department Yes/No Questions Breakdown.
      - *Section 3*: Individual Patient Responses & Office Resolution Log.
 
-#### Print Report Blank Page & Misalignment Issue
-- **Reported Defect**: Printing the report resulted in blank pages and cards squeezed into a narrow column.
+#### Ticket #27: Print Feedback Report Blank Page & Left Sidebar Misalignment
+- **Reported Defect**: Printing the report resulted in blank pages and cards squeezed into a narrow column due to persistent 30% sidebar.
 - **Root Cause**: Tailwind CSS `overflow-hidden` containers, flex layout restrictions, and sidebar visibility during `@media print`.
 - **Correction Made**:
   1. Enforced `display: none !important; width: 0; height: 0; position: absolute; left: -99999px;` on `<aside>` sidebar and `<header>`.
   2. Released `#root`, `.print-layout-root`, and `.print-main-content` to `display: block !important; width: 100% !important`.
   3. Formatted cards into a clean **2-column grid** across the full A4 page width with `break-inside: avoid`.
 
+#### Ticket #8: Submitted Feedback Not Reflecting in Apollo Hospital Report
+- **Correction Made**: Unified SQL queries and `hospital_id` filtering in `/api/get-responses` to accurately tally all submissions.
+
+#### Ticket #9 (Ref 6): Export CSV Button Not Downloading File
+- **Correction Made**: Built `export.service.ts` with browser download triggers and MIME type headers.
+
 ---
 
-### 4. Patient Feedback Wizard & Form Navigation
+### 4. Patient Feedback Wizard, Validation & Navigation
 
 #### Ticket #1 (Ref 1): Title Text Not Showing on Language Switch
 - **Correction Made**: Wired reactive state in `App.tsx` to immediately re-render question titles in the active language (`en` or `ta`).
@@ -132,6 +160,26 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 #### Ticket #24 (Ref 24): URL Direct Access Navigation
 - **Correction Made**: Built `getEffectiveHospitalId` to automatically read URL parameters (`?hospital_id=...`), fall back to `localStorage`, or display clean hospital selection cards without blank screens.
 
+#### Ticket #28: OTP Verification & Email Button Blocking on Invalid Input
+- **Repro Steps**: Enter 3 digits or invalid characters in OTP field $\rightarrow$ observe Verify OTP button state.
+- **Reported Defect**: Verify OTP was clickable prematurely; incomplete email addresses allowed triggering email verification.
+- **Correction Made**:
+  1. Disabled Verify OTP button until strict 6-digit numeric length is reached.
+  2. Disabled Send OTP and email actions until email string satisfies RFC standard email format.
+
+#### Ticket #29: Mandatory OP / IP Date Fields Validation & Alerts
+- **Repro Steps**: Select OP $\rightarrow$ leave OP Date empty $\rightarrow$ click Next. Select IP $\rightarrow$ leave Admission/Discharge date empty $\rightarrow$ click Next.
+- **Reported Defect**: User was allowed to proceed without entering mandatory visit/admission dates.
+- **Correction Made**:
+  1. For `visitType === 'OP'`: `opNumber` and `opDate` are strictly required.
+  2. For `visitType === 'IP'`: `ipNumber`, `admissionDate`, and `dischargeDate` are strictly required.
+  3. Added bilingual warning toasts ("Please enter OP Date" / "Please enter Admission and Discharge Dates") blocking step navigation until completed.
+
+#### Ticket #30: Streamlined Hospital Navigation & URL Routing
+- **Reported Defect**: Redundant "Change Hospital" button caused confusion when hospital administrators insisted on fixed URL selection (`https://hms-2-4.vercel.app/?hospital_id=apollo-hospital`).
+- **Correction Made**:
+  - Removed confusing "Change Hospital" button from the feedback wizard header and standardized direct hospital routing through URL parameters.
+
 ---
 
 ### 5. Admin Form Builder & Dynamic Questions
@@ -147,11 +195,14 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 - **Correction Made**:
   - Added "Deleted from Form (Past Data)" badge and dynamic label resolution so past historical questions retain their original question title.
 
+#### Ticket #18 (Ref 15): Empty Form Submission Generic Error Message
+- **Correction Made**: Added localized Sonner toasts in Tamil & English guiding the user to required sections.
+
 ---
 
 ## 🏆 Verification & Test Sign-off
 
-All 27 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
+All 31 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
 
 - **Live Application**: [https://hms-2-4.vercel.app](https://hms-2-4.vercel.app)
 - **Database Backup**: [`database_dump_with_data.sql`](./database_dump_with_data.sql)
