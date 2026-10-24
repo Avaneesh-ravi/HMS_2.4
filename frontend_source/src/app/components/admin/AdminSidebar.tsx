@@ -30,7 +30,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   getEffectiveHospitalId
 }) => {
   return (
-    <aside className={`no-print admin-sidebar-nav bg-gradient-to-b from-teal-700 to-teal-900 shadow-2xl transition-all duration-300 flex-shrink-0 flex flex-col ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}`}>
+    <aside className={`no-print admin-sidebar-nav bg-gradient-to-b from-teal-700 to-teal-900 shadow-2xl transition-all duration-300 flex-shrink-0 flex flex-col h-screen sticky top-0 z-30 overflow-hidden ${sidebarCollapsed ? 'w-20' : 'w-[260px]'}`}>
       {/* Logo/Brand Section */}
       <div className="p-6 border-b border-white/20 flex items-center justify-between">
         {!sidebarCollapsed && (
@@ -61,7 +61,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 flex-1">
+      <nav className="p-4 flex-1 overflow-y-auto min-h-0">
         {sidebarItems.map((item) => (
           <button
             key={item.id}
@@ -79,7 +79,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-4 space-y-2 border-t border-white/20">
+      <div className="p-4 space-y-2 border-t border-white/20 mt-auto flex-shrink-0">
         <button
           onClick={() => {
             if (onClose) {

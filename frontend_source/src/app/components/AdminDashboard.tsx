@@ -1824,7 +1824,7 @@ export function AdminDashboard({
   }, [responses, filterSearch, fromDate, toDate, filterRating, filterRecommend, filterVisitType, filterOfficeUse, filterDepartment, sortField, sortDirection, officeUseByResponse]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex print-layout-root">
+    <div className="h-screen max-h-screen overflow-hidden bg-gray-50 flex print-layout-root">
       <style>{`
         @media print {
           @page {

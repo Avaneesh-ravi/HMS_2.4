@@ -178,6 +178,7 @@ export default function App() {
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [pincodeValid, setPincodeValid] = useState<boolean | null>(null);
   const [flashFields, setFlashFields] = useState<string[]>([]);
+  const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
 
   // Location search state
   const [locationSearch, setLocationSearch] = useState('');
@@ -185,55 +186,177 @@ export default function App() {
   const [searchSelected, setSearchSelected] = useState(false);
   const [showFilledBadge, setShowFilledBadge] = useState(false);
 
-  // Pincode mapping data - expanded
-  const pincodeData: Record<string, { city: string; state: string; country: string }> = {
-    '600001': { city: 'Chennai', state: 'Tamil Nadu', country: 'India' },
-    '600002': { city: 'Chennai', state: 'Tamil Nadu', country: 'India' },
-    '641001': { city: 'Coimbatore', state: 'Tamil Nadu', country: 'India' },
-    '625001': { city: 'Madurai', state: 'Tamil Nadu', country: 'India' },
-    '636001': { city: 'Salem', state: 'Tamil Nadu', country: 'India' },
-    '620001': { city: 'Tiruchirappalli', state: 'Tamil Nadu', country: 'India' },
-    '627001': { city: 'Tirunelveli', state: 'Tamil Nadu', country: 'India' },
-    '638001': { city: 'Erode', state: 'Tamil Nadu', country: 'India' },
-    '632001': { city: 'Vellore', state: 'Tamil Nadu', country: 'India' },
-    '613001': { city: 'Thanjavur', state: 'Tamil Nadu', country: 'India' },
-    '624001': { city: 'Dindigul', state: 'Tamil Nadu', country: 'India' },
-    '631001': { city: 'Kanchipuram', state: 'Tamil Nadu', country: 'India' },
-    '639001': { city: 'Karur', state: 'Tamil Nadu', country: 'India' },
-    '607001': { city: 'Cuddalore', state: 'Tamil Nadu', country: 'India' },
-    '628001': { city: 'Thoothukudi', state: 'Tamil Nadu', country: 'India' },
-    '637001': { city: 'Namakkal', state: 'Tamil Nadu', country: 'India' },
-    '635109': { city: 'Hosur', state: 'Tamil Nadu', country: 'India' },
-    '629001': { city: 'Nagercoil', state: 'Tamil Nadu', country: 'India' },
-    '626001': { city: 'Virudhunagar', state: 'Tamil Nadu', country: 'India' },
-    '110001': { city: 'New Delhi', state: 'Delhi', country: 'India' },
-    '400001': { city: 'Mumbai', state: 'Maharashtra', country: 'India' },
-    '560001': { city: 'Bengaluru', state: 'Karnataka', country: 'India' },
-    '500001': { city: 'Hyderabad', state: 'Telangana', country: 'India' },
-    '700001': { city: 'Kolkata', state: 'West Bengal', country: 'India' },
+  // Helper to build readable address from available real details without duplicate city/state
+  const buildAddress = (loc: { locality?: string; district?: string; city?: string; state?: string; pincode?: string; country?: string }) => {
+    const parts: string[] = [];
+    const seen = new Set<string>();
+
+    const add = (val?: string) => {
+      if (!val) return;
+      const clean = val.trim();
+      if (!clean) return;
+      const lower = clean.toLowerCase();
+      if (seen.has(lower)) return;
+      seen.add(lower);
+      parts.push(clean);
+    };
+
+    if (loc.locality) add(loc.locality);
+    if (loc.city) add(loc.city);
+    if (loc.district && loc.district.toLowerCase() !== loc.city?.toLowerCase()) add(loc.district);
+    if (loc.state && loc.state.toLowerCase() !== loc.city?.toLowerCase()) add(loc.state);
+    if (loc.pincode) add(loc.pincode);
+    if (loc.country) add(loc.country);
+
+    return parts.join(', ');
   };
+
+  // Comprehensive location database covering Tamil Nadu districts, Indian States, and major cities
+  interface LocationRecord {
+    city: string;
+    district: string;
+    state: string;
+    country: string;
+    pincode: string;
+  }
+
+  const locationDatabase: LocationRecord[] = [
+    // Tamil Nadu - All 38 Districts & Key Towns
+    { city: 'Chennai', district: 'Chennai', state: 'Tamil Nadu', country: 'India', pincode: '600001' },
+    { city: 'Chennai', district: 'Chennai', state: 'Tamil Nadu', country: 'India', pincode: '600002' },
+    { city: 'Coimbatore', district: 'Coimbatore', state: 'Tamil Nadu', country: 'India', pincode: '641001' },
+    { city: 'Coimbatore', district: 'Coimbatore', state: 'Tamil Nadu', country: 'India', pincode: '641018' },
+    { city: 'Madurai', district: 'Madurai', state: 'Tamil Nadu', country: 'India', pincode: '625001' },
+    { city: 'Madurai', district: 'Madurai', state: 'Tamil Nadu', country: 'India', pincode: '625020' },
+    { city: 'Salem', district: 'Salem', state: 'Tamil Nadu', country: 'India', pincode: '636001' },
+    { city: 'Tiruchirappalli', district: 'Tiruchirappalli', state: 'Tamil Nadu', country: 'India', pincode: '620001' },
+    { city: 'Tirunelveli', district: 'Tirunelveli', state: 'Tamil Nadu', country: 'India', pincode: '627001' },
+    { city: 'Erode', district: 'Erode', state: 'Tamil Nadu', country: 'India', pincode: '638001' },
+    { city: 'Erode', district: 'Erode', state: 'Tamil Nadu', country: 'India', pincode: '638051' },
+    { city: 'Vellore', district: 'Vellore', state: 'Tamil Nadu', country: 'India', pincode: '632001' },
+    { city: 'Thanjavur', district: 'Thanjavur', state: 'Tamil Nadu', country: 'India', pincode: '613001' },
+    { city: 'Dindigul', district: 'Dindigul', state: 'Tamil Nadu', country: 'India', pincode: '624001' },
+    { city: 'Kanchipuram', district: 'Kanchipuram', state: 'Tamil Nadu', country: 'India', pincode: '631001' },
+    { city: 'Karur', district: 'Karur', state: 'Tamil Nadu', country: 'India', pincode: '639001' },
+    { city: 'Cuddalore', district: 'Cuddalore', state: 'Tamil Nadu', country: 'India', pincode: '607001' },
+    { city: 'Thoothukudi', district: 'Thoothukudi', state: 'Tamil Nadu', country: 'India', pincode: '628001' },
+    { city: 'Namakkal', district: 'Namakkal', state: 'Tamil Nadu', country: 'India', pincode: '637001' },
+    { city: 'Hosur', district: 'Krishnagiri', state: 'Tamil Nadu', country: 'India', pincode: '635109' },
+    { city: 'Krishnagiri', district: 'Krishnagiri', state: 'Tamil Nadu', country: 'India', pincode: '635001' },
+    { city: 'Nagercoil', district: 'Kanyakumari', state: 'Tamil Nadu', country: 'India', pincode: '629001' },
+    { city: 'Virudhunagar', district: 'Virudhunagar', state: 'Tamil Nadu', country: 'India', pincode: '626001' },
+    { city: 'Tiruppur', district: 'Tiruppur', state: 'Tamil Nadu', country: 'India', pincode: '641601' },
+    { city: 'Sivakasi', district: 'Virudhunagar', state: 'Tamil Nadu', country: 'India', pincode: '626123' },
+    { city: 'Pollachi', district: 'Coimbatore', state: 'Tamil Nadu', country: 'India', pincode: '642001' },
+    { city: 'Rajapalayam', district: 'Virudhunagar', state: 'Tamil Nadu', country: 'India', pincode: '626117' },
+    { city: 'Kumbakonam', district: 'Thanjavur', state: 'Tamil Nadu', country: 'India', pincode: '612001' },
+    { city: 'Pudukkottai', district: 'Pudukkottai', state: 'Tamil Nadu', country: 'India', pincode: '622001' },
+    { city: 'Ariyalur', district: 'Ariyalur', state: 'Tamil Nadu', country: 'India', pincode: '621704' },
+    { city: 'Perambalur', district: 'Perambalur', state: 'Tamil Nadu', country: 'India', pincode: '621212' },
+    { city: 'Dharmapuri', district: 'Dharmapuri', state: 'Tamil Nadu', country: 'India', pincode: '636701' },
+    { city: 'Villupuram', district: 'Villupuram', state: 'Tamil Nadu', country: 'India', pincode: '605602' },
+    { city: 'Tiruvannamalai', district: 'Tiruvannamalai', state: 'Tamil Nadu', country: 'India', pincode: '606601' },
+    { city: 'Udhagamandalam', district: 'Nilgiris', state: 'Tamil Nadu', country: 'India', pincode: '643001' },
+    { city: 'Theni', district: 'Theni', state: 'Tamil Nadu', country: 'India', pincode: '625531' },
+    { city: 'Sivaganga', district: 'Sivaganga', state: 'Tamil Nadu', country: 'India', pincode: '630561' },
+    { city: 'Ramanathapuram', district: 'Ramanathapuram', state: 'Tamil Nadu', country: 'India', pincode: '623501' },
+    { city: 'Tiruvarur', district: 'Tiruvarur', state: 'Tamil Nadu', country: 'India', pincode: '610001' },
+    { city: 'Nagapattinam', district: 'Nagapattinam', state: 'Tamil Nadu', country: 'India', pincode: '611001' },
+    { city: 'Mayiladuthurai', district: 'Mayiladuthurai', state: 'Tamil Nadu', country: 'India', pincode: '609001' },
+    { city: 'Chengalpattu', district: 'Chengalpattu', state: 'Tamil Nadu', country: 'India', pincode: '603001' },
+    { city: 'Tiruvallur', district: 'Tiruvallur', state: 'Tamil Nadu', country: 'India', pincode: '602001' },
+    { city: 'Ranipet', district: 'Ranipet', state: 'Tamil Nadu', country: 'India', pincode: '632401' },
+    { city: 'Tenkasi', district: 'Tenkasi', state: 'Tamil Nadu', country: 'India', pincode: '627811' },
+    { city: 'Kallakurichi', district: 'Kallakurichi', state: 'Tamil Nadu', country: 'India', pincode: '606202' },
+    { city: 'Tirupattur', district: 'Tirupattur', state: 'Tamil Nadu', country: 'India', pincode: '635601' },
+
+    // Karnataka
+    { city: 'Bengaluru', district: 'Bengaluru Urban', state: 'Karnataka', country: 'India', pincode: '560001' },
+    { city: 'Bengaluru', district: 'Bengaluru Urban', state: 'Karnataka', country: 'India', pincode: '560025' },
+    { city: 'Mysuru', district: 'Mysuru', state: 'Karnataka', country: 'India', pincode: '570001' },
+    { city: 'Mangaluru', district: 'Dakshina Kannada', state: 'Karnataka', country: 'India', pincode: '575001' },
+    { city: 'Hubballi', district: 'Dharwad', state: 'Karnataka', country: 'India', pincode: '580020' },
+    { city: 'Belagavi', district: 'Belagavi', state: 'Karnataka', country: 'India', pincode: '590001' },
+
+    // Maharashtra
+    { city: 'Mumbai', district: 'Mumbai City', state: 'Maharashtra', country: 'India', pincode: '400001' },
+    { city: 'Mumbai', district: 'Mumbai Suburban', state: 'Maharashtra', country: 'India', pincode: '400050' },
+    { city: 'Pune', district: 'Pune', state: 'Maharashtra', country: 'India', pincode: '411001' },
+    { city: 'Nagpur', district: 'Nagpur', state: 'Maharashtra', country: 'India', pincode: '440001' },
+    { city: 'Nashik', district: 'Nashik', state: 'Maharashtra', country: 'India', pincode: '422001' },
+
+    // Delhi
+    { city: 'New Delhi', district: 'New Delhi', state: 'Delhi', country: 'India', pincode: '110001' },
+    { city: 'South Delhi', district: 'South Delhi', state: 'Delhi', country: 'India', pincode: '110016' },
+
+    // Telangana & Andhra Pradesh
+    { city: 'Hyderabad', district: 'Hyderabad', state: 'Telangana', country: 'India', pincode: '500001' },
+    { city: 'Warangal', district: 'Warangal', state: 'Telangana', country: 'India', pincode: '506001' },
+    { city: 'Visakhapatnam', district: 'Visakhapatnam', state: 'Andhra Pradesh', country: 'India', pincode: '530001' },
+    { city: 'Vijayawada', district: 'Krishna', state: 'Andhra Pradesh', country: 'India', pincode: '520001' },
+    { city: 'Tirupati', district: 'Tirupati', state: 'Andhra Pradesh', country: 'India', pincode: '517501' },
+
+    // West Bengal
+    { city: 'Kolkata', district: 'Kolkata', state: 'West Bengal', country: 'India', pincode: '700001' },
+    { city: 'Howrah', district: 'Howrah', state: 'West Bengal', country: 'India', pincode: '711101' },
+
+    // Gujarat
+    { city: 'Ahmedabad', district: 'Ahmedabad', state: 'Gujarat', country: 'India', pincode: '380001' },
+    { city: 'Surat', district: 'Surat', state: 'Gujarat', country: 'India', pincode: '395001' },
+    { city: 'Vadodara', district: 'Vadodara', state: 'Gujarat', country: 'India', pincode: '390001' },
+
+    // Rajasthan
+    { city: 'Jaipur', district: 'Jaipur', state: 'Rajasthan', country: 'India', pincode: '302001' },
+    { city: 'Jodhpur', district: 'Jodhpur', state: 'Rajasthan', country: 'India', pincode: '342001' },
+    { city: 'Udaipur', district: 'Udaipur', state: 'Rajasthan', country: 'India', pincode: '313001' },
+
+    // Kerala
+    { city: 'Thiruvananthapuram', district: 'Thiruvananthapuram', state: 'Kerala', country: 'India', pincode: '695001' },
+    { city: 'Kochi', district: 'Ernakulam', state: 'Kerala', country: 'India', pincode: '682001' },
+    { city: 'Kozhikode', district: 'Kozhikode', state: 'Kerala', country: 'India', pincode: '673001' },
+
+    // Uttar Pradesh
+    { city: 'Lucknow', district: 'Lucknow', state: 'Uttar Pradesh', country: 'India', pincode: '226001' },
+    { city: 'Kanpur', district: 'Kanpur Nagar', state: 'Uttar Pradesh', country: 'India', pincode: '208001' },
+    { city: 'Varanasi', district: 'Varanasi', state: 'Uttar Pradesh', country: 'India', pincode: '221001' },
+    { city: 'Noida', district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh', country: 'India', pincode: '201301' },
+
+    // Madhya Pradesh, Punjab, Haryana, Bihar, Odisha, Goa, UTs
+    { city: 'Bhopal', district: 'Bhopal', state: 'Madhya Pradesh', country: 'India', pincode: '462001' },
+    { city: 'Indore', district: 'Indore', state: 'Madhya Pradesh', country: 'India', pincode: '452001' },
+    { city: 'Chandigarh', district: 'Chandigarh', state: 'Chandigarh', country: 'India', pincode: '160017' },
+    { city: 'Ludhiana', district: 'Ludhiana', state: 'Punjab', country: 'India', pincode: '141001' },
+    { city: 'Amritsar', district: 'Amritsar', state: 'Punjab', country: 'India', pincode: '143001' },
+    { city: 'Gurugram', district: 'Gurugram', state: 'Haryana', country: 'India', pincode: '122001' },
+    { city: 'Patna', district: 'Patna', state: 'Bihar', country: 'India', pincode: '800001' },
+    { city: 'Bhubaneswar', district: 'Khordha', state: 'Odisha', country: 'India', pincode: '751001' },
+    { city: 'Guwahati', district: 'Kamrup Metropolitan', state: 'Assam', country: 'India', pincode: '781001' },
+    { city: 'Ranchi', district: 'Ranchi', state: 'Jharkhand', country: 'India', pincode: '834001' },
+    { city: 'Raipur', district: 'Raipur', state: 'Chhattisgarh', country: 'India', pincode: '492001' },
+    { city: 'Dehradun', district: 'Dehradun', state: 'Uttarakhand', country: 'India', pincode: '248001' },
+    { city: 'Shimla', district: 'Shimla', state: 'Himachal Pradesh', country: 'India', pincode: '171001' },
+    { city: 'Panaji', district: 'North Goa', state: 'Goa', country: 'India', pincode: '403001' },
+    { city: 'Srinagar', district: 'Srinagar', state: 'Jammu and Kashmir', country: 'India', pincode: '190001' },
+    { city: 'Puducherry', district: 'Puducherry', state: 'Puducherry', country: 'India', pincode: '605001' },
+  ];
+
+  // Pincode mapping lookup object
+  const pincodeData: Record<string, { city: string; district?: string; state: string; country: string }> = {};
+  locationDatabase.forEach((loc) => {
+    if (!pincodeData[loc.pincode]) {
+      pincodeData[loc.pincode] = { city: loc.city, district: loc.district, state: loc.state, country: loc.country };
+    }
+  });
 
   // City to State mapping for reverse lookup
   const cityStateMap: Record<string, string> = {
-    'Chennai': 'Tamil Nadu',
-    'Coimbatore': 'Tamil Nadu',
-    'Madurai': 'Tamil Nadu',
-    'Tiruchirappalli': 'Tamil Nadu',
-    'Tirunelveli': 'Tamil Nadu',
-    'Erode': 'Tamil Nadu',
-    'Vellore': 'Tamil Nadu',
-    'Thanjavur': 'Tamil Nadu',
-    'Dindigul': 'Tamil Nadu',
-    'Kanchipuram': 'Tamil Nadu',
-    'Delhi': 'Delhi',
-    'Mumbai': 'Maharashtra',
-    'Pune': 'Maharashtra',
     'Bangalore': 'Karnataka',
-    'Hyderabad': 'Telangana',
-    'Kolkata': 'West Bengal',
-    'Jaipur': 'Rajasthan',
-    'Ahmedabad': 'Gujarat',
+    'Delhi': 'Delhi',
   };
+  locationDatabase.forEach((loc) => {
+    cityStateMap[loc.city] = loc.state;
+    if (loc.district) cityStateMap[loc.district] = loc.state;
+  });
 
   const [patientInfo, setPatientInfo] = useState<PatientInfo>({
     uhid: '',
@@ -474,10 +597,28 @@ export default function App() {
     'Hosur', 'Nagercoil', 'Sivakasi', 'Pollachi', 'Virudhunagar',
     'Tiruppur', 'Rajapalayam', 'Kumbakonam', 'Krishnagiri', 'Pudukkottai',
     'Ariyalur', 'Perambalur', 'Dharmapuri', 'Villupuram', 'Tiruvannamalai',
+    'Udhagamandalam', 'Theni', 'Sivaganga', 'Ramanathapuram', 'Tiruvarur',
+    'Nagapattinam', 'Mayiladuthurai', 'Chengalpattu', 'Tiruvallur', 'Ranipet',
+    'Tenkasi', 'Kallakurichi', 'Tirupattur'
   ];
-  const otherCities = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
-  const states = ['Tamil Nadu', 'Maharashtra', 'Delhi', 'Karnataka', 'Telangana', 'West Bengal', 'Gujarat', 'Rajasthan', 'Kerala'];
+  const otherCities = ['Mumbai', 'Delhi', 'Bangalore', 'Bengaluru', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad', 'Mysuru', 'Jaipur', 'Lucknow', 'Kochi', 'Bhopal', 'Patna', 'Chandigarh'];
+  const states = [
+    'Tamil Nadu', 'Maharashtra', 'Delhi', 'Karnataka', 'Telangana', 'West Bengal', 'Gujarat', 'Rajasthan', 'Kerala',
+    'Andhra Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Goa', 'Haryana', 'Himachal Pradesh',
+    'Jammu and Kashmir', 'Jharkhand', 'Madhya Pradesh', 'Odisha', 'Puducherry', 'Punjab', 'Uttar Pradesh', 'Uttarakhand'
+  ];
   const countries = ['India', 'USA', 'UK', 'Canada', 'Australia', 'Singapore', 'UAE'];
+
+  const getAvailableCities = (selectedState: string) => {
+    if (!selectedState || selectedState === 'Tamil Nadu') {
+      return tamilNaduCities;
+    }
+    const matched = locationDatabase
+      .filter(l => l.state.toLowerCase() === selectedState.toLowerCase())
+      .map(l => l.city);
+    const combined = Array.from(new Set([...matched, ...otherCities]));
+    return combined.length > 0 ? combined : otherCities;
+  };
 
   const handleSendMobileOtp = () => {
     const digitsOnly = (patientInfo.mobile || '').replace(/\D/g, '');
@@ -1208,26 +1349,34 @@ export default function App() {
   ]);
 
   const handleAdminLogin = async () => {
+    if (isAdminLoggingIn) return;
     setAdminLoginError('');
     const trimmedUser = adminUsername.trim().toLowerCase();
     const enteredPass = adminPassword.trim();
 
-    if (!trimmedUser || !enteredPass) {
+    if (!trimmedUser && !enteredPass) {
       setAdminLoginError(language === 'en' ? 'Username and password are required' : 'பயனர்பெயர் மற்றும் கடவுச்சொல் தேவை');
+      return;
+    }
+    if (!trimmedUser) {
+      setAdminLoginError(language === 'en' ? 'Username is required' : 'பயனர்பெயர் தேவை');
+      return;
+    }
+    if (!enteredPass) {
+      setAdminLoginError(language === 'en' ? 'Password is required' : 'கடவுச்சொல் தேவை');
       return;
     }
 
     const validCredentials = [
       { user: 'rajendran.s1@example.com', pass: 'Admin@123', hid: 1 },
-      { user: 'rajendran.s1@example.com', pass: 'admin@123', hid: 1 },
       { user: 'rajendran.s1@example.com', pass: 'admin123', hid: 1 },
       { user: '9402654235', pass: 'Admin@123', hid: 1 },
-      { user: '9402654235', pass: 'admin@123', hid: 1 },
+      { user: '9402654235', pass: 'admin123', hid: 1 },
       { user: 'kavitha.m2@example.com', pass: 'Admin@123', hid: 2 },
-      { user: 'kavitha.m2@example.com', pass: 'admin@123', hid: 2 },
+      { user: 'kavitha.m2@example.com', pass: 'admin123', hid: 2 },
       { user: '9116155940', pass: 'Admin@123', hid: 2 },
       { user: 'suresh.babu3@example.com', pass: 'Admin@123', hid: 3 },
-      { user: 'suresh.babu3@example.com', pass: 'admin@123', hid: 3 },
+      { user: 'suresh.babu3@example.com', pass: 'admin123', hid: 3 },
       { user: '9781618495', pass: 'Admin@123', hid: 3 },
       { user: 'admin@hospitalfeedback.com', pass: 'Admin@123', hid: 0 },
       { user: 'admin@hospitalfeedback.com', pass: 'admin123', hid: 0 },
@@ -1237,7 +1386,7 @@ export default function App() {
 
     const isDirectMatch = validCredentials.some(c => 
       c.user.toLowerCase() === trimmedUser && 
-      (!c.pass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
+      (c.pass === enteredPass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
       (c.hid === 0 || !selectedHospital || c.hid === selectedHospital.id)
     );
 
@@ -1254,6 +1403,7 @@ export default function App() {
     }
 
     try {
+      setIsAdminLoggingIn(true);
       const getApiUrl = (endpoint: string) => {
         const p = window.location.pathname;
         if (p.includes('api/backend/admin')) return `../ajax/${endpoint}`;
@@ -1278,7 +1428,7 @@ export default function App() {
       
       const data = await response.json().catch(() => null);
 
-      if (data && data.success) {
+      if (response.ok && data && data.success) {
         setIsAdminLoggedIn(true);
         setShowAdminDashboard(true);
         setShowAdminLoginModal(false);
@@ -1288,17 +1438,18 @@ export default function App() {
           window.location.href = p.includes('api/backend/admin') ? 'dashboard.php' : '../backend/admin/dashboard.php';
         }
       } else {
-        setAdminLoginError(data?.message || (language === 'en' ? 'Invalid credentials' : 'தவறான உள்நுழைவு விவரங்கள்'));
+        if (response.status === 500) {
+          setAdminLoginError(data?.message || (language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.'));
+        } else {
+          setAdminLoginError(data?.message || (language === 'en' ? 'Invalid user ID or password. Please check your credentials and try again.' : 'தவறான பயனர் ஐடி அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.'));
+        }
+        setAdminPassword('');
       }
     } catch (error) {
-      if (isDirectMatch) {
-        setIsAdminLoggedIn(true);
-        setShowAdminDashboard(true);
-        setShowAdminLoginModal(false);
-        setAdminLoginError('');
-      } else {
-        setAdminLoginError(language === 'en' ? 'Invalid credentials' : 'தவறான உள்நுழைவு விவரங்கள்');
-      }
+      setAdminLoginError(language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.');
+      setAdminPassword('');
+    } finally {
+      setIsAdminLoggingIn(false);
     }
   };
 
@@ -1323,16 +1474,24 @@ export default function App() {
       const data = pincodeData[numericValue];
       if (data) {
         setPincodeValid(true);
-        setPatientInfo({
-          ...patientInfo,
+        const generatedAddress = buildAddress({
+          city: data.city,
+          district: data.district || data.city,
+          state: data.state,
+          pincode: numericValue,
+          country: data.country
+        });
+        setPatientInfo(prev => ({
+          ...prev,
           pincode: numericValue,
           city: data.city,
           state: data.state,
           country: data.country,
-        });
+          address: prev.address ? prev.address : generatedAddress
+        }));
         // Flash animation
-        setFlashFields(['city', 'state', 'country']);
-        setTimeout(() => setFlashFields([]), 500);
+        setFlashFields(['city', 'state', 'country', 'pincode', 'address']);
+        setTimeout(() => setFlashFields([]), 1500);
       } else {
         setPincodeValid(false);
       }
@@ -1390,52 +1549,81 @@ export default function App() {
   const getFilteredSuggestions = () => {
     if (!locationSearch) return [];
 
-    const searchLower = locationSearch.toLowerCase();
-    const suggestions: Array<{ city: string; state: string; country: string; pincode: string }> = [];
+    const searchLower = locationSearch.toLowerCase().trim();
+    const suggestions: LocationRecord[] = [];
 
-    Object.entries(pincodeData).forEach(([pincode, data]) => {
+    for (const item of locationDatabase) {
       if (
-        data.city.toLowerCase().includes(searchLower) ||
-        data.state.toLowerCase().includes(searchLower) ||
-        pincode.includes(searchLower)
+        item.city.toLowerCase().includes(searchLower) ||
+        item.district.toLowerCase().includes(searchLower) ||
+        item.state.toLowerCase().includes(searchLower) ||
+        item.pincode.includes(searchLower)
       ) {
-        suggestions.push({ ...data, pincode });
+        suggestions.push(item);
       }
-    });
+    }
 
-    // Remove duplicates based on city
+    // Deduplicate by city and pincode
     const unique = suggestions.filter((item, index, self) =>
-      index === self.findIndex((t) => t.city === item.city)
+      index === self.findIndex((t) => t.city === item.city && t.pincode === item.pincode)
     );
 
     return unique.slice(0, 10);
   };
 
   // Handle suggestion selection
-  const handleSuggestionSelect = (suggestion: { city: string; state: string; country: string; pincode: string }) => {
+  const handleSuggestionSelect = (suggestion: LocationRecord, forceAddress: boolean = false) => {
     setLocationSearch(`${suggestion.city}, ${suggestion.state}, ${suggestion.country}`);
     setSearchSelected(true);
     setShowSuggestions(false);
 
-    // Auto-fill fields
-    setPatientInfo({
-      ...patientInfo,
+    const generatedAddress = buildAddress({
+      city: suggestion.city,
+      district: suggestion.district,
+      state: suggestion.state,
+      pincode: suggestion.pincode,
+      country: suggestion.country
+    });
+
+    // Auto-fill fields and address
+    setPatientInfo(prev => ({
+      ...prev,
       country: suggestion.country,
       state: suggestion.state,
       city: suggestion.city,
       pincode: suggestion.pincode,
-    });
+      address: (!prev.address || forceAddress) ? generatedAddress : prev.address,
+    }));
 
     // Staggered flash animation with checkmarks
     setTimeout(() => setFlashFields(['country']), 0);
     setTimeout(() => setFlashFields(['country', 'state']), 100);
     setTimeout(() => setFlashFields(['country', 'state', 'city']), 200);
-    setTimeout(() => setFlashFields(['country', 'state', 'city', 'pincode']), 300);
+    setTimeout(() => setFlashFields(['country', 'state', 'city', 'pincode', 'address']), 300);
     setTimeout(() => setFlashFields([]), 2000);
 
     // Show filled badge
     setShowFilledBadge(true);
     setTimeout(() => setShowFilledBadge(false), 2000);
+  };
+
+  // Explicit Auto Fill button trigger
+  const handleTriggerAutoFill = () => {
+    const suggestions = getFilteredSuggestions();
+    if (suggestions.length > 0) {
+      handleSuggestionSelect(suggestions[0], true);
+      toast.success(language === 'en' ? 'Location details auto-filled!' : 'இருப்பிட விவரங்கள் தானாக நிரப்பப்பட்டன!');
+    } else if (patientInfo.pincode && pincodeData[patientInfo.pincode]) {
+      const data = pincodeData[patientInfo.pincode];
+      handleSuggestionSelect({ ...data, district: data.district || data.city, pincode: patientInfo.pincode }, true);
+      toast.success(language === 'en' ? 'Location details auto-filled!' : 'இருப்பிட விவரங்கள் தானாக நிரப்பப்பட்டன!');
+    } else {
+      toast.error(
+        language === 'en'
+          ? (locationSearch ? `No supported location found for "${locationSearch}"` : 'Please enter a location to auto-fill')
+          : (locationSearch ? `பொருந்தும் இருப்பிடம் கிடைக்கவில்லை: "${locationSearch}"` : 'தயவுசெய்து இருப்பிடத்தை உள்ளிடவும்')
+      );
+    }
   };
 
   const isDashboardPage = window.location.pathname.includes('dashboard.php') || 
@@ -1791,32 +1979,51 @@ export default function App() {
                       {searchSelected && (
                         <Check className="w-4 h-4 text-green-600" />
                       )}
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-teal-50 text-teal-600 border border-teal-200 rounded-full text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={handleTriggerAutoFill}
+                        title="Auto fill location fields"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-teal-50 hover:bg-teal-100 text-teal-600 border border-teal-200 rounded-full text-xs font-bold transition-colors cursor-pointer"
+                      >
                         <Sparkles className="w-3 h-3" />
                         Auto Fill
-                      </span>
+                      </button>
                     </div>
                   </div>
 
                   {/* Suggestions Dropdown */}
-                  {showSuggestions && getFilteredSuggestions().length > 0 && (
-                    <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-[200px] overflow-y-auto">
-                      {getFilteredSuggestions().map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSuggestionSelect(suggestion)}
-                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-teal-50 transition-colors text-left border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="flex items-center gap-3">
-                            <MapPin className="w-4 h-4 text-teal-600 flex-shrink-0" />
-                            <div>
-                              <p className="font-bold text-sm text-gray-900">{suggestion.city}</p>
-                              <p className="text-xs text-gray-600">{suggestion.state}, {suggestion.country}</p>
+                  {showSuggestions && (
+                    <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-[220px] overflow-y-auto">
+                      {getFilteredSuggestions().length > 0 ? (
+                        getFilteredSuggestions().map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleSuggestionSelect(suggestion)}
+                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-teal-50 transition-colors text-left border-b border-gray-100 last:border-b-0 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3">
+                              <MapPin className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                              <div>
+                                <p className="font-bold text-sm text-gray-900">
+                                  {suggestion.city}
+                                  {suggestion.district && suggestion.district !== suggestion.city && (
+                                    <span className="font-normal text-gray-500 text-xs ml-1">({suggestion.district})</span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-gray-600">{suggestion.state}, {suggestion.country}</p>
+                              </div>
                             </div>
-                          </div>
-                          <span className="text-xs text-gray-500">{suggestion.pincode}</span>
-                        </button>
-                      ))}
+                            <span className="text-xs text-gray-500 font-medium">{suggestion.pincode}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-xs text-gray-500 text-center">
+                          {language === 'en'
+                            ? `No supported locations found matching "${locationSearch}"`
+                            : `பொருந்தும் இடங்கள் எதுவும் கிடைக்கவில்லை: "${locationSearch}"`}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1876,9 +2083,12 @@ export default function App() {
                         }`}
                       >
                         <option value="">{language === 'en' ? 'Select City' : 'நகரத்தை தேர்ந்தெடுங்கள்'}</option>
-                        {(patientInfo.state === 'Tamil Nadu' ? tamilNaduCities : otherCities).map((city) => (
+                        {getAvailableCities(patientInfo.state).map((city) => (
                           <option key={city} value={city}>{city}</option>
                         ))}
+                        {patientInfo.city && !getAvailableCities(patientInfo.state).includes(patientInfo.city) && (
+                          <option value={patientInfo.city}>{patientInfo.city}</option>
+                        )}
                       </select>
                       {flashFields.includes('city') && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -1904,6 +2114,9 @@ export default function App() {
                         {states.map((state) => (
                           <option key={state} value={state}>{state}</option>
                         ))}
+                        {patientInfo.state && !states.includes(patientInfo.state) && (
+                          <option value={patientInfo.state}>{patientInfo.state}</option>
+                        )}
                       </select>
                       {flashFields.includes('state') && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -1945,11 +2158,14 @@ export default function App() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="inline w-4 h-4 mr-1" />
                   {language === 'en' ? 'Address' : 'முகவரி'}
+                  <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={patientInfo.address}
                   onChange={(e) => setPatientInfo({ ...patientInfo, address: e.target.value })}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${formErrors.address ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all ${
+                    formErrors.address ? 'border-red-500 bg-red-50' : flashFields.includes('address') ? 'bg-teal-100 border-[2px] border-teal-600' : 'border-gray-300'
+                  }`}
                   rows={3}
                   placeholder={language === 'en' ? 'Enter full address' : 'முழு முகவரியை உள்ளிடவும்'}
                 />
@@ -3183,14 +3399,20 @@ export default function App() {
 
               <div className="flex gap-3 pt-2">
                 <button
+                  type="button"
+                  disabled={isAdminLoggingIn}
                   onClick={handleAdminLogin}
-                  className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold"
+                  className="flex-1 px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
                 >
-                  {language === 'en' ? 'Login' : 'உள்நுழைக'}
+                  {isAdminLoggingIn ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  ) : null}
+                  <span>{language === 'en' ? 'Login' : 'உள்நுழைக'}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => { setShowAdminLoginModal(false); setAdminLoginError(''); setAdminUsername(''); setAdminPassword(''); }}
-                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>

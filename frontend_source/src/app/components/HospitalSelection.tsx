@@ -112,39 +112,45 @@ export function HospitalSelection({
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedHospitalForLogin) return;
+    if (!selectedHospitalForLogin || isLoggingIn) return;
 
     const trimmedUser = loginUsername.trim().toLowerCase();
     const enteredPass = loginPassword.trim();
 
-    if (!trimmedUser || !enteredPass) {
+    if (!trimmedUser && !enteredPass) {
       setLoginError(language === 'en' ? 'Email / User ID and password are required' : 'பயனர்பெயர் மற்றும் கடவுச்சொல் தேவை');
+      return;
+    }
+    if (!trimmedUser) {
+      setLoginError(language === 'en' ? 'Email / User ID is required' : 'பயனர்பெயர் தேவை');
+      return;
+    }
+    if (!enteredPass) {
+      setLoginError(language === 'en' ? 'Password is required' : 'கடவுச்சொல் தேவை');
       return;
     }
 
     // Direct credential check supporting standard hospital admins
     const validCredentials = [
       { user: 'rajendran.s1@example.com', pass: 'Admin@123', hid: 1 },
-      { user: 'rajendran.s1@example.com', pass: 'admin@123', hid: 1 },
       { user: 'rajendran.s1@example.com', pass: 'admin123', hid: 1 },
       { user: '9402654235', pass: 'Admin@123', hid: 1 },
-      { user: '9402654235', pass: 'admin@123', hid: 1 },
+      { user: '9402654235', pass: 'admin123', hid: 1 },
       { user: 'kavitha.m2@example.com', pass: 'Admin@123', hid: 2 },
-      { user: 'kavitha.m2@example.com', pass: 'admin@123', hid: 2 },
+      { user: 'kavitha.m2@example.com', pass: 'admin123', hid: 2 },
       { user: '9116155940', pass: 'Admin@123', hid: 2 },
       { user: 'suresh.babu3@example.com', pass: 'Admin@123', hid: 3 },
-      { user: 'suresh.babu3@example.com', pass: 'admin@123', hid: 3 },
+      { user: 'suresh.babu3@example.com', pass: 'admin123', hid: 3 },
       { user: '9781618495', pass: 'Admin@123', hid: 3 },
       { user: 'admin@hospitalfeedback.com', pass: 'Admin@123', hid: 0 },
       { user: 'admin@hospitalfeedback.com', pass: 'admin123', hid: 0 },
       { user: 'admin', pass: 'Admin@123', hid: 0 },
-      { user: 'admin', pass: 'admin123', hid: 0 },
-      { user: 'patient', pass: '', hid: 0 }
+      { user: 'admin', pass: 'admin123', hid: 0 }
     ];
 
     const isDirectMatch = validCredentials.some(c => 
       c.user.toLowerCase() === trimmedUser && 
-      (!c.pass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
+      (c.pass === enteredPass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
       (c.hid === 0 || c.hid === selectedHospitalForLogin.id)
     );
 
@@ -184,15 +190,21 @@ export function HospitalSelection({
 
       const data = await response.json().catch(() => null);
 
-      if (data && data.success) {
+      if (response.ok && data && data.success) {
         localStorage.setItem('selected_hospital_id', String(selectedHospitalForLogin.id));
         onHospitalSelect(selectedHospitalForLogin);
       } else {
-        setLoginError(data?.message || (language === 'en' ? 'Invalid credentials for this healthcare center.' : 'இந்த மருத்துவமனைக்கான தவறான உள்நுழைவு விவரங்கள்.'));
+        if (response.status === 500) {
+          setLoginError(data?.message || (language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.'));
+        } else {
+          setLoginError(data?.message || (language === 'en' ? 'Invalid user ID or password. Please check your credentials and try again.' : 'தவறான பயனர் ஐடி அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.'));
+        }
+        setLoginPassword('');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setLoginError(language === 'en' ? 'Invalid credentials for this healthcare center.' : 'இந்த மருத்துவமனைக்கான தவறான உள்நுழைவு விவரங்கள்.');
+      setLoginError(language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.');
+      setLoginPassword('');
     } finally {
       setIsLoggingIn(false);
     }
