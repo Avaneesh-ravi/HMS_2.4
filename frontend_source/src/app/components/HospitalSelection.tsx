@@ -130,31 +130,35 @@ export function HospitalSelection({
       return;
     }
 
-    // Direct credential check supporting standard hospital admins
+    // Unique, distinct credential check per hospital to prevent shared password cross-login
     const validCredentials = [
-      { user: 'rajendran.s1@example.com', pass: 'Admin@123', hid: 1 },
-      { user: 'rajendran.s1@example.com', pass: 'admin123', hid: 1 },
-      { user: '9402654235', pass: 'Admin@123', hid: 1 },
-      { user: '9402654235', pass: 'admin123', hid: 1 },
-      { user: 'kavitha.m2@example.com', pass: 'Admin@123', hid: 2 },
-      { user: 'kavitha.m2@example.com', pass: 'admin123', hid: 2 },
-      { user: '9116155940', pass: 'Admin@123', hid: 2 },
-      { user: 'suresh.babu3@example.com', pass: 'Admin@123', hid: 3 },
-      { user: 'suresh.babu3@example.com', pass: 'admin123', hid: 3 },
-      { user: '9781618495', pass: 'Admin@123', hid: 3 },
-      { user: 'admin@hospitalfeedback.com', pass: 'Admin@123', hid: 0 },
-      { user: 'admin@hospitalfeedback.com', pass: 'admin123', hid: 0 },
-      { user: 'admin', pass: 'Admin@123', hid: 0 },
-      { user: 'admin', pass: 'admin123', hid: 0 }
+      { user: 'rajendran.s1@example.com', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: '9402654235', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: 'kavitha.m2@example.com', pass: 'City@Admin4719', hid: 2 },
+      { user: '9116155940', pass: 'City@Admin4719', hid: 2 },
+      { user: 'suresh.babu3@example.com', pass: 'Govt@Admin3185', hid: 3 },
+      { user: '9781618495', pass: 'Govt@Admin3185', hid: 3 },
+      { user: 'admin@hospitalfeedback.com', pass: 'Super@Admin2026', hid: 0 },
+      { user: 'admin', pass: 'Super@Admin2026', hid: 0 }
     ];
 
     const isDirectMatch = validCredentials.some(c => 
       c.user.toLowerCase() === trimmedUser && 
-      (c.pass === enteredPass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
+      c.pass === enteredPass && 
       (c.hid === 0 || c.hid === selectedHospitalForLogin.id)
     );
 
+    const getHospitalCode = (id: number): string => {
+      if (id === 1) return 'apl-8092';
+      if (id === 2) return 'cmc-4719';
+      if (id === 3) return 'gov-3185';
+      return `hosp-${id}`;
+    };
+
     if (isDirectMatch) {
+      sessionStorage.setItem('hms_auth_hospital_id', String(selectedHospitalForLogin.id));
+      sessionStorage.setItem('hms_auth_hospital_code', getHospitalCode(selectedHospitalForLogin.id));
+      sessionStorage.setItem('hms_auth_hospital_name', selectedHospitalForLogin.name);
       localStorage.setItem('selected_hospital_id', String(selectedHospitalForLogin.id));
       onHospitalSelect(selectedHospitalForLogin);
       return;
@@ -191,13 +195,16 @@ export function HospitalSelection({
       const data = await response.json().catch(() => null);
 
       if (response.ok && data && data.success) {
+        sessionStorage.setItem('hms_auth_hospital_id', String(selectedHospitalForLogin.id));
+        sessionStorage.setItem('hms_auth_hospital_code', getHospitalCode(selectedHospitalForLogin.id));
+        sessionStorage.setItem('hms_auth_hospital_name', selectedHospitalForLogin.name);
         localStorage.setItem('selected_hospital_id', String(selectedHospitalForLogin.id));
         onHospitalSelect(selectedHospitalForLogin);
       } else {
         if (response.status === 500) {
           setLoginError(data?.message || (language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.'));
         } else {
-          setLoginError(data?.message || (language === 'en' ? 'Invalid user ID or password. Please check your credentials and try again.' : 'தவறான பயனர் ஐடி அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.'));
+          setLoginError(data?.message || (language === 'en' ? 'Invalid user ID or password for this hospital. Please check your credentials.' : 'இந்த மருத்துவமனைக்கான தவறான பயனர் ஐடி அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களைச் சரிபார்க்கவும்.'));
         }
         setLoginPassword('');
       }

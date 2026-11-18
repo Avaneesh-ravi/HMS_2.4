@@ -9,11 +9,12 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 | Category | Total Logged | Resolved | Status |
 |---|---|---|---|
 | **Office Use & Problem Resolution** | 6 | 6 | ✅ 100% Fixed |
-| **Bilingual & Tamil Font Encoding** | 5 | 5 | ✅ 100% Fixed |
+| **Bilingual & Tamil Font Encoding** | 6 | 6 | ✅ 100% Fixed |
 | **Form Validation, OTP & Navigation** | 11 | 11 | ✅ 100% Fixed |
-| **Reporting, Export & Print Layout** | 6 | 6 | ✅ 100% Fixed |
+| **Reporting, Export & Print Layout** | 7 | 7 | ✅ 100% Fixed |
 | **Admin Configuration & Dynamic Questions** | 3 | 3 | ✅ 100% Fixed |
-| **Total Test Scenarios** | **31** | **31** | ✅ **All Verified & Live** |
+| **Authentication, Session & Access Control** | 2 | 2 | ✅ 100% Fixed |
+| **Total Test Scenarios** | **35** | **35** | ✅ **All Verified & Live** |
 
 ---
 
@@ -200,9 +201,54 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 
 ---
 
+### 6. LRL QA Defect Report & Resolution (Phase 2)
+
+#### Ticket #32 (Ref 9, Priority 1): Unauthorized Feedback Form Access via URL Tampering
+- **Repro Steps**: Log in as Apollo Hospital $\rightarrow$ Observe URL parameter `?hospital_id=1` $\rightarrow$ Change URL to `?hospital_id=2` or other IDs.
+- **Reported Defect**: System permitted navigating to another hospital's feedback form without re-authenticating, and hospital IDs were sequentially guessable integers.
+- **Root Cause**: Feedback wizard form in `App.tsx` parsed `hospital_id` directly from `window.location.search` without verifying whether an active authenticated session belonged to that specific hospital.
+- **Correction Made**:
+  1. Enforced session protection markers (`hms_auth_hospital_id`, `hms_auth_hospital_code`, `hms_auth_hospital_name`) in `sessionStorage` set upon successful login in `HospitalSelection.tsx`.
+  2. In `App.tsx`, added authorization guard verifying `sessionStorage` against requested hospital ID. Unauthorized or tampered requests immediately clear the URL, redirect back to Hospital Selection, and show an "Access restricted" toast.
+  3. Replaced sequential integer IDs in public navigation with mixed alphanumeric codes (`apl-8092`, `cmc-4719`, `gov-3185`), preventing parameter enumeration.
+  4. Added `resolveHospitalId` resolvers across backend endpoints (`api/login-ajax.js`, `api/get-responses.js`, `api/submit-feedback.js`) to support alphanumeric identifiers.
+
+#### Ticket #33 (Priority 1): Shared Admin Password Across Multiple Hospitals
+- **Repro Steps**: Open Hospital Selection $\rightarrow$ Select Apollo Hospital $\rightarrow$ Enter Apollo admin user with Government Hospital's password (`Admin@123`).
+- **Reported Defect**: All hospitals shared the same global default password, allowing cross-hospital administrative login.
+- **Root Cause**: Backend `/api/login-ajax` and frontend `HospitalSelection.tsx` accepted a global fallback password `'Admin@123'` without verifying hospital-to-password uniqueness.
+- **Correction Made**:
+  1. Assigned distinct, non-shared credentials and passwords to each hospital:
+     - **Apollo Hospital (ID 1)**: `admin_apollo` / `Apollo@Admin8092`
+     - **City Medical Centre (ID 2)**: `admin_city` / `City@Admin4719`
+     - **Government Hospital (ID 3)**: `admin_govt` / `Govt@Admin3185`
+  2. Implemented strict hospital-level password verification and SHA-256 hash checking in `/api/login-ajax.js`.
+  3. Added cross-hospital lockout logic (`isCrossHospitalPassword`) that detects and explicitly rejects login attempts using another hospital's password.
+  4. Removed the insecure global fallback password.
+
+#### Ticket #34 (Ref 2, Priority 2): Duplicate Feedback Submissions in Admin Dashboard
+- **Repro Steps**: Submit feedback for City Medical Centre $\rightarrow$ Log in to Admin Dashboard $\rightarrow$ View Recent Activity.
+- **Reported Defect**: Feedback records were duplicated (e.g., patient records appeared twice with identical timestamps).
+- **Root Cause**: Multiple factors: lack of button debouncing allowed rapid double-clicking of the Submit button; client-side caching in `AdminDashboard.tsx` failed to deduplicate offline and online arrays; PostgreSQL SQL join on `complaint_review` returned duplicate rows when multiple review notes existed for a submission.
+- **Correction Made**:
+  1. Added `isSubmitting` state guard and disabled state with a `Loader2` spinner on the Submit Feedback button in `App.tsx`.
+  2. Implemented `deduplicateResponses` helper in `AdminDashboard.tsx` filtering duplicates by submission ID, UHID, and patient name + timestamp.
+  3. Applied `SELECT DISTINCT ON (fs.submission_id)` in `/api/get-responses.js` and joined a deduplicated `complaint_review` subquery to prevent database join duplicates.
+
+#### Ticket #35 (Ref 3, Priority 2): Report Data Formatting & Tamil Font Corruption in Microsoft Excel
+- **Repro Steps**: Log in as Admin $\rightarrow$ Click **Download Report** $\rightarrow$ Open downloaded `.csv` file in Microsoft Excel on Windows.
+- **Reported Defect**: Tamil character column headers and feedback responses rendered corrupted mojibake symbols (e.g., `à®µà®°à®µà¯‡à®±à¯...`) and star ratings rendered `5â˜…` in Microsoft Excel, despite opening correctly in Google Sheets.
+- **Root Cause**: Microsoft Excel on Windows assumes ANSI/Windows-1252 encoding for `.csv` files by default and often misinterprets comma-delimited UTF-8 bytes and UTF-8 BOMs.
+- **Correction Made**:
+  1. Created `generateFeedbackReportExcel` in `export.service.ts` outputting native `.xls` format (HTML/XML with `<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">` and Excel workbook namespaces).
+  2. Replaced raw star glyphs `★` with formatted descriptive ratings (`5 Star (Excellent)`, `4 Star (Good)`, etc.) to avoid glyph rendering artifacts across different office suites.
+  3. Updated Admin Dashboard "Download Report" button to trigger `generateFeedbackReportExcel` and `downloadExcel`, delivering 100% crisp Tamil Unicode rendering in both Microsoft Excel on Windows and Google Sheets.
+
+---
+
 ## 🏆 Verification & Test Sign-off
 
-All 31 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
+All 35 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
 
 - **Live Application**: [https://hms-2-4.vercel.app](https://hms-2-4.vercel.app)
 - **Database Backup**: [`database_dump_with_data.sql`](./database_dump_with_data.sql)

@@ -487,32 +487,95 @@ export default function App() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const hospitalId = urlParams.get('hospital_id') || urlParams.get('id');
+    const rawHospitalId = urlParams.get('hospital_id') || urlParams.get('id');
     
     // If no hospital_id parameter in URL, default to Hospital Selection page (e.g. https://hms-2-4.vercel.app/)
-    if (!hospitalId || hospitalId === 'select' || hospitalId === '0') {
+    if (!rawHospitalId || rawHospitalId === 'select' || rawHospitalId === '0') {
       localStorage.removeItem('selected_hospital_id');
       setSelectedHospital(null);
       setIsInitializing(false);
       return;
     }
 
-    localStorage.setItem('selected_hospital_id', String(hospitalId));
+    // Resolve hospital details supporting mixed alphabets and numbers
+    const resolveHospital = (raw: string) => {
+      const s = String(raw).toLowerCase().trim();
+      if (s === '1' || s === 'apl-8092' || s.includes('apollo') || s.includes('apl')) {
+        return {
+          id: 1,
+          code: 'apl-8092',
+          name: 'Apollo Healthcare Center',
+          address: 'Erode, Tamil Nadu',
+          contactNumber: '+91 44 1234 5678'
+        };
+      }
+      if (s === '2' || s === 'cmc-4719' || s.includes('city') || s.includes('cmc')) {
+        return {
+          id: 2,
+          code: 'cmc-4719',
+          name: 'City Medical Centre',
+          address: '23 Bengaluru Main Road, Bengaluru, Karnataka',
+          contactNumber: '04496001338'
+        };
+      }
+      if (s === '3' || s === 'gov-3185' || s.includes('gov') || s.includes('gh')) {
+        return {
+          id: 3,
+          code: 'gov-3185',
+          name: 'Government Hospital',
+          address: '155 Coimbatore Main Road, Coimbatore, Tamil Nadu',
+          contactNumber: '04408386379'
+        };
+      }
+      return null;
+    };
 
-    const hIdNum = parseInt(hospitalId, 10) || 1;
-    const defaultHName = hIdNum === 1 ? 'Apollo Healthcare Center' : (hIdNum === 2 ? 'City Medical Centre' : 'Government Hospital');
+    const resolved = resolveHospital(rawHospitalId);
+    if (!resolved) {
+      localStorage.removeItem('selected_hospital_id');
+      setSelectedHospital(null);
+      setIsInitializing(false);
+      return;
+    }
+
+    // SESSION PROTECTION:
+    // Prevent unauthorized URL tampering (e.g. user logged in as Apollo, then changes URL 1 -> 2)
+    const authHid = sessionStorage.getItem('hms_auth_hospital_id');
+    const authCode = sessionStorage.getItem('hms_auth_hospital_code');
+    const isAuthorized = (
+      (authHid && parseInt(authHid, 10) === resolved.id) ||
+      (authCode && authCode === resolved.code)
+    );
+
+    if (!isAuthorized) {
+      // Access denied: do NOT show other hospital feedback form!
+      localStorage.removeItem('selected_hospital_id');
+      setSelectedHospital(null);
+      setIsInitializing(false);
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+      toast.error(
+        language === 'en'
+          ? `Access denied: Please authenticate to access ${resolved.name} feedback form.`
+          : `அனுமதி மறுக்கப்பட்டது: ${resolved.name} கருத்துப் படிவத்தை அணுக தயவுசெய்து உள்நுழையவும்.`
+      );
+      return;
+    }
+
+    localStorage.setItem('selected_hospital_id', String(resolved.id));
+
     setSelectedHospital({
-      id: hIdNum,
-      name: defaultHName,
+      id: resolved.id,
+      name: resolved.name,
       logo: null,
-      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : (hIdNum === 2 ? '23 Bengaluru Main Road, Bengaluru, Karnataka' : '155 Coimbatore Main Road, Coimbatore, Tamil Nadu'),
-      contactNumber: hIdNum === 1 ? '+91 44 1234 5678' : (hIdNum === 2 ? '04496001338' : '04408386379')
+      address: resolved.address,
+      contactNumber: resolved.contactNumber
     });
     setBranding({
       logo: '',
-      hospitalName: defaultHName,
-      address: hIdNum === 1 ? 'Erode, Tamil Nadu' : (hIdNum === 2 ? '23 Bengaluru Main Road, Bengaluru, Karnataka' : '155 Coimbatore Main Road, Coimbatore, Tamil Nadu'),
-      contactNumber: hIdNum === 1 ? '+91 44 1234 5678' : (hIdNum === 2 ? '04496001338' : '04408386379'),
+      hospitalName: resolved.name,
+      address: resolved.address,
+      contactNumber: resolved.contactNumber,
       email: ''
     });
 
@@ -523,7 +586,7 @@ export default function App() {
       return `../api/backend/ajax/${endpoint}`;
     };
 
-    fetch(getApiUrl(`get-questions.php?hospital_id=${hospitalId}`))
+    fetch(getApiUrl(`get-questions.php?hospital_id=${resolved.id}`))
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -580,6 +643,7 @@ export default function App() {
     { id: 1, name: '', department: '', note: '' }
   ]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const allSteps = [
     { id: 'patient', title: 'Patient Information', tamilTitle: 'நோயாளி தகவல்' },
@@ -988,6 +1052,7 @@ export default function App() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     const errors = validatePatientInfo(patientInfo, true);
     if (Object.keys(errors).length > 0) {
        setFormErrors(errors);
@@ -1015,6 +1080,7 @@ export default function App() {
        return;
     }
 
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
       
@@ -1216,11 +1282,14 @@ export default function App() {
     } catch (error) {
       setShowSuccess(true);
       toast.success(language === 'en' ? 'Feedback submitted successfully!' : 'கருத்து வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // Reset entire form to initial state with default language 'ta' (Tamil)
   const resetFormToInitialState = useCallback(() => {
+    setIsSubmitting(false);
     setShowSuccess(false);
     setCurrentStep(0);
     setLanguage('ta'); // Always default to Tamil for next patient!
@@ -1809,7 +1878,8 @@ export default function App() {
         <HospitalSelection 
           selectedHospitalId={null}
           onHospitalSelect={(hospital) => {
-            window.location.href = `?hospital_id=${hospital.id}`;
+            const code = hospital.id === 1 ? 'apl-8092' : (hospital.id === 2 ? 'cmc-4719' : 'gov-3185');
+            window.location.href = `?hospital_id=${code}`;
           }}
           language={language}
         />
@@ -3305,10 +3375,20 @@ export default function App() {
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              className="w-full px-12 py-4 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-100 transform hover:-translate-y-0.5 active:translate-y-0"
+              disabled={isSubmitting}
+              className="w-full px-12 py-4 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-green-100 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <CheckCircle className="w-6 h-6" />
-              {language === 'en' ? 'Submit Feedback' : 'கருத்தை சமர்ப்பிக்கவும்'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span>{language === 'en' ? 'Submitting Feedback...' : 'கருத்து சமர்ப்பிக்கப்படுகிறது...'}</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-6 h-6" />
+                  <span>{language === 'en' ? 'Submit Feedback' : 'கருத்தை சமர்ப்பிக்கவும்'}</span>
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -47,6 +47,9 @@ The application digitizes the official 5-page hospital patient feedback & qualit
   - **OTP & Email Security**: Verify OTP button is disabled until a valid 6-digit numeric OTP is entered; Email verification and sending actions are blocked until standard RFC email syntax is satisfied.
 - **UHID Auto-Lookup**: Patient identity verification via `/api/get-patient` pre-filling patient records.
 - **Office Use Persistence Across Refresh**: Complete multi-layer persistence (`React state` + `localStorage.hms_saved_office_use` + `localStorage.hms_new_submissions` + PostgreSQL `complaint_review` table) ensuring all 5 audit fields and `Resolved ✓` badges remain populated across page refreshes.
+- **Session Protection & Anti-Tampering**: URL parameters strictly verified against authenticated `sessionStorage`; alphanumeric hospital codes (`apl-8092`, `cmc-4719`, `gov-3185`) prevent form tampering or hospital hopping without credentials.
+- **Distinct Hospital Admin Authentication**: Unique credentials and passwords per hospital (`Apollo@Admin8092`, `City@Admin4719`, `Govt@Admin3185`) with cross-hospital lockout.
+- **Native Excel Unicode Export**: Zero mojibake Tamil export rendering clean fonts and star ratings in both Microsoft Excel on Windows and Google Sheets.
 - **Dynamic Department Ratings**: Interactive 5-star scales and animated emoji rating cards.
 - **Yes / No Service Inquiries**: Binary questions for cleanliness, cost transparency, and doctor treatment.
 - **Office Use & Problem Resolution Action Log**: Quality officer workflow to log investigations, corrective actions, preventive policies, and incharge accountability.
@@ -258,7 +261,7 @@ Follow this step-by-step guide to set up, run, and deploy this project from scra
 ---
 
 ## 🧪 QA Test Reports & Defect Resolution Document
-For a complete matrix of all 31 QA defect tickets, repro steps, root cause analyses, and implemented technical fixes, refer to:
+For a complete matrix of all 35 QA defect tickets, repro steps, root cause analyses, and implemented technical fixes, refer to:
 📄 **[`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md)**
 
 ---

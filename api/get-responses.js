@@ -1,5 +1,14 @@
 import { query } from './db.js';
 
+function resolveHospitalId(rawId) {
+  const str = String(rawId || '').toLowerCase().trim();
+  if (str === '1' || str.includes('apl') || str.includes('apollo')) return 1;
+  if (str === '2' || str.includes('cmc') || str.includes('city')) return 2;
+  if (str === '3' || str.includes('gov') || str.includes('govt')) return 3;
+  const num = parseInt(str, 10);
+  return isNaN(num) ? 0 : num;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -9,7 +18,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const hospitalId = parseInt(req.query.hospital_id || '1', 10);
+  const hospitalId = resolveHospitalId(req.query.hospital_id || req.query.id);
 
   try {
     // 1. Fetch Hospital info
@@ -56,23 +65,28 @@ export default async function handler(req, res) {
       `);
     } catch (e) {}
 
-    // 3. Fetch Submissions
+    // 3. Fetch Submissions with strict DISTINCT ON (fs.submission_id) to eliminate any join duplication
     const params = [];
-    let sql = `SELECT fs.submission_id, fs.submission_date AS submitted_at, fs.status AS office_status, fs.patient_id, fs.hospital_id, fs.department_id, fs.feedback_form_id,
+    let sql = `SELECT DISTINCT ON (fs.submission_id)
+                      fs.submission_id, fs.submission_date AS submitted_at, fs.status AS office_status, fs.patient_id, fs.hospital_id, fs.department_id, fs.feedback_form_id,
                       p.uhid, p.first_name AS full_name, p.mobile AS mobile_number, p.p_email as patient_email, p.address as patient_address, p.pin_code, p.city, p.state, p.country,
                       p.op_no, p.ip_no, p.admission_date, p.discharge_date,
                       cr.review_comments AS complaint_review, cr.review_date, cr.corrective_action, cr.preventive_action, cr.incharge_name,
                       d.department_name
                FROM feedback_submission fs
                JOIN patient p ON p.patient_id = fs.patient_id
-               LEFT JOIN complaint_review cr ON cr.submission_id = fs.submission_id
+               LEFT JOIN (
+                 SELECT DISTINCT ON (submission_id) submission_id, review_comments, review_date, corrective_action, preventive_action, incharge_name
+                 FROM complaint_review
+                 ORDER BY submission_id, review_id DESC
+               ) cr ON cr.submission_id = fs.submission_id
                LEFT JOIN department d ON d.department_id = fs.department_id`;
 
     if (hospitalId > 0) {
       sql += ' WHERE fs.hospital_id = $1';
       params.push(hospitalId);
     }
-    sql += ' ORDER BY fs.submission_date DESC LIMIT 200';
+    sql += ' ORDER BY fs.submission_id DESC, fs.submission_date DESC LIMIT 200';
 
     const subRes = await query(sql, params);
     const submissions = subRes.rows;

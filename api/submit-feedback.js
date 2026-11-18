@@ -101,7 +101,15 @@ export default async function handler(req, res) {
     const ipNo = visitType === 'IP' ? (body.ip_id || body.ipNo || null) : null;
     const admissionDate = body.admission_date || body.admissionDate || null;
     const dischargeDate = body.discharge_date || body.dischargeDate || null;
-    const hospitalId = parseInt(body.hospital_id || '1', 10);
+    const rawHid = String(body.hospital_id || '1').toLowerCase().trim();
+    let hospitalId = 1;
+    if (rawHid === '1' || rawHid.includes('apl') || rawHid.includes('apollo')) hospitalId = 1;
+    else if (rawHid === '2' || rawHid.includes('cmc') || rawHid.includes('city')) hospitalId = 2;
+    else if (rawHid === '3' || rawHid.includes('gov') || rawHid.includes('govt')) hospitalId = 3;
+    else {
+      const n = parseInt(rawHid, 10);
+      hospitalId = isNaN(n) || n <= 0 ? 1 : n;
+    }
     const formId = parseInt(body.feedback_form_id || '1', 10);
 
     // Extract department name from body or appreciations

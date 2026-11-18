@@ -1,7 +1,7 @@
 import { REAL_DB_RESPONSES, REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from '../real_db_data';
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { BrandingSettings, Question, FeedbackResponse } from '../../types';
-import { generateFeedbackReportCSV, downloadCSV, printFeedbackDetail, printFeedbackReport } from '../../services';
+import { generateFeedbackReportExcel, downloadExcel, generateFeedbackReportCSV, downloadCSV, printFeedbackDetail, printFeedbackReport } from '../../services';
 import { AdminSidebar } from './admin/AdminSidebar';
 import { AdminHeader } from './admin/AdminHeader';
 import { OfficeUseModal } from './admin/OfficeUseModal';
@@ -391,15 +391,60 @@ export const getConsolidatedRating = (r: any): number => {
   return 5.0;
 };
 
+const deduplicateResponses = (list: FeedbackResponse[]): FeedbackResponse[] => {
+  const seenIds = new Set<string>();
+  const seenSignatures = new Set<string>();
+  const unique: FeedbackResponse[] = [];
+
+  for (const r of list) {
+    const rId = String(r.id || '').trim();
+    const uhid = String(r.uhid || '').toLowerCase().trim();
+    const name = String(r.patientName || '').toLowerCase().trim();
+    const mobile = String(r.mobile || '').replace(/\D/g, '').slice(-10);
+    const date = String(r.date || '').trim();
+
+    // Skip duplicate IDs
+    if (rId && seenIds.has(rId)) continue;
+    // Skip duplicate UHIDs (if not generic/empty)
+    if (uhid && !uhid.startsWith('uhid') && seenIds.has(uhid)) continue;
+
+    // Skip duplicate patient submissions on the same date/mobile
+    const signature = `${name}_${mobile || date}`;
+    if (name && name !== 'patient' && name !== 'anonymous' && seenSignatures.has(signature)) {
+      continue;
+    }
+
+    if (rId) seenIds.add(rId);
+    if (uhid) seenIds.add(uhid);
+    if (name && name !== 'patient' && name !== 'anonymous') seenSignatures.add(signature);
+    unique.push(r);
+  }
+  return unique;
+};
+
 const getEffectiveHospitalId = () => {
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    const qHid = urlParams.get('hospital_id');
-    if (qHid && !isNaN(parseInt(qHid, 10))) return qHid;
+    const qHid = urlParams.get('hospital_id') || urlParams.get('id');
+    if (qHid) {
+      const s = String(qHid).toLowerCase().trim();
+      if (s === '1' || s === 'apl-8092' || s.includes('apl') || s.includes('apollo')) return '1';
+      if (s === '2' || s === 'cmc-4719' || s.includes('cmc') || s.includes('city')) return '2';
+      if (s === '3' || s === 'gov-3185' || s.includes('gov') || s.includes('gh')) return '3';
+      const n = parseInt(s, 10);
+      if (!isNaN(n) && n > 0) return String(n);
+    }
   } catch (e) {}
   if ((window as any).ADMIN_HOSPITAL_ID) return String((window as any).ADMIN_HOSPITAL_ID);
   const saved = localStorage.getItem('selected_hospital_id');
-  if (saved && !isNaN(parseInt(saved, 10))) return saved;
+  if (saved) {
+    const s = String(saved).toLowerCase().trim();
+    if (s === '1' || s === 'apl-8092' || s.includes('apl') || s.includes('apollo')) return '1';
+    if (s === '2' || s === 'cmc-4719' || s.includes('cmc') || s.includes('city')) return '2';
+    if (s === '3' || s === 'gov-3185' || s.includes('gov') || s.includes('gh')) return '3';
+    const n = parseInt(s, 10);
+    if (!isNaN(n) && n > 0) return String(n);
+  }
   return '1';
 };
 
@@ -724,7 +769,7 @@ export function AdminDashboard({
     } catch (e) {
       baseList = REAL_DB_RESPONSES as any[];
     }
-    return baseList.map(r => {
+    const mapped = baseList.map(r => {
       const keyUhid = r.uhid;
       const keyId = String(r.id);
       const ou = savedOfficeUse[keyUhid] || savedOfficeUse[keyId] || r.officeUse;
@@ -733,6 +778,7 @@ export function AdminDashboard({
       }
       return r;
     });
+    return deduplicateResponses(mapped);
   });
   const [isLoadingResponses, setIsLoadingResponses] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -859,7 +905,7 @@ export function AdminDashboard({
             finalResponses = [...remainingNewSubs, ...fetchedResponses];
           }
         } catch (e) {}
-        setResponses(finalResponses);
+        setResponses(deduplicateResponses(finalResponses));
       } else {
         setOfficeUseByResponse(mergedOfficeUse);
         let baseList = REAL_DB_RESPONSES as any[];
@@ -879,7 +925,7 @@ export function AdminDashboard({
           }
           return r;
         });
-        setResponses(withOfficeUse);
+        setResponses(deduplicateResponses(withOfficeUse));
       }
       setIsLoadingResponses(false);
       setIsRefreshingResponses(false);
@@ -1563,132 +1609,17 @@ export function AdminDashboard({
   }, [responses, availableDepartments, reportDept, reportFromDate, reportToDate, fromDate, toDate, questions, yesNoQuestions, reportSearch]);
 
   const handleExportCSV = () => {
-    let rows: string[] = [];
-
-    // Header Summary
-    rows.push(`"PATIENT FEEDBACK REPORT - ${brandingSettings.hospitalName.replace(/"/g, '""')}"`);
-    rows.push(`"Generated On: ${new Date().toLocaleString('en-GB')}"`);
-    rows.push(`"Total Feedback Responses Evaluated: ${responses.length}"`);
-    rows.push('');
-
-    // Table 1: Service Rating Questions Summary
-    rows.push('"=== SECTION 1: DEPARTMENT SERVICE RATING QUESTIONS SUMMARY ==="');
-    rows.push([
-      '"Department"',
-      '"Service / Question (English)"',
-      '"Question (Tamil)"',
-      '"Total Rated"',
-      '"Average Rating (out of 5.0)"',
-      '"Positive Response % (4★ & 5★)"',
-      '"5★ (Excellent)"',
-      '"4★ (Good)"',
-      '"3★ (Average)"',
-      '"2★ (Poor)"',
-      '"1★ (Very Poor)"'
-    ].join(','));
-
-    departmentReportData.forEach(dept => {
-      dept.ratingQuestions.forEach(rq => {
-        const posCount = (rq.count5 || 0) + (rq.count4 || 0);
-        const posPct = rq.totalRated > 0 ? Math.round((posCount / rq.totalRated) * 100) : 0;
-        rows.push([
-          `"${dept.departmentName.replace(/"/g, '""')}"`,
-          `"${rq.label.replace(/"/g, '""')}"`,
-          `"${(rq.tamilLabel || '').replace(/"/g, '""')}"`,
-          rq.totalRated,
-          `"${rq.averageScore}"`,
-          `"${posPct}%"`,
-          rq.count5,
-          rq.count4,
-          rq.count3,
-          rq.count2,
-          rq.count1
-        ].join(','));
-      });
-    });
-
-    rows.push('');
-    rows.push('');
-
-    // Table 2: Yes/No Questions Breakdown
-    rows.push('"=== SECTION 2: YES / NO QUESTIONS BREAKDOWN ==="');
-    rows.push([
-      '"Department"',
-      '"Question (English)"',
-      '"Question (Tamil)"',
-      '"Total Answered"',
-      '"Yes Count"',
-      '"No Count"',
-      '"Yes %"',
-      '"Remarks Count"'
-    ].join(','));
-
-    departmentReportData.forEach(dept => {
-      dept.yesNoQuestions.forEach(yq => {
-        rows.push([
-          `"${dept.departmentName.replace(/"/g, '""')}"`,
-          `"${yq.label.replace(/"/g, '""')}"`,
-          `"${(yq.tamilLabel || '').replace(/"/g, '""')}"`,
-          yq.totalAnswered,
-          yq.yesCount,
-          yq.noCount,
-          `"${yq.yesPercent}%"`,
-          yq.remarks.length
-        ].join(','));
-      });
-    });
-
-    rows.push('');
-    rows.push('');
-
-    // Table 3: Patient Feedback & Action Log
-    rows.push('"=== SECTION 3: PATIENT FEEDBACK RESPONSES & RESOLUTION LOG ==="');
-    rows.push([
-      '"UHID"',
-      '"Patient Name"',
-      '"Visit Type"',
-      '"Date"',
-      '"Department"',
-      '"Overall Rating"',
-      '"Would Recommend"',
-      '"Office Status"',
-      '"Review of Complaint"',
-      '"Corrective Action Taken"',
-      '"Preventive Action"',
-      '"Incharge Name / Date"'
-    ].join(','));
-
-    responses.forEach(r => {
-      const ou = officeUseByResponse[r.uhid] || r.officeUse || {};
-      const isResolved = !!(ou.reviewOfComplaint || ou.inchargeName);
-      rows.push([
-        `"${(r.uhid || '').replace(/"/g, '""')}"`,
-        `"${(r.patientName || '').replace(/"/g, '""')}"`,
-        `"${(r.visitType || 'OP').replace(/"/g, '""')}"`,
-        `"${(r.date || '').replace(/"/g, '""')}"`,
-        `"${(r.departmentName || 'Cardiology').replace(/"/g, '""')}"`,
-        `"${typeof r.overallRating === 'number' ? r.overallRating.toFixed(1) : r.overallRating}"`,
-        `"${r.wouldRecommend ? 'Yes' : 'No'}"`,
-        `"${isResolved ? 'Resolved' : 'Pending Action'}"`,
-        `"${(ou.reviewOfComplaint || '').replace(/"/g, '""')}"`,
-        `"${(ou.correctiveAction || '').replace(/"/g, '""')}"`,
-        `"${(ou.preventiveAction || '').replace(/"/g, '""')}"`,
-        `"${(ou.inchargeName || '') + (ou.dateOfReview ? ` (${ou.dateOfReview})` : '')}"`
-      ].join(','));
-    });
-
-    // Use UTF-8 BOM so Excel opens Tamil and English characters without corruption
-    const csvContent = "\uFEFF" + rows.join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Feedback_Report_${brandingSettings.hospitalName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Feedback Report exported successfully as clean Excel CSV!');
+    // Generate native Excel spreadsheet with explicit UTF-8 encoding for 100% accurate Tamil font and star rendering
+    const excelContent = generateFeedbackReportExcel(
+      departmentReportData,
+      responses,
+      officeUseByResponse,
+      brandingSettings.hospitalName
+    );
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `Feedback_Report_${brandingSettings.hospitalName.replace(/\s+/g, '_')}_${dateStr}.xls`;
+    downloadExcel(excelContent, filename);
+    toast.success('Feedback Report downloaded! 100% compatible with Excel & Google Sheets.');
   };
 
   const activeFilterCount = useMemo(() => {

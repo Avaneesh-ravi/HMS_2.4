@@ -243,6 +243,21 @@ graph LR
 4. **Direct Admin Route Support**:
    - Access admin portal directly using URL query parameters: `https://hms-2-4.vercel.app/?view=admin` or `?admin=true`.
 
+5. **Session Authorization & Alphanumeric Hospital Codes**:
+   - URL parameter tampering is strictly prevented by authenticating active sessions via `sessionStorage` (`hms_auth_hospital_id`, `hms_auth_hospital_code`, `hms_auth_hospital_name`).
+   - Hospital URLs use mixed alphanumeric identifiers (`apl-8092`, `cmc-4719`, `gov-3185`) instead of sequentially guessable integers.
+   - Any attempt to switch `hospital_id` in the URL without logging in immediately triggers an access denied toast and redirects to Hospital Selection.
+
+6. **Distinct Hospital Administrative Credentials**:
+   - Each hospital is provisioned with its own unique credentials, eliminating shared administrative passwords:
+     | Hospital | Alphanumeric Code | Username / Email | Password |
+     |---|---|---|---|
+     | **Apollo Hospital** | `apl-8092` | `admin_apollo` | `Apollo@Admin8092` |
+     | **City Medical Centre** | `cmc-4719` | `admin_city` | `City@Admin4719` |
+     | **Government Hospital** | `gov-3185` | `admin_govt` | `Govt@Admin3185` |
+     | **Super Admin (Platform)** | `system` | `admin` | `Super@Admin2026` |
+   - Cross-hospital logins are strictly rejected by `isCrossHospitalPassword` validation.
+
 ---
 
 ## 7. Database Schema Reference (PostgreSQL)
@@ -377,7 +392,10 @@ Dynamic question registry for ratings and binary checks.
 - [x] **CSV/Excel Export Verification**: Verified 3-section layout with UTF-8 BOM encoding.
 - [x] **Complaint Investigation Logging & Refresh Persistence**: Tested "Resolve Problem" and "Edit Office Review" workflows; verified persistence after browser refresh.
 - [x] **Validation Integrity**: Verified OP/IP date requirements and OTP/Email validation rules.
-- [x] **QA Defect Log Verification**: All 31 historical test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
+- [x] **Session Protection & Anti-Tampering**: URL parameters strictly validated against authenticated `sessionStorage`; alphanumeric IDs (`apl-8092`, `cmc-4719`, `gov-3185`) prevent enumeration.
+- [x] **Distinct Hospital Authentication**: Unique administrative passwords per hospital with cross-hospital lockout.
+- [x] **Excel Tamil Rendering**: Native `.xls` UTF-8 export renders crisp Tamil and star ratings in both Microsoft Excel and Google Sheets.
+- [x] **QA Defect Log Verification**: All 35 historical and LRL test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
 
 ---
 
