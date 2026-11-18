@@ -132,19 +132,48 @@ export function HospitalSelection({
 
     // Unique, distinct credential check per hospital to prevent shared password cross-login
     const validCredentials = [
+      // Apollo Hospital (ID: 1)
+      { user: 'admin_apollo', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: 'apollo', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: 'admin.apollo', pass: 'Apollo@Admin8092', hid: 1 },
       { user: 'rajendran.s1@example.com', pass: 'Apollo@Admin8092', hid: 1 },
       { user: '9402654235', pass: 'Apollo@Admin8092', hid: 1 },
+
+      // City Medical Centre (ID: 2)
+      { user: 'admin_city', pass: 'City@Admin4719', hid: 2 },
+      { user: 'city', pass: 'City@Admin4719', hid: 2 },
+      { user: 'admin.city', pass: 'City@Admin4719', hid: 2 },
       { user: 'kavitha.m2@example.com', pass: 'City@Admin4719', hid: 2 },
       { user: '9116155940', pass: 'City@Admin4719', hid: 2 },
+
+      // Government Hospital (ID: 3)
+      { user: 'admin_govt', pass: 'Govt@Admin3185', hid: 3 },
+      { user: 'govt', pass: 'Govt@Admin3185', hid: 3 },
+      { user: 'admin.govt', pass: 'Govt@Admin3185', hid: 3 },
       { user: 'suresh.babu3@example.com', pass: 'Govt@Admin3185', hid: 3 },
       { user: '9781618495', pass: 'Govt@Admin3185', hid: 3 },
+
+      // Super Admin (Global access)
       { user: 'admin@hospitalfeedback.com', pass: 'Super@Admin2026', hid: 0 },
       { user: 'admin', pass: 'Super@Admin2026', hid: 0 }
     ];
 
+    // Explicit cross-hospital password detection to block shared passwords immediately
+    const isCrossHospitalPassword = validCredentials.some(c => 
+      c.hid !== 0 && c.hid !== selectedHospitalForLogin.id && 
+      (c.pass === enteredPass || c.pass.toLowerCase() === enteredPass.toLowerCase())
+    );
+    if (isCrossHospitalPassword) {
+      setLoginError(language === 'en' 
+        ? 'Invalid password for this hospital. Cross-hospital access is restricted.' 
+        : 'இந்த மருத்துவமனைக்கான தவறான கடவுச்சொல். பிற மருத்துவமனை அனுமதி தடுக்கப்பட்டுள்ளது.');
+      setLoginPassword('');
+      return;
+    }
+
     const isDirectMatch = validCredentials.some(c => 
       c.user.toLowerCase() === trimmedUser && 
-      c.pass === enteredPass && 
+      (c.pass === enteredPass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
       (c.hid === 0 || c.hid === selectedHospitalForLogin.id)
     );
 
@@ -183,25 +212,42 @@ export function HospitalSelection({
         password: loginPassword
       };
 
-      const response = await fetch(getApiUrl('login-ajax.php'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      const endpoints = [
+        '/api/login-ajax',
+        getApiUrl('login-ajax.php')
+      ];
 
-      const data = await response.json().catch(() => null);
+      let response: Response | null = null;
+      let data: any = null;
 
-      if (response.ok && data && data.success) {
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok || res.status === 401 || res.status === 400) {
+            response = res;
+            data = await res.json().catch(() => null);
+            break;
+          }
+        } catch (e) {
+          // Fall through to next endpoint
+        }
+      }
+
+      if (response && response.ok && data && data.success) {
         sessionStorage.setItem('hms_auth_hospital_id', String(selectedHospitalForLogin.id));
         sessionStorage.setItem('hms_auth_hospital_code', getHospitalCode(selectedHospitalForLogin.id));
         sessionStorage.setItem('hms_auth_hospital_name', selectedHospitalForLogin.name);
         localStorage.setItem('selected_hospital_id', String(selectedHospitalForLogin.id));
         onHospitalSelect(selectedHospitalForLogin);
       } else {
-        if (response.status === 500) {
+        if (response && response.status === 500) {
           setLoginError(data?.message || (language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.'));
         } else {
           setLoginError(data?.message || (language === 'en' ? 'Invalid user ID or password for this hospital. Please check your credentials.' : 'இந்த மருத்துவமனைக்கான தவறான பயனர் ஐடி அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களைச் சரிபார்க்கவும்.'));

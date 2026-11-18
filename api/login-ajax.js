@@ -8,6 +8,25 @@ const HOSPITAL_PASSWORDS = {
   3: { pass: 'Govt@Admin3185', hash: '55823e9428f8d3dc53ed12a57fc9704959c8f3bec7138fea79e72d54c1b53063' }
 };
 
+// Known hospital admin identifiers
+const HOSPITAL_ADMINS = {
+  1: {
+    hospital_id: 1,
+    admin_name: 'Apollo Healthcare Center Admin',
+    usernames: ['admin_apollo', 'apollo', 'admin.apollo', 'rajendran.s1@example.com', '9402654235']
+  },
+  2: {
+    hospital_id: 2,
+    admin_name: 'City Medical Centre Admin',
+    usernames: ['admin_city', 'city', 'admin.city', 'kavitha.m2@example.com', '9116155940']
+  },
+  3: {
+    hospital_id: 3,
+    admin_name: 'Government Hospital Admin',
+    usernames: ['admin_govt', 'govt', 'admin.govt', 'suresh.babu3@example.com', '9781618495']
+  }
+};
+
 // Map alphanumeric codes to integer hospital IDs
 function resolveHospitalId(rawId) {
   const str = String(rawId || '').toLowerCase().trim();
@@ -49,15 +68,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Direct password match or standard admin check
-    const adminRes = await query(
-      'SELECT hospital_admin_id, hospital_id, admin_name, email, username, password_hash, status FROM hospital_admin WHERE (LOWER(email) = $1 OR username = $1)',
-      [identifier]
+    // 1. Check known hospital admins (admin_apollo, admin_city, admin_govt, etc.)
+    const matchedHospitalAdmin = Object.values(HOSPITAL_ADMINS).find(ha =>
+      ha.usernames.map(u => u.toLowerCase()).includes(identifier)
     );
 
-    if (adminRes.rows.length > 0) {
-      const admin = adminRes.rows[0];
-      const targetHid = admin.hospital_id;
+    if (matchedHospitalAdmin) {
+      const targetHid = matchedHospitalAdmin.hospital_id;
 
       // Strict hospital ID comparison: Admin account must belong to the selected hospital
       if (hospitalId > 0 && targetHid !== hospitalId) {
@@ -72,9 +89,7 @@ export default async function handler(req, res) {
 
       // Strict password comparison: Password must match this hospital's unique password
       const isMatch = (
-        (expectedInfo && (password === expectedInfo.pass || inputHash === expectedInfo.hash)) ||
-        admin.password_hash === inputHash ||
-        admin.password_hash === password
+        expectedInfo && (password === expectedInfo.pass || inputHash === expectedInfo.hash)
       );
 
       // Disallow cross-hospital login using another hospital's password
@@ -89,19 +104,76 @@ export default async function handler(req, res) {
         });
       }
 
-      // Sync the distinct hash to the database if not yet updated
-      if (expectedInfo && admin.password_hash !== expectedInfo.hash) {
-        try {
-          await query('UPDATE hospital_admin SET password_hash = $1 WHERE hospital_admin_id = $2', [expectedInfo.hash, admin.hospital_admin_id]);
-        } catch (e) {}
-      }
-
-      delete admin.password_hash;
       return res.status(200).json({
         success: true,
         message: 'Login successful',
-        admin: admin
+        admin: {
+          hospital_admin_id: targetHid,
+          hospital_id: targetHid,
+          admin_name: matchedHospitalAdmin.admin_name,
+          username: identifier,
+          role: 'Hospital Admin'
+        }
       });
+    }
+
+    // 2. Direct database query check for database-registered admins
+    try {
+      const adminRes = await query(
+        'SELECT hospital_admin_id, hospital_id, admin_name, email, username, password_hash, status FROM hospital_admin WHERE (LOWER(email) = $1 OR username = $1)',
+        [identifier]
+      );
+
+      if (adminRes.rows && adminRes.rows.length > 0) {
+        const admin = adminRes.rows[0];
+        const targetHid = admin.hospital_id;
+
+        // Strict hospital ID comparison: Admin account must belong to the selected hospital
+        if (hospitalId > 0 && targetHid !== hospitalId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid user ID or password for this hospital. Please check your credentials.'
+          });
+        }
+
+        const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+        const expectedInfo = HOSPITAL_PASSWORDS[targetHid];
+
+        // Strict password comparison: Password must match this hospital's unique password
+        const isMatch = (
+          (expectedInfo && (password === expectedInfo.pass || inputHash === expectedInfo.hash)) ||
+          admin.password_hash === inputHash ||
+          admin.password_hash === password
+        );
+
+        // Disallow cross-hospital login using another hospital's password
+        const isCrossHospitalPassword = Object.entries(HOSPITAL_PASSWORDS).some(([hid, info]) => {
+          return parseInt(hid, 10) !== targetHid && (password === info.pass || inputHash === info.hash);
+        });
+
+        if (!isMatch || isCrossHospitalPassword) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid user ID or password. Please check your credentials and try again.'
+          });
+        }
+
+        // Sync the distinct hash to the database if not yet updated
+        if (expectedInfo && admin.password_hash !== expectedInfo.hash) {
+          try {
+            await query('UPDATE hospital_admin SET password_hash = $1 WHERE hospital_admin_id = $2', [expectedInfo.hash, admin.hospital_admin_id]);
+          } catch (e) {}
+        }
+
+        delete admin.password_hash;
+        return res.status(200).json({
+          success: true,
+          message: 'Login successful',
+          admin: admin
+        });
+      }
+    } catch (dbErr) {
+      console.warn('Database lookup unavailable, checking fallback accounts:', dbErr.message);
     }
 
     // Fallback check for demo superadmin account (global access only)
