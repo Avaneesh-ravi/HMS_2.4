@@ -1437,20 +1437,29 @@ export default function App() {
     }
 
     const validCredentials = [
-      { user: 'rajendran.s1@example.com', pass: 'Admin@123', hid: 1 },
-      { user: 'rajendran.s1@example.com', pass: 'admin123', hid: 1 },
-      { user: '9402654235', pass: 'Admin@123', hid: 1 },
-      { user: '9402654235', pass: 'admin123', hid: 1 },
-      { user: 'kavitha.m2@example.com', pass: 'Admin@123', hid: 2 },
-      { user: 'kavitha.m2@example.com', pass: 'admin123', hid: 2 },
-      { user: '9116155940', pass: 'Admin@123', hid: 2 },
-      { user: 'suresh.babu3@example.com', pass: 'Admin@123', hid: 3 },
-      { user: 'suresh.babu3@example.com', pass: 'admin123', hid: 3 },
-      { user: '9781618495', pass: 'Admin@123', hid: 3 },
+      // Apollo Hospital (ID: 1)
+      { user: 'admin_apollo', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: 'apollo', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: 'rajendran.s1@example.com', pass: 'Apollo@Admin8092', hid: 1 },
+      { user: '9402654235', pass: 'Apollo@Admin8092', hid: 1 },
+
+      // City Medical Centre (ID: 2)
+      { user: 'admin_city', pass: 'City@Admin4719', hid: 2 },
+      { user: 'city', pass: 'City@Admin4719', hid: 2 },
+      { user: 'kavitha.m2@example.com', pass: 'City@Admin4719', hid: 2 },
+      { user: '9116155940', pass: 'City@Admin4719', hid: 2 },
+
+      // Government Hospital (ID: 3)
+      { user: 'admin_govt', pass: 'Govt@Admin3185', hid: 3 },
+      { user: 'govt', pass: 'Govt@Admin3185', hid: 3 },
+      { user: 'suresh.babu3@example.com', pass: 'Govt@Admin3185', hid: 3 },
+      { user: '9781618495', pass: 'Govt@Admin3185', hid: 3 },
+
+      // Super Admin (Global access across all hospitals)
+      { user: 'admin@hospitalfeedback.com', pass: 'Super@Admin2026', hid: 0 },
       { user: 'admin@hospitalfeedback.com', pass: 'Admin@123', hid: 0 },
-      { user: 'admin@hospitalfeedback.com', pass: 'admin123', hid: 0 },
+      { user: 'admin', pass: 'Super@Admin2026', hid: 0 },
       { user: 'admin', pass: 'Admin@123', hid: 0 },
-      { user: 'admin', pass: 'admin123', hid: 0 },
     ];
 
     const isDirectMatch = validCredentials.some(c => 
