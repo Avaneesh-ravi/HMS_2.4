@@ -1,4 +1,4 @@
-import { getPool } from './db.js';
+import { getPool } from './_lib/db.js';
 
 function resolveHospitalId(rawId) {
   const str = String(rawId || '').toLowerCase().trim();

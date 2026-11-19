@@ -1,4 +1,4 @@
-import { query, getPool } from './db.js';
+import { query, getPool } from './_lib/db.js';
 
 function parseMultipart(buffer, boundary) {
   const result = {};

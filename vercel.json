@@ -2,10 +2,6 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/info",
-      "destination": "/api/info.js"
-    },
-    {
       "source": "/api/backend/ajax/get-hospitals.php",
       "destination": "/api/get-hospitals.js"
     },
@@ -88,6 +84,18 @@
     {
       "source": "/api/save-questions",
       "destination": "/api/save-questions.js"
+    },
+    {
+      "source": "/api/backend/ajax/save-branding.php",
+      "destination": "/api/save-branding.js"
+    },
+    {
+      "source": "/api/backend/ajax/save-branding",
+      "destination": "/api/save-branding.js"
+    },
+    {
+      "source": "/api/save-branding",
+      "destination": "/api/save-branding.js"
     },
     {
       "source": "/api/backend/ajax/save-office-use.php",

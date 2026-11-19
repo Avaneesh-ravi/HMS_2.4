@@ -1,5 +1,5 @@
-import { query } from './db.js';
-import { FALLBACK_RESPONSES } from './fallback_data.js';
+import { query } from './_lib/db.js';
+import { FALLBACK_RESPONSES } from './_lib/fallback_data.js';
 
 const DEFAULT_HOSPITALS = {
   1: {

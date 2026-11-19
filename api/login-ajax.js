@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { query } from './db.js';
+import { query } from './_lib/db.js';
 
 // Unique, non-shared credentials per hospital to prevent cross-hospital login
 const HOSPITAL_PASSWORDS = {

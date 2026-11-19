@@ -1,4 +1,4 @@
-import { query } from './db.js';
+import { query } from './_lib/db.js';
 
 function resolveHospitalId(rawId) {
   const str = String(rawId || '').toLowerCase().trim();
