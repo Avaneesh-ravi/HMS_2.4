@@ -12,9 +12,9 @@ This document provides a comprehensive log of all historical QA test scenarios, 
 | **Bilingual & Tamil Font Encoding** | 6 | 6 | ✅ 100% Fixed |
 | **Form Validation, OTP & Navigation** | 11 | 11 | ✅ 100% Fixed |
 | **Reporting, Export & Print Layout** | 7 | 7 | ✅ 100% Fixed |
-| **Admin Configuration & Dynamic Questions** | 3 | 3 | ✅ 100% Fixed |
-| **Authentication, Session & Access Control** | 2 | 2 | ✅ 100% Fixed |
-| **Total Test Scenarios** | **35** | **35** | ✅ **All Verified & Live** |
+| **Admin Configuration & Dynamic Questions** | 5 | 5 | ✅ 100% Fixed |
+| **Authentication, Session & Access Control** | 4 | 4 | ✅ 100% Fixed |
+| **Total Test Scenarios** | **39** | **39** | ✅ **All Verified & Live** |
 
 ---
 
@@ -266,11 +266,46 @@ This document provides a comprehensive log of all historical QA test scenarios, 
      - Added hospital-partitioned fallback responses in `api/fallback_data.js` and `api/get-responses.js` ensuring 100% strict isolation even when the cloud database pooler is offline.
   4. **Dynamic Support for Future Hospitals**: Any new hospital created will automatically receive its own isolated dataset, questions, form builder configuration, and branding scope.
 
+#### Ticket #37 (Priority 2): Recent Activity Card Displaying Outdated Entries Instead of Latest Submissions
+- **Repro Steps**: Log in to Admin Dashboard -> View 'Recent Activity' widget on the Overview tab.
+- **Reported Defect**: The widget displayed older January/February 2026 submissions (Elango Krishnan, Anand Menon, Hemalatha Balan) instead of the newest submissions (Rahul M, Avaneesh R, Bharani Verified).
+- **Root Cause**: `recentActivities` previously sliced the unsorted array (`[...responses].slice(0, 5)`), reflecting whatever initial order the database or mock array had.
+- **Correction Made**:
+  1. Implemented a robust `parseDateToMs` helper supporting ISO timestamps (`YYYY-MM-DD HH:mm:ss`), standard date strings, and Indian format (`DD/MM/YYYY`).
+  2. Updated `recentActivities` in `AdminDashboard.tsx` to sort descending by `parseDateToMs` and ID (`tB - tA`), guaranteeing that the newest submissions always appear at the top.
+  3. Applied the same descending timestamp sort across `deduplicateResponses` and the Feedback Responses table date sorter.
+
+#### Ticket #38 (Priority 1): 'Back to Form' and 'Logout' Causing Redirect Loops and 404 Errors on Vercel
+- **Repro Steps**: Log in to Admin Dashboard -> Click 'Back to Form' or 'Logout'.
+- **Reported Defect**: In SPA mode on Vercel, clicking 'Back to Form' redirected to `feedback-form.php?hospital_id=1` (causing a 404 error) or triggered 'Access denied: Please authenticate to access...', while 'Logout' sometimes looped back into the dashboard or redirected to `login.php` (404 error).
+- **Root Cause**:
+  1. `onClose()` and `onLogout()` inside `AdminDashboard.tsx` assumed a legacy multi-page PHP server structure and navigated to `.php` endpoints not present on the Vercel SPA build.
+  2. `isDashboardPage` checked `view=admin` or `admin=true` in the URL; without stripping query params, the SPA remained locked in dashboard mode.
+  3. `sessionStorage` authentication tokens (`hms_auth_hospital_id`, `hms_auth_hospital_code`) were not preserved when exiting the dashboard to the hospital's feedback form, triggering the session protection guard.
+- **Correction Made**:
+  1. Differentiated environment behavior: on PHP deployments (`.php`), it navigates to the respective PHP views; on Vercel SPA, it performs in-app state transitions using `window.history.pushState` with clean query params (`?hospital_id=<code-or-id>`).
+  2. In `onClose()` ('Back to Form'): strips `view=admin` and `admin=true`, preserves authenticated session markers (`hms_auth_hospital_id`), and switches cleanly to the patient feedback form for that hospital without any 404.
+  3. In `onLogout()`: clears all session and local storage auth keys (`hms_is_admin`, `hms_admin_role`, `hms_admin_user`, `hms_auth_hospital_*`, `is_admin_logged_in`, `selected_hospital_id`) and redirects cleanly to the root domain.
+
+#### Ticket #39 (Priority 1): Form Builder Questions, Combine Pages Toggle & Custom Branding Reverting on Session Re-entry
+- **Repro Steps**: Log in to Admin Dashboard -> Add a new rating question -> Toggle 'Combine Service Feedback + Questionary Page' -> Add a new yes/no question -> Add a new department -> Change branding location/address -> Click Save -> Log out and re-enter Apollo Hospital feedback form.
+- **Reported Defect**: After logging out and returning to the hospital form or dashboard, all modifications vanished and reverted to the factory default form.
+- **Root Cause**:
+  1. In `App.tsx`, the initial `branding` state hardcoded `123 Health Street, Chennai - 600001` and ignored custom branding saved in `localStorage`.
+  2. `tryFetchQuestions()` and `tryFetchHospQuestions()` in `App.tsx` fetched `/api/get-questions` and unconditionally called `setQuestions(data.data)` and `setCombinePages(data.settings.combinePages)`. Because fallback data does not have user customizations, it immediately overwrote the user's custom saved questions and reset `combinePages = false` in `localStorage`.
+  3. `save-questions.js`, `save-branding.js`, `get-questions.js`, and `get-responses.js` lacked an in-memory runtime cache for serverless environments when the remote PostgreSQL pooler is unreachable.
+- **Correction Made**:
+  1. Created `api/_lib/store.js` providing persistent in-memory dictionaries `SAVED_QUESTIONS_BY_HOSPITAL` and `SAVED_BRANDING_BY_HOSPITAL`.
+  2. Updated `api/save-questions.js` and `api/save-branding.js` to cache configurations in memory with `is_custom: true`, and updated `api/get-questions.js` to serve these custom configurations even during database disconnects.
+  3. In `AdminDashboard.tsx`, `handleSaveQuestions` and `handleSaveBranding` persist custom configurations under `hms_has_custom_config_hospital_${hid}` and `hms_has_custom_branding_hospital_${hid}`.
+  4. In `App.tsx`, `tryFetchQuestions()` and `handleHospitalSelect()` check `hasCustomConfig` and `hasCustomBranding`. If the client has custom configurations saved and the server response is not custom, the custom questions, yes/no questions, departments, layout mode, combine pages toggle, and custom address are strictly preserved.
+  5. Built and compiled the frontend bundle (`dist/assets/index-fO6XNCVg.js`), deployed and pushed to production.
+
 ---
 
 ## 🏆 Verification & Test Sign-off
 
-All 36 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
+All 39 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
 
 - **Live Application**: [https://hms-2-4.vercel.app](https://hms-2-4.vercel.app)
 - **Database Backup**: [`database_dump_with_data.sql`](./database_dump_with_data.sql)
