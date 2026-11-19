@@ -1,4 +1,5 @@
 import { query } from './_lib/db.js';
+import { SAVED_BRANDING_BY_HOSPITAL } from './_lib/store.js';
 
 function resolveHospitalId(rawId) {
   const str = String(rawId || '').toLowerCase().trim();
@@ -87,7 +88,16 @@ export default async function handler(req, res) {
     const address = body.address || body.address1 || '';
     const contactNumber = body.contactNumber || body.mobile || body.phone || '';
     const email = body.email || '';
-    const logo = body.logo || '';
+    const brandData = {
+      hospital_id: hospitalId,
+      hospitalName,
+      address,
+      contactNumber,
+      email,
+      logo,
+      is_custom: true
+    };
+    SAVED_BRANDING_BY_HOSPITAL[hospitalId] = brandData;
 
     try {
       if (logo) {

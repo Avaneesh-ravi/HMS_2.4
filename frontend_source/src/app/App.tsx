@@ -127,18 +127,44 @@ export default function App() {
   const [selectedHospital, setSelectedHospital] = useState<SelectedHospital | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   
-  const [branding, setBranding] = useState<BrandingSettings>({
-    logo: '',
-    hospitalName: 'Apollo Healthcare Center',
-    address: '123 Health Street, Chennai - 600001',
-    contactNumber: '+91 44 1234 5678',
-    email: 'contact@apollo.com'
+  const [branding, setBranding] = useState<BrandingSettings>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const raw = urlParams.get('hospital_id') || urlParams.get('id') || localStorage.getItem('selected_hospital_id') || '1';
+      const s = String(raw).toLowerCase().trim();
+      let hid = 1;
+      if (s === '2' || s.includes('cmc') || s.includes('city')) hid = 2;
+      else if (s === '3' || s.includes('gov') || s.includes('gh')) hid = 3;
+
+      const savedBranding = localStorage.getItem(`hms_branding_hospital_${hid}`);
+      if (savedBranding) {
+        const parsed = JSON.parse(savedBranding);
+        if (parsed && (parsed.hospitalName || parsed.address)) {
+          return {
+            logo: parsed.logo || '',
+            hospitalName: parsed.hospitalName || (hid === 1 ? 'Apollo Healthcare Center' : hid === 2 ? 'City Medical Centre' : 'Government Hospital'),
+            address: parsed.address || '',
+            contactNumber: parsed.contactNumber || '',
+            email: parsed.email || ''
+          };
+        }
+      }
+    } catch (e) {}
+    return {
+      logo: '',
+      hospitalName: 'Apollo Healthcare Center',
+      address: '123 Health Street, Chennai - 600001',
+      contactNumber: '+91 44 1234 5678',
+      email: 'contact@apollo.com'
+    };
   });
   const [showAdminDashboard, setShowAdminDashboard] = useState<boolean>(() => {
     try {
       const p = window.location.pathname;
       if (p.includes('dashboard') || p.includes('admin')) return true;
-      return sessionStorage.getItem('hms_is_admin') === 'true' || localStorage.getItem('is_admin_logged_in') === 'true';
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'admin') return true;
+      return false;
     } catch (e) {
       return false;
     }
@@ -430,15 +456,36 @@ export default function App() {
     overall: 0,
   });
 
+  const getInitialHospitalCode = () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const raw = urlParams.get('hospital_id') || urlParams.get('id') || localStorage.getItem('selected_hospital_id') || '1';
+      const s = String(raw).toLowerCase().trim();
+      if (s === '2' || s.includes('cmc') || s.includes('city')) return '2';
+      if (s === '3' || s.includes('gov') || s.includes('gh')) return '3';
+      return '1';
+    } catch (e) {
+      return '1';
+    }
+  };
+
+  const initialHid = getInitialHospitalCode();
+  const initialHidNum = parseInt(initialHid, 10) || 1;
+
   const [questions, setQuestions] = useState<Question[]>(() => {
     try {
+      const savedHosp = localStorage.getItem(`hms_questions_hospital_${initialHid}`);
+      if (savedHosp) {
+        const parsed = JSON.parse(savedHosp);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
       const saved = localStorage.getItem('hms_saved_questions');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {}
-    return REAL_DB_QUESTIONS as Question[];
+    return (REAL_DB_QUESTIONS_BY_HOSPITAL[initialHidNum] || REAL_DB_QUESTIONS) as Question[];
   });
   const [dynamicRatings, setDynamicRatings] = useState<Record<string, number>>({
     '30': 0, '31': 0, '32': 0, '33': 0, '34': 0, '35': 0
@@ -446,13 +493,18 @@ export default function App() {
 
   const [fetchedYesNoQuestions, setFetchedYesNoQuestions] = useState<any[]>(() => {
     try {
+      const savedHosp = localStorage.getItem(`hms_yesno_hospital_${initialHid}`);
+      if (savedHosp) {
+        const parsed = JSON.parse(savedHosp);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
       const saved = localStorage.getItem('hms_saved_yesno');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {}
-    return REAL_DB_YESNO;
+    return (REAL_DB_YESNO_BY_HOSPITAL[initialHidNum] || REAL_DB_YESNO);
   });
   const [dynamicYesNo, setDynamicYesNo] = useState<Record<string, { answer: boolean | null, remarks: string }>>({
     '40': { answer: null, remarks: '' },
@@ -462,6 +514,8 @@ export default function App() {
 
   const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>(() => {
     try {
+      const savedHosp = localStorage.getItem(`hms_layout_mode_hospital_${initialHid}`);
+      if (savedHosp === '1-column' || savedHosp === '2-column') return savedHosp;
       const saved = localStorage.getItem('hms_layout_mode');
       if (saved === '1-column' || saved === '2-column') return saved;
     } catch (e) {}
@@ -469,6 +523,8 @@ export default function App() {
   });
   const [combinePages, setCombinePages] = useState<boolean>(() => {
     try {
+      const savedHosp = localStorage.getItem(`hms_combine_pages_hospital_${initialHid}`);
+      if (savedHosp !== null) return savedHosp === 'true';
       const saved = localStorage.getItem('hms_combine_pages');
       if (saved !== null) return saved === 'true';
     } catch (e) {}
@@ -479,13 +535,18 @@ export default function App() {
   const [showPageTitleLabels, setShowPageTitleLabels] = useState<boolean>(true);
   const [departments, setDepartments] = useState<string[]>(() => {
     try {
+      const savedHosp = localStorage.getItem(`hms_departments_hospital_${initialHid}`);
+      if (savedHosp) {
+        const parsed = JSON.parse(savedHosp);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
       const saved = localStorage.getItem('hms_saved_departments');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch (e) {}
-    return REAL_DB_DEPARTMENTS;
+    return (REAL_DB_DEPARTMENTS_BY_HOSPITAL[initialHidNum] || REAL_DB_DEPARTMENTS);
   });
 
   // Keep departments in sync if changed by admin
@@ -580,20 +641,31 @@ export default function App() {
 
     localStorage.setItem('selected_hospital_id', String(resolved.id));
 
-    setSelectedHospital({
-      id: resolved.id,
-      name: resolved.name,
-      logo: null,
-      address: resolved.address,
-      contactNumber: resolved.contactNumber
-    });
-    setBranding({
+    let effectiveBranding = {
       logo: '',
       hospitalName: resolved.name,
       address: resolved.address,
       contactNumber: resolved.contactNumber,
       email: ''
+    };
+    try {
+      const savedBranding = localStorage.getItem(`hms_branding_hospital_${resolved.id}`);
+      if (savedBranding) {
+        const parsed = JSON.parse(savedBranding);
+        if (parsed && (parsed.hospitalName || parsed.address)) {
+          effectiveBranding = { ...effectiveBranding, ...parsed };
+        }
+      }
+    } catch (e) {}
+
+    setSelectedHospital({
+      id: resolved.id,
+      name: effectiveBranding.hospitalName || resolved.name,
+      logo: effectiveBranding.logo || null,
+      address: effectiveBranding.address || resolved.address,
+      contactNumber: effectiveBranding.contactNumber || resolved.contactNumber
     });
+    setBranding(effectiveBranding);
 
     const getApiUrl = (endpoint: string) => {
       const p = window.location.pathname;
@@ -623,40 +695,58 @@ export default function App() {
       }
 
       if (data && data.success) {
-        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-          setQuestions(data.data);
-          try { localStorage.setItem(`hms_questions_hospital_${resolved.id}`, JSON.stringify(data.data)); } catch (e) {}
-          const initialRatings: Record<string, number> = {};
-          data.data.forEach((q: Question) => {
-            initialRatings[q.id] = 0;
-          });
-          setDynamicRatings(initialRatings);
+        const hasCustomConfig = localStorage.getItem(`hms_has_custom_config_hospital_${resolved.id}`) === 'true';
+        const hasCustomBranding = localStorage.getItem(`hms_has_custom_branding_hospital_${resolved.id}`) === 'true';
+
+        // Only overwrite form configuration if server explicitly has custom questions, or user hasn't customized them locally
+        if (data.is_custom || !hasCustomConfig) {
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            setQuestions(data.data);
+            try { localStorage.setItem(`hms_questions_hospital_${resolved.id}`, JSON.stringify(data.data)); } catch (e) {}
+            const initialRatings: Record<string, number> = {};
+            data.data.forEach((q: Question) => {
+              initialRatings[q.id] = 0;
+            });
+            setDynamicRatings(initialRatings);
+          }
+          if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
+            setFetchedYesNoQuestions(data.yesno_data);
+            try { localStorage.setItem(`hms_yesno_hospital_${resolved.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+            const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+            data.yesno_data.forEach((yq: any) => {
+              initialYesNo[yq.id] = { answer: null, remarks: '' };
+            });
+            setDynamicYesNo(initialYesNo);
+          }
+          if (data.settings) {
+            if (data.settings.layoutMode) {
+              setLayoutMode(data.settings.layoutMode);
+              try { localStorage.setItem(`hms_layout_mode_hospital_${resolved.id}`, data.settings.layoutMode); } catch (e) {}
+            }
+            if (data.settings.combinePages !== undefined) {
+              setCombinePages(data.settings.combinePages);
+              try { localStorage.setItem(`hms_combine_pages_hospital_${resolved.id}`, String(data.settings.combinePages)); } catch (e) {}
+            }
+            if (data.settings.themeColor) setThemeColor(data.settings.themeColor);
+            if (data.settings.fontSize) setFontSize(data.settings.fontSize);
+            if (data.settings.showPageTitleLabels !== undefined) setShowPageTitleLabels(data.settings.showPageTitleLabels);
+            if (data.settings.departments && Array.isArray(data.settings.departments)) {
+              setDepartments(data.settings.departments);
+              try { localStorage.setItem(`hms_departments_hospital_${resolved.id}`, JSON.stringify(data.settings.departments)); } catch (e) {}
+            }
+          }
         }
-        if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
-          setFetchedYesNoQuestions(data.yesno_data);
-          try { localStorage.setItem(`hms_yesno_hospital_${resolved.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
-          const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-          data.yesno_data.forEach((yq: any) => {
-            initialYesNo[yq.id] = { answer: null, remarks: '' };
-          });
-          setDynamicYesNo(initialYesNo);
-        }
-        if (data.settings) {
-          setLayoutMode(data.settings.layoutMode);
-          setCombinePages(data.settings.combinePages);
-          if (data.settings.themeColor) setThemeColor(data.settings.themeColor);
-          if (data.settings.fontSize) setFontSize(data.settings.fontSize);
-          if (data.settings.showPageTitleLabels !== undefined) setShowPageTitleLabels(data.settings.showPageTitleLabels);
-          if (data.settings.departments) setDepartments(data.settings.departments);
-        }
-        if (data.hospital) {
-          setBranding({
-            logo: data.hospital.logoUrl || '',
-            hospitalName: data.hospital.hospitalName || resolved.name,
-            address: data.hospital.address || resolved.address,
-            contactNumber: data.hospital.contactNumber || resolved.contactNumber,
-            email: data.hospital.email || ''
-          });
+
+        // Only overwrite branding from server if server provided custom hospital data and user hasn't customized it locally
+        if ((data.is_custom || !hasCustomBranding) && data.hospital) {
+          setBranding(prev => ({
+            ...prev,
+            logo: data.hospital.logoUrl || prev.logo,
+            hospitalName: data.hospital.hospitalName || prev.hospitalName,
+            address: data.hospital.address || prev.address,
+            contactNumber: data.hospital.contactNumber || prev.contactNumber,
+            email: data.hospital.email || prev.email
+          }));
         }
       }
     };
@@ -1021,19 +1111,60 @@ export default function App() {
   };
 
   const handleHospitalSelect = (hospital: any) => {
-    setSelectedHospital(hospital);
-    if (hospital?.id) {
-      localStorage.setItem('selected_hospital_id', String(hospital.id));
-    }
-    
-    // Update branding based on selected hospital
-    setBranding({
+    const hid = hospital?.id || 1;
+    let effectiveBranding = {
       logo: hospital.logo || '',
       hospitalName: hospital.name || 'Hospital',
       address: hospital.address || '',
       contactNumber: hospital.contactNumber || '',
       email: ''
+    };
+    try {
+      const savedBranding = localStorage.getItem(`hms_branding_hospital_${hid}`);
+      if (savedBranding) {
+        const parsed = JSON.parse(savedBranding);
+        if (parsed && (parsed.hospitalName || parsed.address)) {
+          effectiveBranding = { ...effectiveBranding, ...parsed };
+        }
+      }
+    } catch (e) {}
+
+    setSelectedHospital({
+      ...hospital,
+      name: effectiveBranding.hospitalName || hospital.name,
+      address: effectiveBranding.address || hospital.address,
+      contactNumber: effectiveBranding.contactNumber || hospital.contactNumber
     });
+    setBranding(effectiveBranding);
+
+    if (hospital?.id) {
+      localStorage.setItem('selected_hospital_id', String(hospital.id));
+    }
+
+    const hasCustomConfig = localStorage.getItem(`hms_has_custom_config_hospital_${hid}`) === 'true';
+    if (hasCustomConfig) {
+      try {
+        const savedQ = localStorage.getItem(`hms_questions_hospital_${hid}`);
+        if (savedQ) {
+          const pq = JSON.parse(savedQ);
+          if (Array.isArray(pq) && pq.length > 0) setQuestions(pq);
+        }
+        const savedY = localStorage.getItem(`hms_yesno_hospital_${hid}`);
+        if (savedY) {
+          const py = JSON.parse(savedY);
+          if (Array.isArray(py) && py.length > 0) setFetchedYesNoQuestions(py);
+        }
+        const savedCombine = localStorage.getItem(`hms_combine_pages_hospital_${hid}`);
+        if (savedCombine !== null) setCombinePages(savedCombine === 'true');
+        const savedLayout = localStorage.getItem(`hms_layout_mode_hospital_${hid}`);
+        if (savedLayout === '1-column' || savedLayout === '2-column') setLayoutMode(savedLayout);
+        const savedDepts = localStorage.getItem(`hms_departments_hospital_${hid}`);
+        if (savedDepts) {
+          const pd = JSON.parse(savedDepts);
+          if (Array.isArray(pd) && pd.length > 0) setDepartments(pd);
+        }
+      } catch (e) {}
+    }
 
     const getApiUrl = (endpoint: string) => {
       const p = window.location.pathname;
@@ -1063,29 +1194,31 @@ export default function App() {
       }
 
       if (data && data.success) {
-        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-          setQuestions(data.data);
-          try { localStorage.setItem(`hms_questions_hospital_${hospital.id}`, JSON.stringify(data.data)); } catch (e) {}
-          const initialRatings: Record<string, number> = {};
-          data.data.forEach((q: Question) => {
-            initialRatings[q.id] = 0;
-          });
-          setDynamicRatings(initialRatings);
-        }
-        if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
-          setFetchedYesNoQuestions(data.yesno_data);
-          try { localStorage.setItem(`hms_yesno_hospital_${hospital.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
-          const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-          data.yesno_data.forEach((yq: any) => {
-            initialYesNo[yq.id] = { answer: null, remarks: '' };
-          });
-          setDynamicYesNo(initialYesNo);
-        }
-        if (data.settings) {
-          setLayoutMode(data.settings.layoutMode);
-          setMergedPages(data.settings.mergePages);
-          if (data.settings.departments) {
-            setDepartments(data.settings.departments);
+        if (data.is_custom || !hasCustomConfig) {
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            setQuestions(data.data);
+            try { localStorage.setItem(`hms_questions_hospital_${hospital.id}`, JSON.stringify(data.data)); } catch (e) {}
+            const initialRatings: Record<string, number> = {};
+            data.data.forEach((q: Question) => {
+              initialRatings[q.id] = 0;
+            });
+            setDynamicRatings(initialRatings);
+          }
+          if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
+            setFetchedYesNoQuestions(data.yesno_data);
+            try { localStorage.setItem(`hms_yesno_hospital_${hospital.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+            const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+            data.yesno_data.forEach((yq: any) => {
+              initialYesNo[yq.id] = { answer: null, remarks: '' };
+            });
+            setDynamicYesNo(initialYesNo);
+          }
+          if (data.settings) {
+            if (data.settings.layoutMode) setLayoutMode(data.settings.layoutMode);
+            if (data.settings.combinePages !== undefined) setCombinePages(data.settings.combinePages);
+            if (data.settings.departments) {
+              setDepartments(data.settings.departments);
+            }
           }
         }
       }
@@ -1508,20 +1641,30 @@ export default function App() {
       { user: 'admin', pass: 'Admin@123', hid: 0 },
     ];
 
-    const isDirectMatch = validCredentials.some(c => 
+    const matched = validCredentials.find(c => 
       c.user.toLowerCase() === trimmedUser && 
       (c.pass === enteredPass || c.pass.toLowerCase() === enteredPass.toLowerCase()) && 
       (c.hid === 0 || !selectedHospital || c.hid === selectedHospital.id)
     );
 
-    if (isDirectMatch) {
+    if (matched) {
+      const loggedHid = matched.hid > 0 ? matched.hid : (selectedHospital?.id || 1);
+      const loggedCode = loggedHid === 1 ? 'apl-8092' : loggedHid === 2 ? 'cmc-4719' : 'gov-3185';
+      const loggedName = loggedHid === 1 ? 'Apollo Healthcare Center' : loggedHid === 2 ? 'City Medical Centre' : 'Government Hospital';
+
       setIsAdminLoggedIn(true);
       setShowAdminDashboard(true);
       setShowAdminLoginModal(false);
       setAdminLoginError('');
       try {
         sessionStorage.setItem('hms_is_admin', 'true');
+        sessionStorage.setItem('hms_admin_role', matched.hid === 0 ? 'super_admin' : 'hospital_admin');
+        sessionStorage.setItem('hms_admin_user', trimmedUser);
+        sessionStorage.setItem('hms_auth_hospital_id', String(loggedHid));
+        sessionStorage.setItem('hms_auth_hospital_code', loggedCode);
+        sessionStorage.setItem('hms_auth_hospital_name', loggedName);
         localStorage.setItem('is_admin_logged_in', 'true');
+        localStorage.setItem('selected_hospital_id', String(loggedHid));
       } catch (e) {}
       const p = window.location.pathname;
       if (p.includes('api/frontend') || p.includes('api/backend/admin')) {
@@ -1574,13 +1717,23 @@ export default function App() {
       }
 
       if (response && response.ok && data && data.success) {
+        const userHid = data.user?.hospital_id || selectedHospital?.id || 1;
+        const userCode = userHid === 1 ? 'apl-8092' : userHid === 2 ? 'cmc-4719' : 'gov-3185';
+        const userName = userHid === 1 ? 'Apollo Healthcare Center' : userHid === 2 ? 'City Medical Centre' : 'Government Hospital';
+
         setIsAdminLoggedIn(true);
         setShowAdminDashboard(true);
         setShowAdminLoginModal(false);
         setAdminLoginError('');
         try {
           sessionStorage.setItem('hms_is_admin', 'true');
+          sessionStorage.setItem('hms_admin_role', data.user?.role || 'admin');
+          sessionStorage.setItem('hms_admin_user', data.user?.username || trimmedUser);
+          sessionStorage.setItem('hms_auth_hospital_id', String(userHid));
+          sessionStorage.setItem('hms_auth_hospital_code', userCode);
+          sessionStorage.setItem('hms_auth_hospital_name', userName);
           localStorage.setItem('is_admin_logged_in', 'true');
+          localStorage.setItem('selected_hospital_id', String(userHid));
         } catch (e) {}
         const p = window.location.pathname;
         if (p.includes('api/frontend') || p.includes('api/backend/admin')) {
@@ -1612,9 +1765,20 @@ export default function App() {
       sessionStorage.removeItem('hms_is_admin');
       sessionStorage.removeItem('hms_admin_role');
       sessionStorage.removeItem('hms_admin_user');
+      sessionStorage.removeItem('hms_auth_hospital_id');
+      sessionStorage.removeItem('hms_auth_hospital_code');
+      sessionStorage.removeItem('hms_auth_hospital_name');
       localStorage.removeItem('is_admin_logged_in');
       localStorage.removeItem('admin_user');
+      localStorage.removeItem('selected_hospital_id');
     } catch (e) {}
+    setSelectedHospital(null);
+    const p = window.location.pathname;
+    if (p.includes('.php')) {
+      window.location.href = 'login.php';
+    } else {
+      window.location.href = window.location.origin + window.location.pathname;
+    }
   };
 
   // Handle pincode change with auto-fill
@@ -1782,29 +1946,83 @@ export default function App() {
     }
   };
 
-  const isDashboardPage = window.location.pathname.includes('dashboard.php') || 
-                          window.location.search.includes('view=admin') || 
-                          window.location.search.includes('admin=true') ||
-                          window.location.hash.includes('admin');
+  const isPhpDashboard = window.location.pathname.includes('dashboard.php');
+  const isAdminViewInUrl = window.location.search.includes('view=admin') || window.location.search.includes('admin=true') || window.location.hash.includes('admin');
 
-  // Show Admin Dashboard if authenticated or if on dashboard page
-  if (isDashboardPage || (showAdminDashboard && isAdminLoggedIn)) {
+  // Show Admin Dashboard if explicitly on dashboard.php, or if admin state is active
+  if (isPhpDashboard || (showAdminDashboard && isAdminLoggedIn) || (isAdminViewInUrl && isAdminLoggedIn)) {
     return (
       <AdminDashboard
         onClose={() => {
           setShowAdminDashboard(false);
-          setIsAdminLoggedIn(false);
-          if (isDashboardPage) {
-            window.location.href = 'feedback-form.php?hospital_id=' + (selectedHospital?.id || 1);
+          const hid = selectedHospital?.id || parseInt(sessionStorage.getItem('hms_auth_hospital_id') || '1', 10);
+          const hCode = hid === 1 ? 'apl-8092' : hid === 2 ? 'cmc-4719' : 'gov-3185';
+          sessionStorage.setItem('hms_auth_hospital_id', String(hid));
+          sessionStorage.setItem('hms_auth_hospital_code', hCode);
+          localStorage.setItem('selected_hospital_id', String(hid));
+
+          const p = window.location.pathname;
+          if (p.includes('dashboard.php') || p.includes('admin/dashboard.php')) {
+            window.location.href = `feedback-form.php?hospital_id=${hid}`;
+          } else {
+            // SPA / Vercel: clean query parameters without page reload or 404
+            const url = new URL(window.location.href);
+            url.searchParams.delete('view');
+            url.searchParams.delete('admin');
+            url.searchParams.set('hospital_id', hCode);
+            window.history.pushState({}, '', url.toString());
+
+            const hName = hid === 1 ? 'Apollo Healthcare Center' : hid === 2 ? 'City Medical Centre' : 'Government Hospital';
+            const hAddr = hid === 1 ? '123 Health Street, Chennai - 600001' : hid === 2 ? '23 Bengaluru Main Road, Bengaluru, Karnataka' : '155 Coimbatore Main Road, Coimbatore, Tamil Nadu';
+            const hPhone = hid === 1 ? '+91 44 1234 5678' : hid === 2 ? '04496001338' : '04408386379';
+            
+            let customAddr = hAddr;
+            let customName = hName;
+            try {
+              const sb = localStorage.getItem(`hms_branding_hospital_${hid}`);
+              if (sb) {
+                const pb = JSON.parse(sb);
+                if (pb.address) customAddr = pb.address;
+                if (pb.hospitalName) customName = pb.hospitalName;
+              }
+            } catch (e) {}
+
+            setSelectedHospital({
+              id: hid,
+              name: customName,
+              logo: null,
+              address: customAddr,
+              contactNumber: hPhone
+            });
+            setBranding(prev => ({
+              ...prev,
+              hospitalName: customName,
+              address: customAddr,
+              contactNumber: hPhone
+            }));
           }
         }}
         onLogout={() => {
           setShowAdminDashboard(false);
           setIsAdminLoggedIn(false);
-          localStorage.removeItem('is_admin_logged_in');
-          localStorage.removeItem('admin_user');
+          setAdminUsername('');
+          setAdminPassword('');
+          setAdminLoginError('');
+          try {
+            sessionStorage.removeItem('hms_is_admin');
+            sessionStorage.removeItem('hms_admin_role');
+            sessionStorage.removeItem('hms_admin_user');
+            sessionStorage.removeItem('hms_auth_hospital_id');
+            sessionStorage.removeItem('hms_auth_hospital_code');
+            sessionStorage.removeItem('hms_auth_hospital_name');
+            localStorage.removeItem('is_admin_logged_in');
+            localStorage.removeItem('admin_user');
+            localStorage.removeItem('selected_hospital_id');
+          } catch (e) {}
           setSelectedHospital(null);
-          if (isDashboardPage) {
+
+          const p = window.location.pathname;
+          if (p.includes('.php')) {
             window.location.href = 'login.php';
           } else {
             window.location.href = window.location.origin + window.location.pathname;

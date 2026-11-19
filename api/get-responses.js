@@ -1,5 +1,6 @@
 import { query } from './_lib/db.js';
 import { FALLBACK_RESPONSES } from './_lib/fallback_data.js';
+import { SAVED_BRANDING_BY_HOSPITAL } from './_lib/store.js';
 
 const DEFAULT_HOSPITALS = {
   1: {
@@ -276,13 +277,21 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('get-responses error:', error);
-    const fallbackHospital = DEFAULT_HOSPITALS[hospitalId] || {
+    const savedBrand = SAVED_BRANDING_BY_HOSPITAL[hospitalId];
+    const fallbackHospital = savedBrand ? {
+      hospitalName: savedBrand.hospitalName,
+      address: savedBrand.address,
+      contactNumber: savedBrand.contactNumber,
+      email: savedBrand.email,
+      logoUrl: savedBrand.logo,
+      is_custom: true
+    } : (DEFAULT_HOSPITALS[hospitalId] || {
       hospitalName: `Hospital #${hospitalId}`,
       address: '',
       contactNumber: '',
       email: '',
       logoUrl: ''
-    };
+    });
     const filteredSubs = FALLBACK_RESPONSES.filter(s => s.hospital_id === hospitalId);
     const todayStr = new Date().toISOString().slice(0, 10);
     const todayCount = filteredSubs.filter(r => String(r.submittedAt || '').startsWith(todayStr)).length;

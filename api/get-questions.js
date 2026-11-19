@@ -1,4 +1,5 @@
 import { query } from './_lib/db.js';
+import { SAVED_QUESTIONS_BY_HOSPITAL } from './_lib/store.js';
 
 function resolveHospitalId(rawId) {
   const str = String(rawId || '').toLowerCase().trim();
@@ -72,6 +73,18 @@ export default async function handler(req, res) {
   }
 
   const hospitalId = resolveHospitalId(req.query.hospital_id || req.query.id);
+
+  if (SAVED_QUESTIONS_BY_HOSPITAL[hospitalId]) {
+    const saved = SAVED_QUESTIONS_BY_HOSPITAL[hospitalId];
+    return res.status(200).json({
+      success: true,
+      is_custom: true,
+      data: saved.data,
+      yesno_data: saved.yesno_data,
+      departments: saved.departments,
+      settings: saved.settings
+    });
+  }
 
   try {
     // 1. Get the feedback form for this hospital
@@ -199,6 +212,18 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
+    if (SAVED_QUESTIONS_BY_HOSPITAL[hospitalId]) {
+      const saved = SAVED_QUESTIONS_BY_HOSPITAL[hospitalId];
+      return res.status(200).json({
+        success: true,
+        is_custom: true,
+        data: saved.data,
+        yesno_data: saved.yesno_data,
+        departments: saved.departments,
+        settings: saved.settings
+      });
+    }
+
     const questions = FALLBACK_QUESTIONS_BY_HOSPITAL[hospitalId] || FALLBACK_QUESTIONS_BY_HOSPITAL[1];
     const yesno = FALLBACK_YESNO_BY_HOSPITAL[hospitalId] || FALLBACK_YESNO_BY_HOSPITAL[1];
     const departments = FALLBACK_DEPTS_BY_HOSPITAL[hospitalId] || FALLBACK_DEPTS_BY_HOSPITAL[1];

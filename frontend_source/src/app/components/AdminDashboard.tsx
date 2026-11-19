@@ -391,6 +391,50 @@ export const getConsolidatedRating = (r: any): number => {
   return 5.0;
 };
 
+const parseDateToMs = (dStr: any): number => {
+  if (!dStr) return 0;
+  if (typeof dStr === 'number') return dStr;
+  const str = String(dStr).trim();
+  if (!str) return 0;
+
+  // If ISO-like or standard format parseable directly without slash ambiguity
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const t = new Date(str.replace(' ', 'T')).getTime();
+    if (!isNaN(t)) return t;
+  }
+
+  // Handle DD/MM/YYYY or DD-MM-YYYY or YYYY/MM/DD with optional time
+  const [datePart, timePart] = str.split(/[T ]+/);
+  if (datePart) {
+    const parts = datePart.split(/[/ -]/);
+    if (parts.length >= 3) {
+      let y = 0, m = 0, d = 0;
+      if (parts[0].length === 4) {
+        y = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        d = parseInt(parts[2], 10);
+      } else if (parts[2].length === 4) {
+        d = parseInt(parts[0], 10);
+        m = parseInt(parts[1], 10) - 1;
+        y = parseInt(parts[2], 10);
+      }
+      if (y > 0 && d > 0) {
+        let hh = 0, mm = 0, ss = 0;
+        if (timePart) {
+          const tParts = timePart.split(':');
+          hh = parseInt(tParts[0] || '0', 10);
+          mm = parseInt(tParts[1] || '0', 10);
+          ss = parseInt(tParts[2] || '0', 10);
+        }
+        return new Date(y, m, d, hh, mm, ss).getTime();
+      }
+    }
+  }
+
+  const parsed = Date.parse(str);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 const deduplicateResponses = (list: FeedbackResponse[]): FeedbackResponse[] => {
   const seenIds = new Set<string>();
   const seenSignatures = new Set<string>();
@@ -419,7 +463,15 @@ const deduplicateResponses = (list: FeedbackResponse[]): FeedbackResponse[] => {
     if (name && name !== 'patient' && name !== 'anonymous') seenSignatures.add(signature);
     unique.push(r);
   }
-  return unique;
+  // Sort newest first: descending by date, then descending by id
+  return unique.sort((a, b) => {
+    const tA = parseDateToMs(a.created_at || a.date);
+    const tB = parseDateToMs(b.created_at || b.date);
+    if (tB !== tA) return tB - tA;
+    const idA = parseInt(String(a.id || 0), 10) || 0;
+    const idB = parseInt(String(b.id || 0), 10) || 0;
+    return idB - idA;
+  });
 };
 
 const DEFAULT_HOSPITAL_BRANDING: Record<number, BrandingSettings> = {
@@ -636,7 +688,10 @@ export function AdminDashboard({
   const [officeUseModalResponse, setOfficeUseModalResponse] = useState<FeedbackResponse | null>(null);
   const [officeUseModalData, setOfficeUseModalData] = useState<OfficeUse>({ reviewOfComplaint: '', dateOfReview: '', correctiveAction: '', preventiveAction: '', inchargeName: '' });
   const [layoutMode, setLayoutMode] = useState<'2-column' | '1-column'>(() => {
+    const hid = getEffectiveHospitalId();
     try {
+      const savedHosp = localStorage.getItem(`hms_layout_mode_hospital_${hid}`);
+      if (savedHosp === '1-column' || savedHosp === '2-column') return savedHosp;
       const saved = localStorage.getItem('hms_layout_mode');
       if (saved === '1-column' || saved === '2-column') return saved;
     } catch (e) {}
@@ -645,7 +700,10 @@ export function AdminDashboard({
   const [yesNoLayoutMode, setYesNoLayoutMode] = useState<'2-column' | '1-column'>('2-column');
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, boolean | null>>({});
   const [combinePages, setCombinePages] = useState<boolean>(() => {
+    const hid = getEffectiveHospitalId();
     try {
+      const savedHosp = localStorage.getItem(`hms_combine_pages_hospital_${hid}`);
+      if (savedHosp !== null) return savedHosp === 'true';
       const saved = localStorage.getItem('hms_combine_pages');
       if (saved !== null) return saved === 'true';
     } catch (e) {}
@@ -899,14 +957,22 @@ export function AdminDashboard({
       if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
         setApiError(null);
         if (data.hospital) {
-          const defaultBrand = DEFAULT_HOSPITAL_BRANDING[hidNum] || {};
-          setBrandingSettings({
-            hospitalName: data.hospital.hospitalName || defaultBrand.hospitalName || 'Apollo Healthcare Center',
-            address: data.hospital.address || defaultBrand.address || '123 Health Street, Chennai - 600001',
-            contactNumber: data.hospital.contactNumber || defaultBrand.contactNumber || '+91 44 1234 5678',
-            email: data.hospital.email || defaultBrand.email || 'contact@apollo.com',
-            logo: data.hospital.logoUrl || defaultBrand.logo || ''
-          });
+          const hasCustomBrand = localStorage.getItem(`hms_has_custom_branding_hospital_${hid}`) === 'true';
+          const savedBrandStr = localStorage.getItem(`hms_branding_hospital_${hid}`);
+          if (hasCustomBrand && savedBrandStr) {
+            try {
+              setBrandingSettings(JSON.parse(savedBrandStr));
+            } catch (e) {}
+          } else {
+            const defaultBrand = DEFAULT_HOSPITAL_BRANDING[hidNum] || {};
+            setBrandingSettings({
+              hospitalName: data.hospital.hospitalName || defaultBrand.hospitalName || 'Apollo Healthcare Center',
+              address: data.hospital.address || defaultBrand.address || '123 Health Street, Chennai - 600001',
+              contactNumber: data.hospital.contactNumber || defaultBrand.contactNumber || '+91 44 1234 5678',
+              email: data.hospital.email || defaultBrand.email || 'contact@apollo.com',
+              logo: data.hospital.logoUrl || defaultBrand.logo || ''
+            });
+          }
         }
 
         const filteredApiData = filterResponsesByHospital(data.data, hid);
@@ -1053,23 +1119,32 @@ export function AdminDashboard({
           if (res.ok) {
             const data = await res.json();
             if (data && data.success) {
-              if (data.data && data.data.length > 0) {
-                setQuestions(data.data);
-                try { localStorage.setItem(`hms_questions_hospital_${hid}`, JSON.stringify(data.data)); } catch (e) {}
-              }
-              if (data.yesno_data && data.yesno_data.length > 0) {
-                setYesNoQuestions(data.yesno_data);
-                try { localStorage.setItem(`hms_yesno_hospital_${hid}`, JSON.stringify(data.yesno_data)); } catch (e) {}
-              }
-              if (data.settings) {
-                if (data.settings.layoutMode) setLayoutMode(data.settings.layoutMode);
-                if (data.settings.combinePages !== undefined) setCombinePages(data.settings.combinePages);
-                if (data.settings.themeColor) setThemeColor(data.settings.themeColor);
-                if (data.settings.fontSize) setFontSize(data.settings.fontSize);
-                if (data.settings.showPageTitleLabels !== undefined) setShowPageTitleLabels(data.settings.showPageTitleLabels);
-                if (data.settings.departments) {
-                  setDepartments(data.settings.departments);
-                  try { localStorage.setItem(`hms_departments_hospital_${hid}`, JSON.stringify(data.settings.departments)); } catch (e) {}
+              const hasCustomConfig = localStorage.getItem(`hms_has_custom_config_hospital_${hid}`) === 'true';
+              if (!hasCustomConfig || data.is_custom) {
+                if (data.data && data.data.length > 0) {
+                  setQuestions(data.data);
+                  try { localStorage.setItem(`hms_questions_hospital_${hid}`, JSON.stringify(data.data)); } catch (e) {}
+                }
+                if (data.yesno_data && data.yesno_data.length > 0) {
+                  setYesNoQuestions(data.yesno_data);
+                  try { localStorage.setItem(`hms_yesno_hospital_${hid}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+                }
+                if (data.settings) {
+                  if (data.settings.layoutMode) {
+                    setLayoutMode(data.settings.layoutMode);
+                    try { localStorage.setItem(`hms_layout_mode_hospital_${hid}`, data.settings.layoutMode); } catch (e) {}
+                  }
+                  if (data.settings.combinePages !== undefined) {
+                    setCombinePages(data.settings.combinePages);
+                    try { localStorage.setItem(`hms_combine_pages_hospital_${hid}`, String(data.settings.combinePages)); } catch (e) {}
+                  }
+                  if (data.settings.themeColor) setThemeColor(data.settings.themeColor);
+                  if (data.settings.fontSize) setFontSize(data.settings.fontSize);
+                  if (data.settings.showPageTitleLabels !== undefined) setShowPageTitleLabels(data.settings.showPageTitleLabels);
+                  if (data.settings.departments) {
+                    setDepartments(data.settings.departments);
+                    try { localStorage.setItem(`hms_departments_hospital_${hid}`, JSON.stringify(data.settings.departments)); } catch (e) {}
+                  }
                 }
               }
               break;
@@ -1131,6 +1206,7 @@ export function AdminDashboard({
     const hid = getEffectiveHospitalId();
     try {
       localStorage.setItem(`hms_branding_hospital_${hid}`, JSON.stringify(brandingSettings));
+      localStorage.setItem(`hms_has_custom_branding_hospital_${hid}`, 'true');
     } catch (e) {}
 
     try {
@@ -1252,9 +1328,15 @@ export function AdminDashboard({
       localStorage.setItem(`hms_questions_hospital_${hid}`, JSON.stringify(questions));
       localStorage.setItem(`hms_yesno_hospital_${hid}`, JSON.stringify(yesNoQuestions));
       localStorage.setItem(`hms_departments_hospital_${hid}`, JSON.stringify(departments));
+      localStorage.setItem(`hms_combine_pages_hospital_${hid}`, String(combinePages));
+      localStorage.setItem(`hms_layout_mode_hospital_${hid}`, layoutMode);
+      localStorage.setItem(`hms_has_custom_config_hospital_${hid}`, 'true');
+
       localStorage.setItem('hms_saved_questions', JSON.stringify(questions));
       localStorage.setItem('hms_saved_yesno', JSON.stringify(yesNoQuestions));
       localStorage.setItem('hms_saved_departments', JSON.stringify(departments));
+      localStorage.setItem('hms_combine_pages', String(combinePages));
+      localStorage.setItem('hms_layout_mode', layoutMode);
       localStorage.setItem('hms_saved_settings', JSON.stringify({
         layoutMode,
         combinePages,
@@ -1263,6 +1345,12 @@ export function AdminDashboard({
         showPageTitleLabels,
         departments
       }));
+
+      onCombinePagesChange?.(combinePages);
+      onLayoutModeChange?.(layoutMode);
+      onDepartmentsChange?.(departments);
+      onQuestionsChange?.(questions);
+      onYesNoQuestionsChange?.(yesNoQuestions);
     } catch (e) {}
     try {
       const getApiUrl = (endpoint: string) => {
@@ -1376,7 +1464,16 @@ export function AdminDashboard({
   const recommendRate = validTotal ? Math.round((recommendCount / validTotal) * 100) : 0;
   const averageRatingStr = validTotal ? (ratingSum / validTotal).toFixed(1) : "0.0";
   const averageRatingNum = parseFloat(averageRatingStr);
-  const recentActivities = responses.slice(0, 5);
+  const recentActivities = useMemo(() => {
+    return [...responses].sort((a, b) => {
+      const tA = parseDateToMs(a.created_at || a.date);
+      const tB = parseDateToMs(b.created_at || b.date);
+      if (tB !== tA) return tB - tA;
+      const idA = parseInt(String(a.id || 0), 10) || 0;
+      const idB = parseInt(String(b.id || 0), 10) || 0;
+      return idB - idA;
+    }).slice(0, 5);
+  }, [responses]);
 
   const starBreakdowns = [5, 4, 3, 2, 1].map(stars => ({
       stars,
@@ -1890,11 +1987,15 @@ export function AdminDashboard({
     result.sort((a, b) => {
       let comp = 0;
       if (sortField === 'date') {
-        const aP = String(a.date).split('/');
-        const bP = String(b.date).split('/');
-        const tA = (aP.length === 3) ? new Date(`${aP[2]}-${aP[1]}-${aP[0]}`).getTime() : 0;
-        const tB = (bP.length === 3) ? new Date(`${bP[2]}-${bP[1]}-${bP[0]}`).getTime() : 0;
-        comp = tA > tB ? 1 : tA < tB ? -1 : 0;
+        const tA = parseDateToMs(a.created_at || a.date);
+        const tB = parseDateToMs(b.created_at || b.date);
+        if (tA !== tB) {
+          comp = tA > tB ? 1 : -1;
+        } else {
+          const idA = parseInt(String(a.id || 0), 10) || 0;
+          const idB = parseInt(String(b.id || 0), 10) || 0;
+          comp = idA > idB ? 1 : idA < idB ? -1 : 0;
+        }
       } else if (sortField === 'patientName') {
         comp = (String(a.patientName || '')).localeCompare(String(b.patientName || ''));
       } else if (sortField === 'overallRating') {
