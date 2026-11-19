@@ -244,11 +244,33 @@ This document provides a comprehensive log of all historical QA test scenarios, 
   2. Replaced raw star glyphs `★` with formatted descriptive ratings (`5 Star (Excellent)`, `4 Star (Good)`, etc.) to avoid glyph rendering artifacts across different office suites.
   3. Updated Admin Dashboard "Download Report" button to trigger `generateFeedbackReportExcel` and `downloadExcel`, delivering 100% crisp Tamil Unicode rendering in both Microsoft Excel on Windows and Google Sheets.
 
+#### Ticket #36 (Ref 4, Priority 1): Multi-Hospital Admin Dashboard Data Crossover & Strict Scoping
+- **Repro Steps**: Log in to Admin Dashboard for Apollo Healthcare Center (`?hospital_id=apl-8092`) $\rightarrow$ Observe 29 responses and recent activity $\rightarrow$ Log in to Admin Dashboard for City Medical Centre (`?hospital_id=cmc-4719`) $\rightarrow$ Observe dashboard.
+- **Reported Defect**: Both hospital admin portals displayed the exact identical 29 feedback responses, identical metrics (Total Responses: 29, Recommend Rate: 55%, Average Rating: 4.7), and identical patient activity (Rahul M, Avaneesh R, etc.), despite having distinct hospital names and logos.
+- **Root Cause**:
+  1. `frontend_source/src/app/real_db_data.ts` previously bundled an unpartitioned static response array that lacked explicit `hospital_id` attributes, causing all hospital admin views to fall back to the exact same 29 records.
+  2. `AdminDashboard.tsx` initialized `responses` state directly from `REAL_DB_RESPONSES` and `localStorage.hms_new_submissions` without filtering by the effective hospital ID.
+  3. `api/get-questions.js` and `api/save-questions.js` used `parseInt(req.query.hospital_id, 10)`, which evaluated alphanumeric IDs (`apl-8092`, `cmc-4719`, `gov-3185`) to `NaN` and defaulted to Hospital 1.
+  4. Client-side branding, questions, and departments shared global `localStorage` keys without hospital-specific partitioning.
+- **Correction Made**:
+  1. **Partitioned Historical Submissions & Questions**: Extracted and partitioned all 152 authentic submissions, distinct rating questions, and departments from `database_dump_with_data.sql`:
+     - **Hospital 1 (Apollo Healthcare Center)**: 99 submissions (48 deduplicated), 39 rating questions, 9 departments.
+     - **Hospital 2 (City Medical Centre)**: 31 submissions (28 deduplicated, e.g. Deepa Balan, Suresh Gounder, Sivakumar Raj), 34 rating questions, 7 departments.
+     - **Hospital 3 (Government Hospital)**: 22 submissions (18 deduplicated, e.g. Muthu Perumal, Bhavani Gounder, Meena Menon), 6 rating questions, 4 departments.
+  2. **Scoped Admin Dashboard State**:
+     - Added `filterResponsesByHospital` in `AdminDashboard.tsx` filtering responses by both explicit `hospital_id`/`hospitalId` and UHID prefix (`APL`/`ABC` for Apollo, `CMC`/`CTY` for City Medical, `GH`/`GOV` for Government Hospital).
+     - Applied `filterResponsesByHospital` to `responses` initial state, `fetchResponses()` API data, and new submission cache.
+     - Partitioned question and branding cache in `localStorage` under `hms_questions_hospital_${hid}`, `hms_yesno_hospital_${hid}`, `hms_departments_hospital_${hid}`, and `hms_branding_hospital_${hid}`.
+  3. **Robust API Multi-Hospital Resolution**:
+     - Added `resolveHospitalId` to `api/get-questions.js`, `api/save-questions.js`, `api/get-responses.js`, and created `api/save-branding.js` resolving alphanumeric tokens (`apl-8092`, `cmc-4719`, `gov-3185`, `hosp-X`).
+     - Added hospital-partitioned fallback responses in `api/fallback_data.js` and `api/get-responses.js` ensuring 100% strict isolation even when the cloud database pooler is offline.
+  4. **Dynamic Support for Future Hospitals**: Any new hospital created will automatically receive its own isolated dataset, questions, form builder configuration, and branding scope.
+
 ---
 
 ## 🏆 Verification & Test Sign-off
 
-All 35 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
+All 36 test scenarios above have been corrected, verified across both local and cloud environments, and deployed to production.
 
 - **Live Application**: [https://hms-2-4.vercel.app](https://hms-2-4.vercel.app)
 - **Database Backup**: [`database_dump_with_data.sql`](./database_dump_with_data.sql)

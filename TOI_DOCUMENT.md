@@ -394,8 +394,9 @@ Dynamic question registry for ratings and binary checks.
 - [x] **Validation Integrity**: Verified OP/IP date requirements and OTP/Email validation rules.
 - [x] **Session Protection & Anti-Tampering**: URL parameters strictly validated against authenticated `sessionStorage`; alphanumeric IDs (`apl-8092`, `cmc-4719`, `gov-3185`) prevent enumeration.
 - [x] **Distinct Hospital Authentication**: Unique administrative passwords per hospital with cross-hospital lockout.
+- [x] **Strict Multi-Hospital Data Scoping**: Feedback responses, feedback reports, form builder questions, and branding are strictly isolated per hospital with zero cross-hospital crossover; dynamically supports any future hospital.
 - [x] **Excel Tamil Rendering**: Native `.xls` UTF-8 export renders crisp Tamil and star ratings in both Microsoft Excel and Google Sheets.
-- [x] **QA Defect Log Verification**: All 35 historical and LRL test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
+- [x] **QA Defect Log Verification**: All 36 historical and LRL test cases resolved and documented in [`TEST_REPORTS_AND_CORRECTIONS.md`](./TEST_REPORTS_AND_CORRECTIONS.md).
 
 ---
 

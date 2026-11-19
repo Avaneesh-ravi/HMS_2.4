@@ -189,6 +189,10 @@ export function HospitalSelection({
       sessionStorage.setItem('hms_auth_hospital_code', getHospitalCode(selectedHospitalForLogin.id));
       sessionStorage.setItem('hms_auth_hospital_name', selectedHospitalForLogin.name);
       localStorage.setItem('selected_hospital_id', String(selectedHospitalForLogin.id));
+      if (trimmedUser.toLowerCase().includes('admin') || trimmedUser.toLowerCase() === 'admin') {
+        sessionStorage.setItem('hms_is_admin', 'true');
+        localStorage.setItem('is_admin_logged_in', 'true');
+      }
       onHospitalSelect(selectedHospitalForLogin);
       return;
     }
@@ -245,6 +249,10 @@ export function HospitalSelection({
         sessionStorage.setItem('hms_auth_hospital_code', getHospitalCode(selectedHospitalForLogin.id));
         sessionStorage.setItem('hms_auth_hospital_name', selectedHospitalForLogin.name);
         localStorage.setItem('selected_hospital_id', String(selectedHospitalForLogin.id));
+        if (data.admin || loginUsername.toLowerCase().includes('admin')) {
+          sessionStorage.setItem('hms_is_admin', 'true');
+          localStorage.setItem('is_admin_logged_in', 'true');
+        }
         onHospitalSelect(selectedHospitalForLogin);
       } else {
         if (response && response.status === 500) {

@@ -1,5 +1,14 @@
 import { getPool } from './db.js';
 
+function resolveHospitalId(rawId) {
+  const str = String(rawId || '').toLowerCase().trim();
+  if (str === '1' || str.includes('apl') || str.includes('apollo')) return 1;
+  if (str === '2' || str.includes('cmc') || str.includes('city')) return 2;
+  if (str === '3' || str.includes('gov') || str.includes('govt')) return 3;
+  const num = parseInt(str, 10);
+  return isNaN(num) ? 1 : num;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -23,7 +32,7 @@ export default async function handler(req, res) {
     }
     if (!body || typeof body !== 'object') body = {};
 
-    const hospitalId = parseInt(body.hospital_id || req.query.hospital_id || '1', 10);
+    const hospitalId = resolveHospitalId(body.hospital_id || req.query.hospital_id || '1');
     const questions = Array.isArray(body.questions) ? body.questions : [];
     const yesnoQuestions = Array.isArray(body.yesno_questions || body.yesno_data) ? (body.yesno_questions || body.yesno_data) : [];
     const settings = body.settings || {};

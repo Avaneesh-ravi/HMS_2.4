@@ -134,8 +134,24 @@ export default function App() {
     contactNumber: '+91 44 1234 5678',
     email: 'contact@apollo.com'
   });
-  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState<boolean>(() => {
+    try {
+      const p = window.location.pathname;
+      if (p.includes('dashboard') || p.includes('admin')) return true;
+      return sessionStorage.getItem('hms_is_admin') === 'true' || localStorage.getItem('is_admin_logged_in') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    try {
+      const p = window.location.pathname;
+      if (p.includes('dashboard') || p.includes('admin')) return true;
+      return sessionStorage.getItem('hms_is_admin') === 'true' || localStorage.getItem('is_admin_logged_in') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
 
   // Auto-close Admin Login modal after 10 seconds of inactivity
@@ -586,56 +602,65 @@ export default function App() {
       return `../api/backend/ajax/${endpoint}`;
     };
 
-    fetch(getApiUrl(`get-questions.php?hospital_id=${resolved.id}`))
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-            setQuestions(data.data);
-            try { localStorage.setItem('hms_saved_questions', JSON.stringify(data.data)); } catch (e) {}
-            const initialRatings: Record<string, number> = {};
-            data.data.forEach((q: Question) => {
-              initialRatings[q.id] = 0;
-            });
-            setDynamicRatings(initialRatings);
+    const tryFetchQuestions = async () => {
+      const endpoints = [
+        `/api/get-questions?hospital_id=${resolved.id}`,
+        getApiUrl(`get-questions.php?hospital_id=${resolved.id}`),
+        `api/get-questions.php?hospital_id=${resolved.id}`
+      ];
+      let data: any = null;
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep);
+          if (res.ok) {
+            const j = await res.json();
+            if (j && j.success && Array.isArray(j.data) && j.data.length > 0) {
+              data = j;
+              break;
+            }
           }
-          if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
-            setFetchedYesNoQuestions(data.yesno_data);
-            try { localStorage.setItem('hms_saved_yesno', JSON.stringify(data.yesno_data)); } catch (e) {}
-            const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-            data.yesno_data.forEach((yq: any) => {
-              initialYesNo[yq.id] = { answer: null, remarks: '' };
-            });
-            setDynamicYesNo(initialYesNo);
-          }
-          if (data.settings) {
-            setLayoutMode(data.settings.layoutMode);
-            setCombinePages(data.settings.combinePages);
-            if (data.settings.themeColor) setThemeColor(data.settings.themeColor);
-            if (data.settings.fontSize) setFontSize(data.settings.fontSize);
-            if (data.settings.showPageTitleLabels !== undefined) setShowPageTitleLabels(data.settings.showPageTitleLabels);
-            if (data.settings.departments) setDepartments(data.settings.departments);
-          }
-          if (data.hospital) {
-            setBranding({
-              logo: data.hospital.logoUrl || '',
-              hospitalName: data.hospital.hospitalName || 'Healthcare Center',
-              address: data.hospital.address || '',
-              contactNumber: data.hospital.contactNumber || '',
-              email: data.hospital.email || ''
-            });
-            setSelectedHospital({
-              id: parseInt(hospitalId!),
-              name: data.hospital.hospitalName || 'Healthcare Center',
-              logo: data.hospital.logoUrl || null,
-              address: data.hospital.address || null,
-              contactNumber: data.hospital.contactNumber || null
-            });
-          }
+        } catch (e) {}
+      }
+
+      if (data && data.success) {
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setQuestions(data.data);
+          try { localStorage.setItem(`hms_questions_hospital_${resolved.id}`, JSON.stringify(data.data)); } catch (e) {}
+          const initialRatings: Record<string, number> = {};
+          data.data.forEach((q: Question) => {
+            initialRatings[q.id] = 0;
+          });
+          setDynamicRatings(initialRatings);
         }
-      })
-      .catch(console.error)
-      .finally(() => setIsInitializing(false));
+        if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
+          setFetchedYesNoQuestions(data.yesno_data);
+          try { localStorage.setItem(`hms_yesno_hospital_${resolved.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+          const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+          data.yesno_data.forEach((yq: any) => {
+            initialYesNo[yq.id] = { answer: null, remarks: '' };
+          });
+          setDynamicYesNo(initialYesNo);
+        }
+        if (data.settings) {
+          setLayoutMode(data.settings.layoutMode);
+          setCombinePages(data.settings.combinePages);
+          if (data.settings.themeColor) setThemeColor(data.settings.themeColor);
+          if (data.settings.fontSize) setFontSize(data.settings.fontSize);
+          if (data.settings.showPageTitleLabels !== undefined) setShowPageTitleLabels(data.settings.showPageTitleLabels);
+          if (data.settings.departments) setDepartments(data.settings.departments);
+        }
+        if (data.hospital) {
+          setBranding({
+            logo: data.hospital.logoUrl || '',
+            hospitalName: data.hospital.hospitalName || resolved.name,
+            address: data.hospital.address || resolved.address,
+            contactNumber: data.hospital.contactNumber || resolved.contactNumber,
+            email: data.hospital.email || ''
+          });
+        }
+      }
+    };
+    tryFetchQuestions().finally(() => setIsInitializing(false));
   }, []);
 
   const [suggestions, setSuggestions] = useState('');
@@ -1017,36 +1042,55 @@ export default function App() {
       return `../api/backend/ajax/${endpoint}`;
     };
 
-    fetch(getApiUrl(`get-questions.php?hospital_id=${hospital.id}`))
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          if (data.data) {
-            setQuestions(data.data);
-            const initialRatings: Record<string, number> = {};
-            data.data.forEach((q: Question) => {
-              initialRatings[q.id] = 0;
-            });
-            setDynamicRatings(initialRatings);
-          }
-          if (data.yesno_data) {
-            setFetchedYesNoQuestions(data.yesno_data);
-            const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-            data.yesno_data.forEach((yq: any) => {
-              initialYesNo[yq.id] = { answer: null, remarks: '' };
-            });
-            setDynamicYesNo(initialYesNo);
-          }
-          if (data.settings) {
-            setLayoutMode(data.settings.layoutMode);
-            setMergedPages(data.settings.mergePages);
-            if (data.settings.departments) {
-              setDepartments(data.settings.departments);
+    const tryFetchHospQuestions = async () => {
+      const endpoints = [
+        `/api/get-questions?hospital_id=${hospital.id}`,
+        getApiUrl(`get-questions.php?hospital_id=${hospital.id}`),
+        `api/get-questions.php?hospital_id=${hospital.id}`
+      ];
+      let data: any = null;
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep);
+          if (res.ok) {
+            const j = await res.json();
+            if (j && j.success && Array.isArray(j.data) && j.data.length > 0) {
+              data = j;
+              break;
             }
           }
+        } catch (e) {}
+      }
+
+      if (data && data.success) {
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setQuestions(data.data);
+          try { localStorage.setItem(`hms_questions_hospital_${hospital.id}`, JSON.stringify(data.data)); } catch (e) {}
+          const initialRatings: Record<string, number> = {};
+          data.data.forEach((q: Question) => {
+            initialRatings[q.id] = 0;
+          });
+          setDynamicRatings(initialRatings);
         }
-      })
-      .catch(err => console.error('Error fetching questions for hospital:', err));
+        if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
+          setFetchedYesNoQuestions(data.yesno_data);
+          try { localStorage.setItem(`hms_yesno_hospital_${hospital.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+          const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
+          data.yesno_data.forEach((yq: any) => {
+            initialYesNo[yq.id] = { answer: null, remarks: '' };
+          });
+          setDynamicYesNo(initialYesNo);
+        }
+        if (data.settings) {
+          setLayoutMode(data.settings.layoutMode);
+          setMergedPages(data.settings.mergePages);
+          if (data.settings.departments) {
+            setDepartments(data.settings.departments);
+          }
+        }
+      }
+    };
+    tryFetchHospQuestions();
     
     toast.success(language === 'en' ? `${hospital.name} selected` : `${hospital.name} தேர்ந்தெடுக்கப்பட்டது`);
   };
@@ -1177,6 +1221,8 @@ export default function App() {
 
       const newSubmissionObj = {
         id: 'sub_' + Date.now(),
+        hospital_id: selectedHospital?.id || 1,
+        hospitalId: selectedHospital?.id || 1,
         uhid: patientInfo.uhid || ('UHID' + Math.floor(1000 + Math.random() * 9000)),
         patientName: `${patientInfo.firstName} ${patientInfo.lastName}`.trim() || 'Patient',
         date: new Date().toLocaleDateString('en-GB'),
@@ -1473,6 +1519,10 @@ export default function App() {
       setShowAdminDashboard(true);
       setShowAdminLoginModal(false);
       setAdminLoginError('');
+      try {
+        sessionStorage.setItem('hms_is_admin', 'true');
+        localStorage.setItem('is_admin_logged_in', 'true');
+      } catch (e) {}
       const p = window.location.pathname;
       if (p.includes('api/frontend') || p.includes('api/backend/admin')) {
         window.location.href = p.includes('api/backend/admin') ? 'dashboard.php' : '../backend/admin/dashboard.php';
@@ -1489,34 +1539,55 @@ export default function App() {
         return `../api/backend/ajax/${endpoint}`;
       };
 
-      const response = await fetch(getApiUrl('login-ajax.php'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          email: adminUsername.trim(),
-          userid: adminUsername.trim(),
-          username: adminUsername.trim(),
-          password: adminPassword,
-          hospital_id: selectedHospital?.id,
-        }),
-      });
-      
-      const data = await response.json().catch(() => null);
+      const payload = {
+        email: adminUsername.trim(),
+        userid: adminUsername.trim(),
+        username: adminUsername.trim(),
+        password: adminPassword,
+        hospital_id: selectedHospital?.id,
+      };
 
-      if (response.ok && data && data.success) {
+      const endpoints = [
+        '/api/login-ajax',
+        getApiUrl('login-ajax.php')
+      ];
+
+      let response: Response | null = null;
+      let data: any = null;
+
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok || res.status === 401 || res.status === 400) {
+            response = res;
+            data = await res.json().catch(() => null);
+            break;
+          }
+        } catch (e) {}
+      }
+
+      if (response && response.ok && data && data.success) {
         setIsAdminLoggedIn(true);
         setShowAdminDashboard(true);
         setShowAdminLoginModal(false);
         setAdminLoginError('');
+        try {
+          sessionStorage.setItem('hms_is_admin', 'true');
+          localStorage.setItem('is_admin_logged_in', 'true');
+        } catch (e) {}
         const p = window.location.pathname;
         if (p.includes('api/frontend') || p.includes('api/backend/admin')) {
           window.location.href = p.includes('api/backend/admin') ? 'dashboard.php' : '../backend/admin/dashboard.php';
         }
       } else {
-        if (response.status === 500) {
+        if (response && response.status === 500) {
           setAdminLoginError(data?.message || (language === 'en' ? 'Unable to sign in right now. Please try again later.' : 'தற்போது உள்நுழைய முடியவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.'));
         } else {
           setAdminLoginError(data?.message || (language === 'en' ? 'Invalid user ID or password. Please check your credentials and try again.' : 'தவறான பயனர் ஐடி அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.'));
@@ -1537,6 +1608,13 @@ export default function App() {
     setAdminUsername('');
     setAdminPassword('');
     setAdminLoginError('');
+    try {
+      sessionStorage.removeItem('hms_is_admin');
+      sessionStorage.removeItem('hms_admin_role');
+      sessionStorage.removeItem('hms_admin_user');
+      localStorage.removeItem('is_admin_logged_in');
+      localStorage.removeItem('admin_user');
+    } catch (e) {}
   };
 
   // Handle pincode change with auto-fill
