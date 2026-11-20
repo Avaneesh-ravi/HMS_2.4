@@ -172,8 +172,8 @@ export default function App() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     try {
       const p = window.location.pathname;
-      if (p.includes('dashboard') || p.includes('admin')) return true;
-      return sessionStorage.getItem('hms_is_admin') === 'true' || localStorage.getItem('is_admin_logged_in') === 'true';
+      if (p.includes('dashboard.php') || p.includes('admin/dashboard.php')) return true;
+      return false;
     } catch (e) {
       return false;
     }
@@ -1955,6 +1955,11 @@ export default function App() {
       <AdminDashboard
         onClose={() => {
           setShowAdminDashboard(false);
+          setIsAdminLoggedIn(false);
+          try {
+            sessionStorage.removeItem('hms_is_admin');
+            localStorage.removeItem('is_admin_logged_in');
+          } catch (e) {}
           const hid = selectedHospital?.id || parseInt(sessionStorage.getItem('hms_auth_hospital_id') || '1', 10);
           const hCode = hid === 1 ? 'apl-8092' : hid === 2 ? 'cmc-4719' : 'gov-3185';
           sessionStorage.setItem('hms_auth_hospital_id', String(hid));
@@ -2126,30 +2131,19 @@ export default function App() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              {isAdminLoggedIn ? (
-                <>
-                  <button
-                    onClick={() => setShowAdminDashboard(true)}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium cursor-pointer shadow-sm"
-                  >
-                    Admin Panel
-                  </button>
-                  <button
-                    onClick={handleAdminLogout}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium flex items-center gap-2 cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setShowAdminLoginModal(true)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium cursor-pointer"
-                >
-                  Admin
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setAdminUsername('');
+                  setAdminPassword('');
+                  setAdminLoginError('');
+                  setShowAdminLoginModal(true);
+                }}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium cursor-pointer shadow-sm flex items-center gap-2"
+                title="Admin Login"
+              >
+                <Shield className="w-4 h-4" />
+                {language === 'en' ? 'Admin Panel' : 'நிர்வாகக் குழு'}
+              </button>
               <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                 <button
                   onClick={() => setLanguage('en')}
