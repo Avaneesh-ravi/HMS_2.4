@@ -274,7 +274,7 @@ function SortableQuestionCard({
             <button
               onClick={() => setShowColorPicker(showColorPicker === question.id ? null : question.id)}
               className="w-7 h-7 rounded-md border-[1.5px] border-gray-300 shadow-sm hover:shadow-md transition-all"
-              style={{ backgroundColor: question.backgroundColor || '#ffffff' }}
+              style={{ backgroundColor: question.backgroundColor || (question as any).cardColor || '#ffffff' }}
             />
             {showColorPicker === question.id && (
               <div className="absolute top-10 right-0 z-50 w-52 bg-white rounded-xl shadow-2xl border border-gray-200 p-3">
@@ -285,7 +285,7 @@ function SortableQuestionCard({
                       key={color}
                       onClick={() => {
                         const updatedQuestions = questions.map(q =>
-                          q.id === question.id ? { ...q, backgroundColor: color } : q
+                          q.id === question.id ? { ...q, backgroundColor: color, cardColor: color } : q
                         );
                         updateQuestions(updatedQuestions);
                       }}
@@ -297,7 +297,7 @@ function SortableQuestionCard({
                 <button
                   onClick={() => {
                     const updatedQuestions = questions.map(q =>
-                      q.id === question.id ? { ...q, backgroundColor: undefined } : q
+                      q.id === question.id ? { ...q, backgroundColor: undefined, cardColor: undefined } : q
                     );
                     updateQuestions(updatedQuestions);
                     setShowColorPicker(null);
@@ -1403,8 +1403,29 @@ export function AdminDashboard({
       if (data && data.success) {
         toast.success('Form configuration saved successfully!');
         
-        const finalRatingQs = (Array.isArray(data.data) && data.data.length > 0) ? data.data : questions;
-        const finalYesNoQs = (Array.isArray(data.yesno_data) && data.yesno_data.length > 0) ? data.yesno_data : yesNoQuestions;
+        const finalRatingQs = (Array.isArray(data.data) && data.data.length > 0)
+          ? data.data.map((q: any, idx: number) => {
+              const prev = questions.find(item => String(item.id) === String(q.id)) || questions[idx];
+              const bg = q.backgroundColor || q.cardColor || prev?.backgroundColor || (prev as any)?.cardColor;
+              return {
+                ...q,
+                backgroundColor: bg,
+                cardColor: bg
+              };
+            })
+          : questions;
+
+        const finalYesNoQs = (Array.isArray(data.yesno_data) && data.yesno_data.length > 0)
+          ? data.yesno_data.map((y: any, idx: number) => {
+              const prev = yesNoQuestions.find(item => String(item.id) === String(y.id)) || yesNoQuestions[idx];
+              const trig = y.describeIssueTrigger || y.describe_issue_trigger || prev?.describeIssueTrigger || 'no';
+              return {
+                ...y,
+                describeIssueTrigger: trig,
+                describe_issue_trigger: trig
+              };
+            })
+          : yesNoQuestions;
         const finalDepts = (Array.isArray(data.departments) && data.departments.length > 0) ? data.departments : departments;
 
         setQuestions(finalRatingQs);
@@ -2709,7 +2730,7 @@ export function AdminDashboard({
                                       const updatedList = yesNoQuestions.map(q => 
                                           q.id === question.id ? { ...q, describeIssueTrigger: e.target.value } : q
                                       );
-                                      setYesNoQuestions(updatedList);
+                                      updateYesNoQuestions(updatedList);
                                   }}
                                   className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none">
                                   <option value="no">No</option>

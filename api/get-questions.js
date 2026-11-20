@@ -134,7 +134,8 @@ export default async function handler(req, res) {
           label: (q.label || '').trim(),
           tamilLabel: (q.tamilLabel || '').trim(),
           ratingMode,
-          cardColor
+          cardColor,
+          backgroundColor: cardColor
         };
       });
     }
@@ -147,7 +148,7 @@ export default async function handler(req, res) {
     let ynRes = null;
     if (form) {
       ynRes = await query(
-        `SELECT yq.yesno_question_id as id, yq.question_en as label, yq.question_ta as "tamilLabel", ffyq.display_order
+        `SELECT yq.yesno_question_id as id, yq.question_en as label, yq.question_ta as "tamilLabel", yq.describe_issue_trigger, ffyq.display_order
          FROM feedback_form_yesno_question ffyq
          JOIN yesno_question yq ON yq.yesno_question_id = ffyq.yesno_question_id
          WHERE ffyq.feedback_form_id = $1 AND ffyq.status = 'Active' AND yq.status = 'Active'
@@ -158,7 +159,7 @@ export default async function handler(req, res) {
 
     if (!ynRes || ynRes.rows.length === 0) {
       ynRes = await query(
-        `SELECT yesno_question_id as id, question_en as label, question_ta as "tamilLabel" 
+        `SELECT yesno_question_id as id, question_en as label, question_ta as "tamilLabel", describe_issue_trigger 
          FROM yesno_question 
          WHERE (hospital_id = $1 OR hospital_id IS NULL OR yesno_question_id IN (40,41,42,1,2,3))
            AND status = 'Active'
@@ -169,11 +170,16 @@ export default async function handler(req, res) {
 
     let yesno = [];
     if (ynRes && ynRes.rows.length > 0) {
-      yesno = ynRes.rows.map(y => ({
-        id: String(y.id),
-        label: (y.label || y.tamilLabel || '').trim(),
-        tamilLabel: (y.tamilLabel || y.label || '').trim()
-      }));
+      yesno = ynRes.rows.map(y => {
+        const trig = (y.describe_issue_trigger || 'no').toLowerCase().trim();
+        return {
+          id: String(y.id),
+          label: (y.label || y.tamilLabel || '').trim(),
+          tamilLabel: (y.tamilLabel || y.label || '').trim(),
+          describeIssueTrigger: trig,
+          describe_issue_trigger: trig
+        };
+      });
     }
 
     if (yesno.length === 0) {

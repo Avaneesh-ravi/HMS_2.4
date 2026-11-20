@@ -726,19 +726,28 @@ export default function App() {
         // Only overwrite form configuration if server explicitly has custom questions, or user hasn't customized them locally
         if (data.is_custom || !hasCustomConfig) {
           if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-            setQuestions(data.data);
-            try { localStorage.setItem(`hms_questions_hospital_${resolved.id}`, JSON.stringify(data.data)); } catch (e) {}
+            const mappedRatingData = data.data.map((q: any) => ({
+              ...q,
+              backgroundColor: q.backgroundColor || q.cardColor,
+              cardColor: q.cardColor || q.backgroundColor
+            }));
+            setQuestions(mappedRatingData);
+            try { localStorage.setItem(`hms_questions_hospital_${resolved.id}`, JSON.stringify(mappedRatingData)); } catch (e) {}
             const initialRatings: Record<string, number> = {};
-            data.data.forEach((q: Question) => {
+            mappedRatingData.forEach((q: Question) => {
               initialRatings[q.id] = 0;
             });
             setDynamicRatings(initialRatings);
           }
           if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
-            setFetchedYesNoQuestions(data.yesno_data);
-            try { localStorage.setItem(`hms_yesno_hospital_${resolved.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+            const mappedYesNoData = data.yesno_data.map((yq: any) => ({
+              ...yq,
+              describeIssueTrigger: (yq.describeIssueTrigger || yq.describe_issue_trigger || 'no').toLowerCase().trim()
+            }));
+            setFetchedYesNoQuestions(mappedYesNoData);
+            try { localStorage.setItem(`hms_yesno_hospital_${resolved.id}`, JSON.stringify(mappedYesNoData)); } catch (e) {}
             const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-            data.yesno_data.forEach((yq: any) => {
+            mappedYesNoData.forEach((yq: any) => {
               initialYesNo[yq.id] = { answer: null, remarks: '' };
             });
             setDynamicYesNo(initialYesNo);
@@ -1221,19 +1230,28 @@ export default function App() {
       if (data && data.success) {
         if (data.is_custom || !hasCustomConfig) {
           if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-            setQuestions(data.data);
-            try { localStorage.setItem(`hms_questions_hospital_${hospital.id}`, JSON.stringify(data.data)); } catch (e) {}
+            const mappedRatingData = data.data.map((q: any) => ({
+              ...q,
+              backgroundColor: q.backgroundColor || q.cardColor,
+              cardColor: q.cardColor || q.backgroundColor
+            }));
+            setQuestions(mappedRatingData);
+            try { localStorage.setItem(`hms_questions_hospital_${hospital.id}`, JSON.stringify(mappedRatingData)); } catch (e) {}
             const initialRatings: Record<string, number> = {};
-            data.data.forEach((q: Question) => {
+            mappedRatingData.forEach((q: Question) => {
               initialRatings[q.id] = 0;
             });
             setDynamicRatings(initialRatings);
           }
           if (data.yesno_data && Array.isArray(data.yesno_data) && data.yesno_data.length > 0) {
-            setFetchedYesNoQuestions(data.yesno_data);
-            try { localStorage.setItem(`hms_yesno_hospital_${hospital.id}`, JSON.stringify(data.yesno_data)); } catch (e) {}
+            const mappedYesNoData = data.yesno_data.map((yq: any) => ({
+              ...yq,
+              describeIssueTrigger: (yq.describeIssueTrigger || yq.describe_issue_trigger || 'no').toLowerCase().trim()
+            }));
+            setFetchedYesNoQuestions(mappedYesNoData);
+            try { localStorage.setItem(`hms_yesno_hospital_${hospital.id}`, JSON.stringify(mappedYesNoData)); } catch (e) {}
             const initialYesNo: Record<string, { answer: boolean | null, remarks: string }> = {};
-            data.yesno_data.forEach((yq: any) => {
+            mappedYesNoData.forEach((yq: any) => {
               initialYesNo[yq.id] = { answer: null, remarks: '' };
             });
             setDynamicYesNo(initialYesNo);
@@ -3033,7 +3051,7 @@ export default function App() {
               <div className={`grid grid-cols-1 ${layoutMode === '2-column' ? 'md:grid-cols-2' : ''} gap-[18px] items-stretch`}>
                 {questions.length > 0 ? (
                   questions.map(q => (
-                    <FeedbackCard key={q.id} title={language === 'en' ? q.label : q.tamilLabel} tamilTitle="" icon={<Sparkles />} cardColor={q.backgroundColor}>
+                    <FeedbackCard key={q.id} title={language === 'en' ? q.label : q.tamilLabel} tamilTitle="" icon={<Sparkles />} cardColor={q.backgroundColor || (q as any).cardColor}>
                       {q.ratingMode === 'star' ? (
                         <StarRating
                           label=""

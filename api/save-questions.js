@@ -40,10 +40,27 @@ export default async function handler(req, res) {
     const deptsList = body.departments || settings.departments || [];
 
     // Always store latest configuration in serverless container memory
+    const normalizedQuestions = questions.map(q => {
+      const c = q.backgroundColor || q.cardColor;
+      return {
+        ...q,
+        cardColor: c,
+        backgroundColor: c
+      };
+    });
+    const normalizedYesNo = yesnoQuestions.map(y => {
+      const trig = (y.describeIssueTrigger || y.describe_issue_trigger || 'no').toLowerCase().trim();
+      return {
+        ...y,
+        describeIssueTrigger: trig,
+        describe_issue_trigger: trig
+      };
+    });
+
     SAVED_QUESTIONS_BY_HOSPITAL[hospitalId] = {
       is_custom: true,
-      data: questions,
-      yesno_data: yesnoQuestions,
+      data: normalizedQuestions,
+      yesno_data: normalizedYesNo,
       departments: deptsList,
       settings: settings
     };
@@ -213,7 +230,8 @@ export default async function handler(req, res) {
           label: q.label,
           tamilLabel: q.tamilLabel || q.label,
           ratingMode: q.ratingMode || 'emoji',
-          cardColor: q.cardColor || q.backgroundColor
+          cardColor: q.cardColor || q.backgroundColor,
+          backgroundColor: q.backgroundColor || q.cardColor
         });
       }
 
@@ -236,20 +254,21 @@ export default async function handler(req, res) {
       let ynOrder = 1;
       for (const y of yesnoQuestions) {
         let yid = y.id;
+        const trigger = (y.describeIssueTrigger || y.describe_issue_trigger || 'no').toLowerCase().trim();
         const isNew = String(yid).startsWith('new_') || isNaN(parseInt(yid, 10));
         if (isNew) {
           const insYn = await client.query(
-            `INSERT INTO yesno_question (question_en, question_ta, hospital_id, status)
-             VALUES ($1, $2, $3, 'Active')
+            `INSERT INTO yesno_question (question_en, question_ta, hospital_id, status, describe_issue_trigger)
+             VALUES ($1, $2, $3, 'Active', $4)
              RETURNING yesno_question_id`,
-            [y.label || 'Question', y.tamilLabel || y.label || '', hospitalId]
+            [y.label || 'Question', y.tamilLabel || y.label || '', hospitalId, trigger]
           );
           yid = insYn.rows[0].yesno_question_id;
         } else {
           const numYId = parseInt(yid, 10);
           await client.query(
-            `UPDATE yesno_question SET question_en = $1, question_ta = $2, status = 'Active', hospital_id = $3 WHERE yesno_question_id = $4`,
-            [y.label || '', y.tamilLabel || y.label || '', hospitalId, numYId]
+            `UPDATE yesno_question SET question_en = $1, question_ta = $2, status = 'Active', hospital_id = $3, describe_issue_trigger = $4 WHERE yesno_question_id = $5`,
+            [y.label || '', y.tamilLabel || y.label || '', hospitalId, trigger, numYId]
           );
           yid = numYId;
         }
@@ -265,7 +284,10 @@ export default async function handler(req, res) {
         savedYesNoQuestions.push({
           id: String(yid),
           label: y.label,
-          tamilLabel: y.tamilLabel || y.label
+          tamilLabel: y.tamilLabel || y.label,
+          describeIssueTrigger: trigger,
+          describe_issue_trigger: trigger,
+          backgroundColor: y.backgroundColor || y.cardColor
         });
       }
 
@@ -297,8 +319,14 @@ export default async function handler(req, res) {
       success: true,
       is_custom: true,
       message: 'Form configuration saved and synced successfully!',
-      data: questions,
-      yesno_data: yesnoQuestions,
+      data: (questions || []).map(q => {
+        const c = q.backgroundColor || q.cardColor;
+        return { ...q, cardColor: c, backgroundColor: c };
+      }),
+      yesno_data: (yesnoQuestions || []).map(y => {
+        const trig = (y.describeIssueTrigger || y.describe_issue_trigger || 'no').toLowerCase().trim();
+        return { ...y, describeIssueTrigger: trig, describe_issue_trigger: trig };
+      }),
       departments: deptsList,
       settings: settings
     });
