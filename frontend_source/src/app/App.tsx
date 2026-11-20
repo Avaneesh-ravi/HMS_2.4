@@ -1,4 +1,12 @@
-import { REAL_DB_QUESTIONS, REAL_DB_YESNO, REAL_DB_DEPARTMENTS } from './real_db_data';
+import { 
+  REAL_DB_RESPONSES, 
+  REAL_DB_QUESTIONS, 
+  REAL_DB_YESNO, 
+  REAL_DB_DEPARTMENTS, 
+  REAL_DB_QUESTIONS_BY_HOSPITAL, 
+  REAL_DB_YESNO_BY_HOSPITAL, 
+  REAL_DB_DEPARTMENTS_BY_HOSPITAL 
+} from './real_db_data';
 // @ts-nocheck
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
