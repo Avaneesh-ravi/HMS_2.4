@@ -215,6 +215,23 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminLoginError, setAdminLoginError] = useState('');
+  const [isUsernameFocused, setIsUsernameFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
+  // Guarantee admin login inputs are completely blank on every modal open
+  useEffect(() => {
+    if (showAdminLoginModal) {
+      setAdminUsername('');
+      setAdminPassword('');
+      setAdminLoginError('');
+      setIsUsernameFocused(false);
+      setIsPasswordFocused(false);
+      const t1 = setTimeout(() => { setAdminUsername(''); setAdminPassword(''); }, 50);
+      const t2 = setTimeout(() => { setAdminUsername(''); setAdminPassword(''); }, 150);
+      const t3 = setTimeout(() => { setAdminUsername(''); setAdminPassword(''); }, 300);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
+  }, [showAdminLoginModal]);
 
   // Pincode auto-fill state
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -2105,6 +2122,14 @@ export default function App() {
         .text-teal-700 { color: var(--primary-color) !important; filter: brightness(0.9); }
         .border-teal-500, .border-teal-600 { border-color: var(--primary-color) !important; }
         .focus\\:ring-teal-500:focus { --tw-ring-color: var(--primary-color) !important; }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px white inset !important;
+          -webkit-text-fill-color: #111827 !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
       `}</style>
       <Toaster position="top-right" richColors />
 
@@ -3739,14 +3764,23 @@ export default function App() {
               </button>
             </div>
 
+            {/* Hidden dummy inputs to absorb browser autofill */}
+            <input type="text" name="dummy_username" style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0 }} tabIndex={-1} autoComplete="off" />
+            <input type="password" name="dummy_password" style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0 }} tabIndex={-1} autoComplete="off" />
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{language === 'en' ? 'Username' : 'பயனர்பெயர்'}</label>
                 <input
                   type="text"
+                  name="hms_admin_login_user"
+                  id="hms_admin_login_user"
+                  autoComplete="off"
+                  readOnly={!isUsernameFocused}
+                  onFocus={() => setIsUsernameFocused(true)}
                   value={adminUsername}
                   onChange={(e) => { setAdminUsername(e.target.value); setAdminLoginError(''); }}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white"
                   placeholder={language === 'en' ? 'Enter username' : 'பயனர்பெயரை உள்ளிடவும்'}
                 />
               </div>
@@ -3756,10 +3790,15 @@ export default function App() {
                 <div className="relative">
                   <input
                     type={showAdminPassword ? 'text' : 'password'}
+                    name="hms_admin_login_pass"
+                    id="hms_admin_login_pass"
+                    autoComplete="new-password"
+                    readOnly={!isPasswordFocused}
+                    onFocus={() => setIsPasswordFocused(true)}
                     value={adminPassword}
                     onChange={(e) => { setAdminPassword(e.target.value); setAdminLoginError(''); }}
                     onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
-                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all bg-white"
                     placeholder={language === 'en' ? 'Enter password' : 'கடவுச்சொல்லை உள்ளிடவும்'}
                   />
                   <button
